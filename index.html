@@ -1291,13 +1291,19 @@
     /*************************************************************************
      * 4. DIFFERENTIAL CALCULUS ENGINE (TRIG DERIVATIVES, TANGENTS & CHAIN RULE)
      *************************************************************************/
-    function getTotalStrength() {
+    function getIndexMasteryBonus() {
       let bonus = 0;
-      state.claimedBiomeRewards.forEach(biomeId => {
-        const b = BIOMES.find(item => item.id === biomeId);
-        if (b) bonus += b.rewardPower;
-      });
-      return state.baseStrength + bonus;
+      if (state && state.claimedBiomeRewards) {
+        state.claimedBiomeRewards.forEach(biomeId => {
+          const b = BIOMES.find(item => item.id === biomeId);
+          if (b) bonus += b.rewardPower;
+        });
+      }
+      return bonus;
+    }
+
+    function getTotalStrength() {
+      return (state.baseStrength || 18) + getIndexMasteryBonus();
     }
 
     function getEquippedFood() {
@@ -1305,6 +1311,7 @@
     }
 
     function evaluateFoodCalculus(food, t) {
+      if (!food) food = FOODS[0];
       if (food.type === 'tan') {
         const arg = food.B * t;
         const cosVal = Math.cos(arg);
@@ -1337,40 +1344,6 @@
       const v = omega * Math.cos(omega * t);
       const isNearPeak = Math.abs(v) >= 0.8 * omega;
       return { h, v, omega, isNearPeak };
-    }
-
-    function updateRampSlider(val) {
-      state.rampX0 = parseFloat(val);
-      const ramp = evaluateRampCalculus(state.rampX0);
-      document.getElementById('rampXVal').textContent = state.rampX0.toFixed(2);
-      document.getElementById('rampSlopeVal').textContent = `${ramp.slope.toFixed(2)} (${ramp.angleDeg.toFixed(0)}°)`;
-      if (typeof update3DRampVisuals === 'function') {
-        update3DRampVisuals();
-      }
-    }
-
-    function togglePauseWave() {
-      state.wavePaused = !state.wavePaused;
-      const btn = document.getElementById('pauseWaveBtn');
-      btn.textContent = state.wavePaused ? '▶ Resume t' : '⏸ Pause t';
-      btn.className = state.wavePaused
-        ? 'bg-amber-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded border border-black'
-        : 'bg-gray-800 hover:bg-gray-700 text-white text-[10px] font-bold px-2 py-0.5 rounded border border-gray-600';
-    }
-
-    function toggleMinimizeCalcHUD(minimize) {
-      const minBar = document.getElementById('calcMinimizedBar');
-      const expPan = document.getElementById('calcExpandedPanel');
-      if (minimize) {
-        expPan.classList.add('hidden');
-        minBar.classList.remove('hidden');
-        minBar.classList.add('flex');
-      } else {
-        minBar.classList.add('hidden');
-        minBar.classList.remove('flex');
-        expPan.classList.remove('hidden');
-        resizeOscilloscope();
-      }
     }
 
     function saveWorkedExampleTelemetry(th) {
@@ -2673,10 +2646,11 @@
     let activePlotPetEntities = [];
 
     function createBlockyAnimalMesh(animal, size, mutation) {
+      if (!animal) return new THREE.Group();
       const g = new THREE.Group();
       const sizeMult = size ? size.scale : 1.0;
       const mutBoost = (mutation && mutation.mult >= 5) ? 1.15 : 1.0;
-      const s = animal.scale * sizeMult * mutBoost;
+      const s = (animal.scale || 1.0) * sizeMult * mutBoost;
 
       return buildDedicatedAnimalModel(animal.id, g, s, animal, size, mutation);
     }
@@ -2697,6 +2671,7 @@
       const cols = 5;
       equippedPets.forEach((pet, idx) => {
         const animal = ANIMALS.find(a => a.id === pet.animalId);
+        if (!animal) return;
         const mesh = createBlockyAnimalMesh(animal, pet.size, pet.mutation);
         const px = -15 + (idx % cols) * 7.5 + (Math.random() - 0.5) * 1.5;
         const pz = 2.5 + Math.floor(idx / cols) * 6.5 + (Math.random() - 0.5) * 1.5;
@@ -3570,6 +3545,7 @@
 
       unequipped.forEach(pet => {
         const animal = ANIMALS.find(a => a.id === pet.animalId);
+        if (!animal) return;
         const sellValue = Math.max(10, pet.income * 25);
         const card = document.createElement('div');
         card.className = 'bg-gray-800 rounded-xl p-2.5 flex items-center justify-between border border-gray-700 shadow';
@@ -3630,6 +3606,7 @@
 
       state.inventory.forEach(pet => {
         const animal = ANIMALS.find(a => a.id === pet.animalId);
+        if (!animal) return;
         const card = document.createElement('div');
         card.className = 'bg-gray-800 rounded-2xl p-2.5 flex items-center justify-between border-2 border-black shadow';
         const sizeTag = pet.size && pet.size.id !== 'regular' ? `[${pet.size.name.toUpperCase()}] ` : '';
@@ -3944,17 +3921,22 @@
         if (d.inventory) state.inventory = d.inventory;
         if (d.unlockedFoods) state.unlockedFoods = d.unlockedFoods;
         if (d.equippedFoodId) state.equippedFoodId = d.equippedFoodId;
-        if (d.unlockedIndex) state.unlockedIndex = new Set(d.unlockedIndex);
-        if (d.claimedBiomeRewards) state.claimedBiomeRewards = new Set(d.claimedBiomeRewards);
-        if (d.playerBestCatches) state.playerBestCatches = d.playerBestCatches;
+        if (d.unlockedIndex && Array.isArray(d.unlockedIndex)) state.unlockedIndex = new Set(d.unlockedIndex);
+        if (d.claimedBiomeRewards && Array.isArray(d.claimedBiomeRewards)) state.claimedBiomeRewards = new Set(d.claimedBiomeRewards);
+        if (d.playerBestCatches && Array.isArray(d.playerBestCatches)) state.playerBestCatches = d.playerBestCatches;
         if (d.autoSkipRepeats !== undefined) state.autoSkipRepeats = d.autoSkipRepeats;
         if (d.settings) state.settings = { ...state.settings, ...d.settings };
 
-        document.getElementById('musicSlider').value = state.settings.musicVol;
-        document.getElementById('musicVolLabel').textContent = `${state.settings.musicVol}%`;
-        document.getElementById('sfxSlider').value = state.settings.sfxVol;
-        document.getElementById('sfxVolLabel').textContent = `${state.settings.sfxVol}%`;
-        document.getElementById('autoSkipCheckbox').checked = state.autoSkipRepeats;
+        const musicSlider = document.getElementById('musicSlider');
+        if (musicSlider) musicSlider.value = state.settings.musicVol;
+        const musicLabel = document.getElementById('musicVolLabel');
+        if (musicLabel) musicLabel.textContent = `${state.settings.musicVol}%`;
+        const sfxSlider = document.getElementById('sfxSlider');
+        if (sfxSlider) sfxSlider.value = state.settings.sfxVol;
+        const sfxLabel = document.getElementById('sfxVolLabel');
+        if (sfxLabel) sfxLabel.textContent = `${state.settings.sfxVol}%`;
+        const autoSkipBox = document.getElementById('autoSkipCheckbox');
+        if (autoSkipBox) autoSkipBox.checked = state.autoSkipRepeats;
       } catch (e) {
         console.warn('LocalStorage load failed:', e);
       }

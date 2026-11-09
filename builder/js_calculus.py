@@ -4,13 +4,19 @@ JS_CALCULUS = """
     /*************************************************************************
      * 4. DIFFERENTIAL CALCULUS ENGINE (TRIG DERIVATIVES, TANGENTS & CHAIN RULE)
      *************************************************************************/
-    function getTotalStrength() {
+    function getIndexMasteryBonus() {
       let bonus = 0;
-      state.claimedBiomeRewards.forEach(biomeId => {
-        const b = BIOMES.find(item => item.id === biomeId);
-        if (b) bonus += b.rewardPower;
-      });
-      return state.baseStrength + bonus;
+      if (state && state.claimedBiomeRewards) {
+        state.claimedBiomeRewards.forEach(biomeId => {
+          const b = BIOMES.find(item => item.id === biomeId);
+          if (b) bonus += b.rewardPower;
+        });
+      }
+      return bonus;
+    }
+
+    function getTotalStrength() {
+      return (state.baseStrength || 18) + getIndexMasteryBonus();
     }
 
     function getEquippedFood() {
@@ -18,6 +24,7 @@ JS_CALCULUS = """
     }
 
     function evaluateFoodCalculus(food, t) {
+      if (!food) food = FOODS[0];
       if (food.type === 'tan') {
         const arg = food.B * t;
         const cosVal = Math.cos(arg);
@@ -50,40 +57,6 @@ JS_CALCULUS = """
       const v = omega * Math.cos(omega * t);
       const isNearPeak = Math.abs(v) >= 0.8 * omega;
       return { h, v, omega, isNearPeak };
-    }
-
-    function updateRampSlider(val) {
-      state.rampX0 = parseFloat(val);
-      const ramp = evaluateRampCalculus(state.rampX0);
-      document.getElementById('rampXVal').textContent = state.rampX0.toFixed(2);
-      document.getElementById('rampSlopeVal').textContent = `${ramp.slope.toFixed(2)} (${ramp.angleDeg.toFixed(0)}°)`;
-      if (typeof update3DRampVisuals === 'function') {
-        update3DRampVisuals();
-      }
-    }
-
-    function togglePauseWave() {
-      state.wavePaused = !state.wavePaused;
-      const btn = document.getElementById('pauseWaveBtn');
-      btn.textContent = state.wavePaused ? '▶ Resume t' : '⏸ Pause t';
-      btn.className = state.wavePaused
-        ? 'bg-amber-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded border border-black'
-        : 'bg-gray-800 hover:bg-gray-700 text-white text-[10px] font-bold px-2 py-0.5 rounded border border-gray-600';
-    }
-
-    function toggleMinimizeCalcHUD(minimize) {
-      const minBar = document.getElementById('calcMinimizedBar');
-      const expPan = document.getElementById('calcExpandedPanel');
-      if (minimize) {
-        expPan.classList.add('hidden');
-        minBar.classList.remove('hidden');
-        minBar.classList.add('flex');
-      } else {
-        minBar.classList.add('hidden');
-        minBar.classList.remove('flex');
-        expPan.classList.remove('hidden');
-        resizeOscilloscope();
-      }
     }
 
     function saveWorkedExampleTelemetry(th) {

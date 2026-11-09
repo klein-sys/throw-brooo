@@ -647,10 +647,11 @@ JS_THREE = """
     let activePlotPetEntities = [];
 
     function createBlockyAnimalMesh(animal, size, mutation) {
+      if (!animal) return new THREE.Group();
       const g = new THREE.Group();
       const sizeMult = size ? size.scale : 1.0;
       const mutBoost = (mutation && mutation.mult >= 5) ? 1.15 : 1.0;
-      const s = animal.scale * sizeMult * mutBoost;
+      const s = (animal.scale || 1.0) * sizeMult * mutBoost;
 
       return buildDedicatedAnimalModel(animal.id, g, s, animal, size, mutation);
     }
@@ -671,6 +672,7 @@ JS_THREE = """
       const cols = 5;
       equippedPets.forEach((pet, idx) => {
         const animal = ANIMALS.find(a => a.id === pet.animalId);
+        if (!animal) return;
         const mesh = createBlockyAnimalMesh(animal, pet.size, pet.mutation);
         const px = -15 + (idx % cols) * 7.5 + (Math.random() - 0.5) * 1.5;
         const pz = 2.5 + Math.floor(idx / cols) * 6.5 + (Math.random() - 0.5) * 1.5;

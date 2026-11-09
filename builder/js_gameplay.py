@@ -762,6 +762,7 @@ JS_GAMEPLAY = """
 
       unequipped.forEach(pet => {
         const animal = ANIMALS.find(a => a.id === pet.animalId);
+        if (!animal) return;
         const sellValue = Math.max(10, pet.income * 25);
         const card = document.createElement('div');
         card.className = 'bg-gray-800 rounded-xl p-2.5 flex items-center justify-between border border-gray-700 shadow';
@@ -822,6 +823,7 @@ JS_GAMEPLAY = """
 
       state.inventory.forEach(pet => {
         const animal = ANIMALS.find(a => a.id === pet.animalId);
+        if (!animal) return;
         const card = document.createElement('div');
         card.className = 'bg-gray-800 rounded-2xl p-2.5 flex items-center justify-between border-2 border-black shadow';
         const sizeTag = pet.size && pet.size.id !== 'regular' ? `[${pet.size.name.toUpperCase()}] ` : '';
@@ -1136,17 +1138,22 @@ JS_GAMEPLAY = """
         if (d.inventory) state.inventory = d.inventory;
         if (d.unlockedFoods) state.unlockedFoods = d.unlockedFoods;
         if (d.equippedFoodId) state.equippedFoodId = d.equippedFoodId;
-        if (d.unlockedIndex) state.unlockedIndex = new Set(d.unlockedIndex);
-        if (d.claimedBiomeRewards) state.claimedBiomeRewards = new Set(d.claimedBiomeRewards);
-        if (d.playerBestCatches) state.playerBestCatches = d.playerBestCatches;
+        if (d.unlockedIndex && Array.isArray(d.unlockedIndex)) state.unlockedIndex = new Set(d.unlockedIndex);
+        if (d.claimedBiomeRewards && Array.isArray(d.claimedBiomeRewards)) state.claimedBiomeRewards = new Set(d.claimedBiomeRewards);
+        if (d.playerBestCatches && Array.isArray(d.playerBestCatches)) state.playerBestCatches = d.playerBestCatches;
         if (d.autoSkipRepeats !== undefined) state.autoSkipRepeats = d.autoSkipRepeats;
         if (d.settings) state.settings = { ...state.settings, ...d.settings };
 
-        document.getElementById('musicSlider').value = state.settings.musicVol;
-        document.getElementById('musicVolLabel').textContent = `${state.settings.musicVol}%`;
-        document.getElementById('sfxSlider').value = state.settings.sfxVol;
-        document.getElementById('sfxVolLabel').textContent = `${state.settings.sfxVol}%`;
-        document.getElementById('autoSkipCheckbox').checked = state.autoSkipRepeats;
+        const musicSlider = document.getElementById('musicSlider');
+        if (musicSlider) musicSlider.value = state.settings.musicVol;
+        const musicLabel = document.getElementById('musicVolLabel');
+        if (musicLabel) musicLabel.textContent = `${state.settings.musicVol}%`;
+        const sfxSlider = document.getElementById('sfxSlider');
+        if (sfxSlider) sfxSlider.value = state.settings.sfxVol;
+        const sfxLabel = document.getElementById('sfxVolLabel');
+        if (sfxLabel) sfxLabel.textContent = `${state.settings.sfxVol}%`;
+        const autoSkipBox = document.getElementById('autoSkipCheckbox');
+        if (autoSkipBox) autoSkipBox.checked = state.autoSkipRepeats;
       } catch (e) {
         console.warn('LocalStorage load failed:', e);
       }
