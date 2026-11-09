@@ -510,34 +510,7 @@ JS_THREE = """
       const mutBoost = (mutation && mutation.mult >= 5) ? 1.15 : 1.0;
       const s = animal.scale * sizeMult * mutBoost;
 
-      const bodyMat = new THREE.MeshLambertMaterial({ color: animal.color });
-      const body = new THREE.Mesh(new THREE.BoxGeometry(1.4 * s, 1.1 * s, 1.7 * s), bodyMat);
-      body.position.y = 0.75 * s;
-      body.castShadow = true;
-      g.add(body);
-
-      const head = new THREE.Mesh(new THREE.BoxGeometry(1.1 * s, 1.0 * s, 1.0 * s), bodyMat);
-      head.position.set(0, 1.35 * s, -0.8 * s);
-      head.castShadow = true;
-      g.add(head);
-
-      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-      const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.18 * s, 0.18 * s, 0.1 * s), eyeMat);
-      eyeL.position.set(-0.3 * s, 1.45 * s, -1.32 * s);
-      const eyeR = eyeL.clone();
-      eyeR.position.x = 0.3 * s;
-      g.add(eyeL, eyeR);
-
-      // Mutation Glowing Particle Aura / Halo Ring
-      if (mutation && mutation.mult >= 5) {
-        const auraGeo = new THREE.TorusGeometry(1.2 * s, 0.12 * s, 12, 24);
-        const auraMat = new THREE.MeshBasicMaterial({ color: mutation.hex });
-        const aura = new THREE.Mesh(auraGeo, auraMat);
-        aura.rotation.x = Math.PI / 2;
-        aura.position.y = 0.25;
-        g.add(aura);
-      }
-      return g;
+      return buildDedicatedAnimalModel(animal.id, g, s, animal, size, mutation);
     }
 
     function sync3DPlotPets() {

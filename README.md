@@ -28,8 +28,27 @@ A fully 3D responsive WebGL simulator inspired by the Roblox hit *Throw Food For
    * Projects a glowing 3D ballistic trajectory arc directly from the player's held food into the canyon.
    * The launch angle is dictated in real-time by the derivative slope: $m = y'(x_0) = 2\cos(x_0) \implies \theta = \arctan(m)$.
 
-4. **Skippable 3D Catch Cutscene with Exact Rarity Odds**
+4. **Skippable 3D Catch Cutscene with Exact Rarity Odds & Dedicated 3D Models**
    * Dramatic 3D camera zoom on the caught animal eating bait.
+   * **18 Dedicated Handcrafted 3D Voxel Models:** Every single animal features dedicated voxel anatomy:
+     * *Frog:* Wide amphibian jaw, raised eye bumps, front webbed feet, folded hind frog thighs.
+     * *Bunny:* Tall upright ears with pink insets, pink nose, cotton-ball puffy tail.
+     * *Grizzly Bear:* Heavy bear snout, dark nose, rounded ears with tan cups, sturdy paws.
+     * *Zebra:* Striped mane along neck, dark muzzle, black hooves, striped tail.
+     * *Giraffe:* Long vertical neck, knobby ossicones (horns), brown spots, tall legs.
+     * *King Lion:* Volumetric dark collar mane framing face, feline jowls, tufted tail.
+     * *Dune Camel:* Iconic desert hump, curved S-neck, flat desert padded hooves.
+     * *Gold Scorpion:* Segmented low carapace, front jointed pincer claws, arched curved sting tail with forward barb.
+     * *Pharaoh Fox:* Giant fennec ears, golden collar, white-tipped sweeping bushy tail.
+     * *Emerald Toucan:* Massive curved beak with emerald/orange/red gradient, yellow chest bib, side wings.
+     * *Silverback Gorilla:* Broad chest, silver-grey back plate, powerful knuckle-walking arms.
+     * *Bengal Tiger:* Feline jowls, tiger stripes, white throat, curved striped tail.
+     * *Arctic Seal:* Sleek hydrodynamic body, front flippers, split swimming rear tail flippers.
+     * *Megalodon Shark:* Pointed snout, jagged teeth, sharp pectoral fins, tall triangular dorsal fin, vertical tail.
+     * *Abyssal Kraken:* Bulbous mantle head, glowing bioluminescent eyes, 8 curling splaying tentacles.
+     * *Starlight Unicorn:* Arched neck, flowing pastel mane, spiraled golden horn on forehead, golden hooves.
+     * *Solar Phoenix:* Crown feather crest, eagle beak, wide spread fiery wings, 3 flowing solar tail plumes.
+     * *Celestial Dragon:* Horned dragon head, white fangs, membrane wings, spiny dorsal ridge, spade barb tail.
    * Displays the exact probability / rarity odds (e.g., `1 IN 450 (0.22%)`).
    * Displays both **Size** (Regular, Big, Huge, Giant, Titanic, Colossal) and **Mutation** (Normal, Silver, Golden, Rainbow, Cosmic).
    * Instant `⏭ SKIP ANIMATION` button on repeats and an `Auto-Skip Repeat Cutscenes` toggle.
@@ -77,3 +96,4 @@ Timing reps near peak velocity ($|h'| \ge 0.8\omega$) grants **2x XP/rep** with 
 ## 🚀 Running the Project
 
 Open `index.html` or `throw_food_for_animals_3d_calculus_edition.html` in any modern web browser (Google Chrome, Microsoft Edge, Safari, Firefox). No build step, Node server, or external downloads required!
+

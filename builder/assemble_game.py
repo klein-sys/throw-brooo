@@ -10,10 +10,11 @@ from html_ui import HTML_UI
 from js_data import JS_DATA
 from js_audio import JS_AUDIO
 from js_calculus import JS_CALCULUS
+from animal_models import JS_ANIMAL_MODELS
 from js_three import JS_THREE
 from js_gameplay import JS_GAMEPLAY
 
-full_html = HTML_HEAD + HTML_UI + "\n  <script>\n" + JS_DATA + JS_AUDIO + JS_CALCULUS + JS_THREE + JS_GAMEPLAY
+full_html = HTML_HEAD + HTML_UI + "\n  <script>\n" + JS_DATA + JS_AUDIO + JS_CALCULUS + JS_ANIMAL_MODELS + JS_THREE + JS_GAMEPLAY
 
 workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 file1 = os.path.join(workspace_dir, "throw_food_for_animals_3d_calculus_edition.html")
