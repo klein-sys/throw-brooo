@@ -1,0 +1,3283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Throw Food For Animals 3D: Calculus Edition (MATH 101)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Fredoka', sans-serif;
+      background: #0f172a;
+    }
+    .mono-math {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .rblx-stroke {
+      text-shadow:
+        -2.5px -2.5px 0 #000,
+         2.5px -2.5px 0 #000,
+        -2.5px  2.5px 0 #000,
+         2.5px  2.5px 0 #000,
+         0px    4.5px 0 #000;
+    }
+    .rblx-stroke-sm {
+      text-shadow:
+        -1.5px -1.5px 0 #000,
+         1.5px -1.5px 0 #000,
+        -1.5px  1.5px 0 #000,
+         1.5px  1.5px 0 #000,
+         0px    2.5px 0 #000;
+    }
+    .rblx-stroke-subtle {
+      text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000;
+    }
+    .rblx-btn {
+      border: 3px solid #111;
+      box-shadow: 0 5px 0 #111, inset 0 3px 0 rgba(255,255,255,0.4);
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      cursor: pointer;
+    }
+    .rblx-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 0 #111, inset 0 3px 0 rgba(255,255,255,0.5);
+    }
+    .rblx-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #111, inset 0 2px 0 rgba(255,255,255,0.2);
+    }
+    .rblx-card {
+      border: 3px solid #111;
+      box-shadow: 0 6px 0 #111;
+    }
+    .rblx-modal-header {
+      background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%);
+      border-bottom: 3px solid #111;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+      border-radius: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 6px;
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: floatSlow 2s ease-in-out infinite;
+    }
+    @keyframes cashFloatUp {
+      0% { opacity: 0; transform: translate(-50%, 0) scale(0.7); }
+      20% { opacity: 1; transform: translate(-50%, -12px) scale(1.15); }
+      80% { opacity: 1; transform: translate(-50%, -40px) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -60px) scale(0.85); }
+    }
+    .floating-cash-anim {
+      animation: cashFloatUp 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      pointer-events: none;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.7)); }
+      50% { filter: drop-shadow(0 0 16px rgba(250, 204, 21, 1)); }
+    }
+    .pulse-glow {
+      animation: pulseGlow 1.5s infinite;
+    }
+    @keyframes screenShake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-6px, 4px); }
+      40% { transform: translate(6px, -5px); }
+      60% { transform: translate(-5px, 3px); }
+      80% { transform: translate(4px, -2px); }
+    }
+    .shake-active {
+      animation: screenShake 0.45s ease-out;
+    }
+    /* Toggle Switch Custom */
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #22c55e;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #22c55e;
+    }
+  </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden select-none bg-slate-900 text-white">
+
+  <!-- 3D THREE.JS WEBGL VIEWPORT -->
+  <div id="webglContainer" class="absolute inset-0 w-full h-full z-0"></div>
+
+  <!-- 3D FLOATING LABELS CONTAINER (PLOT PETS, INCOME POPUPS & STATIONS) -->
+  <div id="labelsContainer" class="absolute inset-0 pointer-events-none z-10 overflow-hidden"></div>
+
+  <!-- TOP NAVIGATION BAR: TITLE, QUICK-WALK TELEPORTS & SHORTCUTS -->
+  <div class="fixed top-2 left-1/2 -translate-x-1/2 z-20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-[98%] max-w-5xl pointer-events-none">
+    
+    <!-- Title & Math Pill -->
+    <div class="bg-gray-900/95 border-2 border-black rounded-2xl px-3 py-1 flex items-center gap-2 shadow-xl pointer-events-auto">
+      <span class="text-yellow-400 font-extrabold text-xs sm:text-base rblx-stroke-sm">🥕 THROW FOOD 3D</span>
+      <span class="hidden sm:inline-block bg-cyan-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-black shadow">
+        MATH 101 CALCULUS
+      </span>
+    </div>
+
+    <!-- Quick-Walk Station Teleport Bar -->
+    <div class="bg-gray-900/95 border-2 border-black rounded-2xl p-1 flex items-center gap-1 shadow-xl pointer-events-auto">
+      <button onclick="walkToStation('throw')" class="rblx-btn bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-xl">
+        🎯 Throw Line
+      </button>
+      <button onclick="walkToStation('pullup')" class="rblx-btn bg-sky-400 hover:bg-sky-300 text-black font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-xl">
+        🏋️ Pull-Up Bar
+      </button>
+      <button onclick="walkToStation('shop')" class="rblx-btn bg-blue-500 hover:bg-blue-400 text-white font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-xl rblx-stroke-sm">
+        🛒 Food Shop
+      </button>
+      <button onclick="walkToStation('sell')" class="rblx-btn bg-rose-500 hover:bg-rose-400 text-white font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-xl rblx-stroke-sm">
+        💰 Sell Stall
+      </button>
+      <button onclick="walkToStation('plot')" class="rblx-btn bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-xl">
+        🏡 My Plot
+      </button>
+    </div>
+
+    <!-- Teacher God-Mode Demo Pill (For live presentations) -->
+    <button onclick="activateTeacherGodMode()" title="Instant End-Game Preview for Professors Aquino & Gatdula" class="rblx-btn bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-black font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl pointer-events-auto flex items-center gap-1">
+      <span>👨‍🏫 DEMO MODE</span>
+    </button>
+
+    <!-- Equipped Bait Pill -->
+    <div onclick="openModal('shopModal')" title="Click to change bait in Food Shop" class="cursor-pointer bg-purple-700/95 hover:bg-purple-600 border-2 border-black rounded-2xl px-2.5 py-1 flex items-center gap-1.5 shadow-xl pointer-events-auto">
+      <span id="hudFoodIcon" class="text-base sm:text-lg">🥕</span>
+      <div class="leading-tight">
+        <div id="hudFoodName" class="text-white font-extrabold text-[11px] sm:text-xs rblx-stroke-sm">Carrot</div>
+        <div id="hudFoodFunc" class="text-[9px] sm:text-[10px] text-yellow-300 mono-math font-bold">P(t)=2sin(1.2t)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CURRENT ZONE BANNER NOTIFIER -->
+  <div id="zoneBanner" class="fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-all duration-200">
+    <div class="bg-black/75 backdrop-blur-md border-2 border-white/30 text-white px-4 py-1 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 shadow-2xl">
+      <span id="zoneBannerIcon">🏃</span>
+      <span id="zoneBannerText">Walk to the Orange Checkered Launch Line to Throw Food!</span>
+    </div>
+  </div>
+
+  <!-- LEFT HUD: SIDEBAR ICONS (INDEX, SHOP, ANIMALS, CALC LAB) & STATS -->
+  <div class="fixed left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5">
+    
+    <!-- Index Button (Matching Screenshot 75) -->
+    <button onclick="openModal('indexModal')" class="rblx-btn bg-gradient-to-b from-blue-500 to-blue-700 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex flex-col items-center justify-center relative group">
+      <span class="text-xl sm:text-2xl group-hover:scale-110 transition-transform">📘</span>
+      <span class="text-white font-extrabold text-[10px] sm:text-xs rblx-stroke-sm">Index</span>
+      <span id="indexBadge" class="absolute -top-1.5 -right-1.5 bg-yellow-400 text-black font-extrabold text-[9px] px-1.5 py-0.2 rounded-full border-2 border-black shadow">0/18</span>
+      <span id="indexRewardDot" class="hidden absolute -bottom-1.5 -right-1.5 bg-lime-400 text-black font-extrabold text-[9px] px-1.5 rounded-full border-2 border-black animate-bounce shadow">🎁!</span>
+    </button>
+
+    <!-- Shop Button (Matching Screenshot 75) -->
+    <button onclick="openModal('shopModal')" class="rblx-btn bg-gradient-to-b from-red-500 to-red-700 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex flex-col items-center justify-center relative group">
+      <span class="text-xl sm:text-2xl group-hover:scale-110 transition-transform">🧺</span>
+      <span class="text-white font-extrabold text-[10px] sm:text-xs rblx-stroke-sm">Shop</span>
+    </button>
+
+    <!-- Animals / Plot Button (Matching Screenshot 75 & 80) -->
+    <button onclick="openModal('animalsModal')" class="rblx-btn bg-gradient-to-b from-orange-400 to-amber-700 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex flex-col items-center justify-center relative group">
+      <span class="text-xl sm:text-2xl group-hover:scale-110 transition-transform">🐾</span>
+      <span class="text-white font-extrabold text-[10px] sm:text-xs rblx-stroke-sm">Animals</span>
+      <span id="plotCountBadge" class="absolute -top-1.5 -right-1.5 bg-lime-400 text-black font-extrabold text-[9px] px-1.5 rounded-full border-2 border-black shadow">0/5</span>
+    </button>
+
+    <!-- Calculus Lab & Worked Example Button (For Engr. Aquino & Gatdula) -->
+    <button onclick="openModal('calcLabModal')" class="rblx-btn bg-gradient-to-b from-indigo-500 to-purple-800 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex flex-col items-center justify-center relative group">
+      <span class="text-xl sm:text-2xl group-hover:scale-110 transition-transform">📐</span>
+      <span class="text-white font-extrabold text-[10px] sm:text-xs rblx-stroke-sm">MATH 101</span>
+    </button>
+
+    <!-- Canyon Wall Best Catches Quick Button -->
+    <button onclick="openModal('leaderboardModal')" class="rblx-btn bg-gradient-to-b from-yellow-500 to-amber-700 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex flex-col items-center justify-center relative group">
+      <span class="text-xl sm:text-2xl group-hover:scale-110 transition-transform">🏆</span>
+      <span class="text-white font-extrabold text-[10px] sm:text-xs rblx-stroke-sm">Best</span>
+    </button>
+  </div>
+
+  <!-- BOTTOM-LEFT STATS: MUSCLE STRENGTH & CASH DISPLAY -->
+  <div class="fixed bottom-3 left-3 z-20 flex flex-col gap-1.5 pointer-events-auto">
+    <!-- Strength Pill with Muscle Icon, Number, Bonus & Settings Gear ⚙️ -->
+    <div class="flex items-center gap-2 bg-black/75 backdrop-blur-sm border-2 border-black rounded-2xl px-3 py-1 shadow-2xl">
+      <span class="text-2xl sm:text-3xl filter drop-shadow">💪</span>
+      <div class="leading-none">
+        <div class="flex items-center gap-1.5">
+          <span id="strengthDisplay" class="text-sky-400 font-extrabold text-lg sm:text-2xl rblx-stroke-sm">18</span>
+          <button onclick="openModal('settingsModal')" title="Open Settings" class="text-slate-400 hover:text-white transition-colors p-0.5">
+            <span class="text-sm sm:text-base">⚙️</span>
+          </button>
+        </div>
+        <div id="indexBonusDisplay" class="text-[9px] text-amber-300 font-bold">+0 Index Bonus</div>
+      </div>
+    </div>
+
+    <!-- Cash Pill with Money Icon, Cash Amount & $/s Passive Rate -->
+    <div class="flex items-center gap-2 bg-black/75 backdrop-blur-sm border-2 border-black rounded-2xl px-3 py-1 shadow-2xl">
+      <span class="text-2xl sm:text-3xl filter drop-shadow">💵</span>
+      <div class="leading-none">
+        <div id="cashDisplay" class="text-lime-400 font-extrabold text-lg sm:text-2xl rblx-stroke-sm">$0</div>
+        <div id="incomeRateDisplay" class="text-[10px] text-lime-200 font-bold">+$0/s (Plot)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIRTUAL ON-SCREEN JOYSTICK FOR MOBILE / TABLET NAVIGATION -->
+  <div id="joystickZone" class="fixed bottom-4 left-36 sm:left-44 z-20 w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-black/40 border-3 border-white/30 backdrop-blur-sm flex items-center justify-center touch-none">
+    <div id="joystickKnob" class="w-12 h-12 rounded-full bg-white/85 border-3 border-black shadow-xl pointer-events-none transition-transform duration-75"></div>
+  </div>
+
+  <!-- MINIMIZABLE LIVE TRIGONOMETRIC DERIVATIVE HUD (BOTTOM CENTER) -->
+  <!-- 1) Minimized Pill Bar -->
+  <div id="calcMinimizedBar" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-20 hidden pointer-events-auto">
+    <button onclick="toggleMinimizeCalcHUD(false)" class="rblx-btn bg-gray-900/95 border-2 border-black text-white px-4 py-1.5 rounded-full flex items-center gap-2 shadow-2xl">
+      <span class="text-cyan-400 font-extrabold text-xs">📈 Expand Calculus HUD</span>
+      <span class="text-gray-400 text-xs">|</span>
+      <span id="minDerivReadout" class="mono-math text-amber-300 font-bold text-xs">P'(t) = +2.40</span>
+      <span class="text-gray-400 text-xs">|</span>
+      <span id="minSlopeReadout" class="mono-math text-emerald-300 font-bold text-xs">m = 1.00 (45°)</span>
+    </button>
+  </div>
+
+  <!-- 2) Expanded Calculus Oscilloscope Panel -->
+  <div id="calcExpandedPanel" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-xl bg-gray-900/95 border-3 border-black rounded-2xl p-2.5 sm:p-3 shadow-2xl pointer-events-auto transition-all">
+    <!-- Panel Header: Title, Minimizer, Pause & Status Badges -->
+    <div class="flex items-center justify-between gap-1 pb-1.5 border-b border-gray-700">
+      <div class="flex items-center gap-2">
+        <span class="text-cyan-400 font-extrabold text-xs sm:text-sm rblx-stroke-sm">📈 Live Derivative Oscilloscope</span>
+        <span id="calcRegimeBadge" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-lime-400 text-black shadow">MAX SURGE</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button onclick="togglePauseWave()" id="pauseWaveBtn" class="bg-gray-800 hover:bg-gray-700 text-white text-[10px] font-bold px-2 py-0.5 rounded border border-gray-600 transition-colors">
+          ⏸ Pause t
+        </button>
+        <button onclick="toggleMinimizeCalcHUD(true)" class="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded border border-black transition-colors" title="Minimize Oscilloscope">
+          — Minimize
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Oscilloscope HTML5 Canvas -->
+    <div class="relative w-full h-20 sm:h-24 bg-black/80 rounded-xl my-1.5 overflow-hidden border border-gray-700">
+      <canvas id="oscCanvas" class="w-full h-full block"></canvas>
+      <div class="absolute top-1 left-2 pointer-events-none flex items-center gap-2 text-[9px] mono-math font-bold">
+        <span class="text-cyan-400">● P(t) Position Wave</span>
+        <span class="text-amber-400">● P'(t) Derivative Velocity</span>
+        <span class="text-pink-400">● Tangent Slope</span>
+      </div>
+      <div id="critPointIndicator" class="hidden absolute top-1 right-2 pointer-events-none text-[9px] font-extrabold text-yellow-300 bg-yellow-950/80 px-2 py-0.5 rounded border border-yellow-500">
+        🎯 CRITICAL POINT (P' ≈ 0)
+      </div>
+    </div>
+
+    <!-- Dynamic Calculus Mathematical Formulas & Tangent Angle Controls -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[10px] sm:text-xs">
+      <div class="bg-gray-800/80 p-1.5 rounded-xl border border-gray-700">
+        <div id="livePosEq" class="text-cyan-300 font-bold truncate">P(t) = 2sin(1.2t) = +0.00</div>
+        <div id="liveDerivEq" class="text-amber-300 font-bold truncate">P'(t) = 2.4cos(1.2t) = +2.40</div>
+      </div>
+      <div class="bg-gray-800/80 p-1.5 rounded-xl border border-gray-700 flex flex-col justify-center">
+        <div class="flex items-center justify-between text-[10px] leading-tight">
+          <span>Ramp <span class="mono-math text-pink-300">x₀=<span id="rampXVal">1.05</span> rad</span></span>
+          <span class="mono-math text-emerald-300">m = 2cos(x₀) = <span id="rampSlopeVal">1.00</span> (45°)</span>
+        </div>
+        <input id="rampSlider" type="range" min="0.1" max="1.45" step="0.01" value="1.05"
+          oninput="updateRampSlider(this.value)"
+          class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-400 mt-1" />
+      </div>
+    </div>
+  </div>
+
+  <!-- THROW HUD (ACTIVE ONLY ON LAUNCH LINE) -->
+  <div id="throwZoneHUD" class="fixed right-3 bottom-3 z-20 hidden items-end gap-2.5 pointer-events-auto">
+    <!-- Vertical Harmonic Derivative Throw Meter -->
+    <div class="flex flex-col items-center">
+      <div class="relative w-10 sm:w-12 h-56 sm:h-64 rounded-full border-4 border-black p-1 shadow-2xl flex flex-col justify-between overflow-hidden"
+           style="background: linear-gradient(to top, #ef4444 0%, #f97316 25%, #eab308 50%, #84cc16 75%, #22c55e 100%);">
+        <div class="w-full h-[3px] bg-black/60 my-auto"></div>
+        <div class="w-full h-[3px] bg-black/60 my-auto"></div>
+        <div class="w-full h-[3px] bg-black/60 my-auto"></div>
+        <div class="w-full h-[3px] bg-black/60 my-auto"></div>
+        
+        <div id="meterMarker" class="absolute left-0 right-0 h-4 bg-white rounded-full border-2 border-black shadow-lg" style="top: 50%;"></div>
+      </div>
+      <div id="meterReadout" class="mt-1 text-white font-extrabold text-sm sm:text-base rblx-stroke">+12</div>
+    </div>
+
+    <!-- Big Action Buttons & Auto-Skip Toggle -->
+    <div class="flex flex-col gap-2">
+      <!-- Strategy Badges -->
+      <div class="flex flex-col gap-1">
+        <div id="badgeCritStatus" class="bg-black/80 border-2 border-yellow-400 rounded-xl px-2.5 py-0.5 text-[10px] text-yellow-300 font-extrabold shadow flex items-center justify-between">
+          <span>🎯 CRITICAL POINT (P'≈0):</span>
+          <span class="text-yellow-400 font-bold">MUTATION SURGE</span>
+        </div>
+        <div id="badgeSurgeStatus" class="bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow flex items-center justify-between">
+          <span>⚡ MAX SURGE (|P'|=Max):</span>
+          <span class="text-cyan-400 font-bold">+35% DISTANCE</span>
+        </div>
+      </div>
+
+      <!-- Main "TAP TO THROW!" Button -->
+      <button onclick="executeCalculusThrow()" id="throwActionBtn" class="rblx-btn bg-gradient-to-b from-yellow-300 via-amber-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-black font-extrabold text-lg sm:text-2xl px-6 sm:px-8 py-3 sm:py-4 rounded-3xl rblx-stroke-sm shadow-2xl flex flex-col items-center leading-none">
+        <span>TAP TO THROW!</span>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-900 mt-1">or press SPACE</span>
+      </button>
+
+      <!-- Auto-Skip Repeat Catches Grind Toggle -->
+      <label class="flex items-center gap-2 bg-black/75 border-2 border-black rounded-xl px-2.5 py-1 cursor-pointer shadow">
+        <input id="autoSkipCheckbox" type="checkbox" onchange="toggleAutoSkipRepeats(this.checked)" class="w-4 h-4 accent-amber-400 rounded">
+        <span class="text-[10px] sm:text-xs text-white font-bold select-none">Auto-Skip Repeat Cutscenes</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- PULL-UP BAR HUD (MATCHING SCREENSHOT 78) -->
+  <div id="pullUpZoneHUD" class="fixed inset-x-0 bottom-4 z-20 hidden flex-col items-center gap-2 pointer-events-auto">
+    <button onclick="exitPullUpStation()" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-extrabold text-base sm:text-xl px-8 py-2 rounded-2xl rblx-stroke-sm shadow-2xl">
+      STOP
+    </button>
+
+    <div class="w-[92%] max-w-md bg-black/85 border-3 border-black rounded-2xl p-2.5 shadow-2xl flex flex-col gap-1.5">
+      <div class="flex items-center justify-between text-xs sm:text-sm font-extrabold text-white rblx-stroke-sm">
+        <span id="pullUpLevelTitle">Level 1</span>
+        <span id="pullUpXpFraction">4/5</span>
+      </div>
+      <div class="w-full h-4 bg-gray-950 rounded-full border-2 border-black overflow-hidden relative">
+        <div id="pullUpProgressBar" class="h-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-100" style="width: 80%;"></div>
+      </div>
+      <button onclick="doCalculusPullUpRep()" class="rblx-btn bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-black font-black text-xs sm:text-sm py-1.5 rounded-xl mt-1">
+        🏋️ PULL UP! (Tap Near Peak Velocity h'(t) for 2x XP)
+      </button>
+    </div>
+  </div>
+
+  <!-- 3D FLIGHT TRACKING OVERLAY & SKIP BUTTON -->
+  <div id="flightOverlay" class="fixed inset-0 pointer-events-none z-30 hidden flex-col justify-between p-4 sm:p-6">
+    <div class="self-center bg-black/85 border-3 border-black rounded-2xl px-5 py-2 shadow-2xl flex items-center gap-3">
+      <span class="text-2xl animate-spin">🌀</span>
+      <div>
+        <div id="flightDistReadout" class="text-yellow-400 font-extrabold text-lg sm:text-2xl rblx-stroke-sm">0.0m</div>
+        <div id="flightBiomeReadout" class="text-[10px] sm:text-xs text-white font-bold">Flying down the canyon...</div>
+      </div>
+    </div>
+    <div class="self-center pointer-events-auto">
+      <button id="skipFlightBtn" onclick="skipThrowAnimation()" class="rblx-btn bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-sm sm:text-base px-6 py-2 rounded-2xl shadow-2xl flex items-center gap-1.5">
+        <span>⏭ SKIP ANIMATION</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 3D CATCH REVEAL CUTSCENE MODAL (SHOWING SIZE, MUTATION & EXACT ODDS) -->
+  <div id="catchRevealModal" onclick="handleCatchRevealTap()" class="fixed inset-0 bg-black/45 z-40 hidden flex-col items-center justify-between py-8 px-4 cursor-pointer">
+    <!-- Top celebration badge if NEW -->
+    <div id="catchNewBadge" class="bg-yellow-400 text-black font-black text-sm sm:text-lg px-4 py-1 rounded-2xl border-3 border-black shadow-2xl -rotate-6 transform animate-bounce">
+      NEW ANIMAL DISCOVERED!
+    </div>
+
+    <!-- Center is transparent for Three.js 3D camera zooming into the animal eating food! -->
+    <div class="flex-1 w-full flex items-center justify-center"></div>
+
+    <!-- Bottom Catch Details Card -->
+    <div class="flex flex-col items-center gap-1.5 text-center bg-black/75 backdrop-blur-md border-3 border-black px-6 sm:px-10 py-3.5 rounded-3xl shadow-2xl pointer-events-auto" onclick="event.stopPropagation()">
+      <!-- Catch Odds Banner -->
+      <div id="catchOddsBadge" class="bg-gradient-to-r from-amber-400 to-yellow-300 text-black font-black text-xs sm:text-sm px-4 py-0.5 rounded-full border-2 border-black shadow-lg">
+        🎲 CHANCE: 1 IN 4.5 (22%)
+      </div>
+
+      <div id="catchAnimalName" class="text-white font-extrabold text-2xl sm:text-4xl rblx-stroke mt-1">FROG</div>
+      
+      <!-- Size & Mutation Tags -->
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <div id="catchSizeTag" class="text-emerald-400 font-extrabold text-xs sm:text-base rblx-stroke-sm bg-gray-900/80 px-2.5 py-0.5 rounded-xl border border-emerald-500">
+          TITANIC (15x Size)
+        </div>
+        <div id="catchMutationTag" class="text-cyan-400 font-extrabold text-xs sm:text-base rblx-stroke-sm bg-gray-900/80 px-2.5 py-0.5 rounded-xl border border-cyan-500">
+          GOLDEN (5x Mutation)
+        </div>
+      </div>
+
+      <div id="catchIncomeRate" class="text-lime-400 font-extrabold text-lg sm:text-2xl rblx-stroke-sm mt-0.5">$300/s</div>
+      
+      <button onclick="closeCatchReveal(event)" class="rblx-btn bg-lime-400 hover:bg-lime-300 text-black font-extrabold text-sm sm:text-base px-8 py-2 rounded-2xl mt-1">
+        CLAIM PET (tap to continue)
+      </button>
+    </div>
+  </div>
+
+  <!-- "NEW FOOD UNLOCKED!" POPUP MODAL (SCREENSHOT 81) -->
+  <div id="newFoodModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-gray-950 border-4 border-black rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col">
+      <div class="rblx-modal-header px-4 py-2 flex items-center justify-between">
+        <span class="text-white font-extrabold text-sm sm:text-base rblx-stroke-sm">NEW FOOD UNLOCKED!</span>
+        <button onclick="closeModal('newFoodModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2 py-0.5 rounded-lg">✕</button>
+      </div>
+      <div class="p-6 flex items-center gap-4 bg-gray-900">
+        <div id="newFoodIconBox" class="w-20 h-20 bg-gray-800 rounded-2xl border-3 border-black flex items-center justify-center text-4xl shadow-inner">
+          🍌
+        </div>
+        <div class="flex-1">
+          <div class="text-gray-400 text-xs font-bold">YOU CAN NOW BUY</div>
+          <div id="newFoodTitle" class="text-white font-extrabold text-xl sm:text-2xl rblx-stroke-sm">BANANA</div>
+          <div id="newFoodCost" class="text-lime-400 font-extrabold text-sm sm:text-base">$150</div>
+        </div>
+      </div>
+      <div class="p-4 bg-gray-950 flex justify-end border-t border-gray-800">
+        <button onclick="closeModal('newFoodModal'); openModal('shopModal')" class="rblx-btn bg-lime-400 hover:bg-lime-300 text-black font-extrabold text-base px-6 py-2 rounded-2xl">
+          SHOP
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL (SCREENSHOT 82) -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+      <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
+        <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Settings</span>
+        <button onclick="closeModal('settingsModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+      </div>
+      <div class="p-5 flex flex-col gap-4 text-white text-sm sm:text-base font-bold">
+        <div class="flex items-center justify-between gap-3">
+          <span class="w-20">Music</span>
+          <input id="musicSlider" type="range" min="0" max="100" value="70" oninput="setMusicVolume(this.value)" class="flex-1 h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
+          <span id="musicVolLabel" class="w-12 text-right mono-math">70%</span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="w-20">SFX</span>
+          <input id="sfxSlider" type="range" min="0" max="100" value="85" oninput="setSfxVolume(this.value)" class="flex-1 h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
+          <span id="sfxVolLabel" class="w-12 text-right mono-math">85%</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>View Others Pets</span>
+          <div class="flex items-center gap-2">
+            <span id="viewOthersLabel" class="text-xs text-lime-400">ON</span>
+            <input type="checkbox" id="viewOthersToggle" checked onchange="toggleViewOthersPets(this.checked)" class="w-6 h-6 accent-lime-400 cursor-pointer">
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>View Your Pets</span>
+          <div class="flex items-center gap-2">
+            <span id="viewYoursLabel" class="text-xs text-lime-400">ON</span>
+            <input type="checkbox" id="viewYoursToggle" checked onchange="toggleViewYourPets(this.checked)" class="w-6 h-6 accent-lime-400 cursor-pointer">
+          </div>
+        </div>
+        <hr class="border-gray-700 my-1">
+        <div class="flex items-center justify-between gap-2">
+          <button onclick="activateTeacherGodMode(); closeModal('settingsModal')" class="rblx-btn bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs px-3 py-2 rounded-xl flex-1">
+            👨‍🏫 God-Mode Demo
+          </button>
+          <button onclick="resetPlayerProgress()" class="rblx-btn bg-gray-700 hover:bg-gray-600 text-rose-300 font-extrabold text-xs px-3 py-2 rounded-xl">
+            Reset Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOD SHOP MODAL -->
+  <div id="shopModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="rblx-modal-header px-4 py-2.5 flex items-center justify-between">
+        <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Food Shop</span>
+        <button onclick="closeModal('shopModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+      </div>
+      <div class="p-3 sm:p-4 overflow-y-auto flex-1 flex flex-col gap-3">
+        <div id="foodShopGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3"></div>
+        <!-- Plot Expansion Upgrade Card (Starts 5, Max 20 Pets) -->
+        <div class="bg-gray-800 border-2 border-black rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-lg">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🏡</span>
+            <div>
+              <div class="text-white font-extrabold text-xs sm:text-sm">Expand Lawn Plot Capacity</div>
+              <div class="text-gray-400 text-[10px]">Hold up to 20 pets on your fenced yard!</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="shopPlotCapText" class="text-yellow-400 font-extrabold text-xs sm:text-sm">5/20</span>
+            <button id="upgradePlotBtn" onclick="upgradePlotCapacity()" class="rblx-btn bg-lime-400 hover:bg-lime-300 text-black font-extrabold text-xs px-3 py-1.5 rounded-xl">
+              UPGRADE ($100)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SELL STALL MODAL -->
+  <div id="sellModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="bg-gradient-to-r from-red-600 to-rose-700 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
+        <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Sell Stall</span>
+        <button onclick="closeModal('sellModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+      </div>
+      <div class="p-3 sm:p-4 flex-1 overflow-y-auto flex flex-col gap-2.5">
+        <div class="flex items-center justify-between bg-gray-800/80 p-2.5 rounded-2xl border border-gray-700">
+          <span class="text-xs text-gray-300">Sell duplicate or unequipped pets for instant cash!</span>
+          <button onclick="sellAllUnequipped()" class="rblx-btn bg-rose-500 hover:bg-rose-400 text-white font-extrabold text-xs px-3 py-1 rounded-xl">
+            SELL ALL UNEQUIPPED
+          </button>
+        </div>
+        <div id="sellListGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- "MY ANIMALS" MODAL (MATCHING SCREENSHOT 80) -->
+  <div id="animalsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="rblx-modal-header px-4 py-2.5 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">My Animals</span>
+          <span id="animalsPlotBadge" class="bg-lime-400 text-black font-extrabold text-xs px-2 py-0.5 rounded-full border border-black">0/5</span>
+        </div>
+        <button onclick="closeModal('animalsModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+      </div>
+      <div class="p-3 overflow-y-auto flex-1 flex flex-col gap-2" id="myAnimalsList"></div>
+      <div class="p-3 bg-gray-950 border-t border-gray-800 flex justify-center">
+        <button onclick="equipBestAnimals()" class="rblx-btn bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-black font-black text-lg px-8 py-3 rounded-2xl w-full shadow-2xl">
+          EQUIP BEST
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANIMAL INDEX MODAL (MATCHING SCREENSHOT 73) -->
+  <div id="indexModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="rblx-modal-header px-4 py-2.5 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Animal Index</span>
+          <span id="indexModalCount" class="text-yellow-300 text-xs font-bold">Unlocked: 0/18</span>
+        </div>
+        <button onclick="closeModal('indexModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+      </div>
+      <div id="indexBiomeContainer" class="p-3 sm:p-4 overflow-y-auto flex-1 flex flex-col gap-3"></div>
+    </div>
+  </div>
+
+  <!-- PLAYER'S LUCKIEST CATCHES (PERSONAL RECORDS MODAL) -->
+  <div id="leaderboardModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="bg-gradient-to-r from-amber-500 to-yellow-600 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
+        <div>
+          <span class="text-black font-extrabold text-base sm:text-lg rblx-stroke-sm">🏆 Your Luckiest Catches</span>
+          <div class="text-[10px] text-gray-900 font-bold">Personal Hall of Fame & Best Records</div>
+        </div>
+        <button onclick="closeModal('leaderboardModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+      </div>
+      <div class="p-4 overflow-y-auto flex-1 flex flex-col gap-2.5">
+        <div class="text-xs text-gray-300 bg-gray-800 p-2.5 rounded-xl border border-gray-700">
+          Ranked by overall rarity probability! Throws with critical points and high strength unlock giant sizes & mutations.
+        </div>
+        <div id="leaderboardList" class="flex flex-col gap-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATH 101 DIFFERENTIAL CALCULUS PRESENTATION & WORKED EXAMPLE MODAL -->
+  <div id="calcLabModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-5">
+    <div class="bg-gray-950 border-4 border-indigo-600 rounded-3xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl text-white">
+      <div class="bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 px-5 py-3 border-b-3 border-black flex items-center justify-between">
+        <div>
+          <div class="font-extrabold text-base sm:text-lg rblx-stroke-sm">MATH 101 • Differential Calculus Project</div>
+          <div class="text-[11px] text-pink-200">Prepared for: Engr. Hilarion S. Aquino III & Engr. James Marvin C. Gatdula</div>
+        </div>
+        <button onclick="closeModal('calcLabModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+      </div>
+      
+      <div class="p-4 sm:p-5 overflow-y-auto flex-1 flex flex-col gap-4 text-xs sm:text-sm">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[10px] font-bold">
+          <div class="bg-blue-900/60 border border-blue-400 p-2 rounded-xl">
+            <div class="text-blue-300">Calculus Rubric</div>
+            <div class="text-lg text-white font-black">30%</div>
+            <div class="text-gray-300 text-[9px]">Rigorous Trig Derivatives</div>
+          </div>
+          <div class="bg-emerald-900/60 border border-emerald-400 p-2 rounded-xl">
+            <div class="text-emerald-300">Programming</div>
+            <div class="text-lg text-white font-black">20%</div>
+            <div class="text-gray-300 text-[9px]">WebGL 3D Simulator</div>
+          </div>
+          <div class="bg-amber-900/60 border border-amber-400 p-2 rounded-xl">
+            <div class="text-amber-300">Creativity & Rules</div>
+            <div class="text-lg text-white font-black">30%</div>
+            <div class="text-gray-300 text-[9px]">Roblox Simulator Loop</div>
+          </div>
+          <div class="bg-purple-900/60 border border-purple-400 p-2 rounded-xl">
+            <div class="text-purple-300">Presentation</div>
+            <div class="text-lg text-white font-black">20%</div>
+            <div class="text-gray-300 text-[9px]">Live Worked Telemetry</div>
+          </div>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 p-3 rounded-2xl">
+          <div class="text-yellow-400 font-extrabold text-sm mb-1.5">1. Core Trigonometric Derivatives Applied</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mono-math text-[11px]">
+            <div class="bg-black/60 p-2 rounded-lg border border-gray-700">
+              <span class="text-cyan-400 font-bold">Sine Derivative:</span><br>
+              d/dt [sin(t)] = cos(t)<br>
+              Chain: d/dt [A sin(Bt)] = AB cos(Bt)
+            </div>
+            <div class="bg-black/60 p-2 rounded-lg border border-gray-700">
+              <span class="text-amber-400 font-bold">Cosine Derivative:</span><br>
+              d/dt [cos(t)] = -sin(t)<br>
+              Chain: d/dt [C cos(Dt)] = -CD sin(Dt)
+            </div>
+            <div class="bg-black/60 p-2 rounded-lg border border-gray-700">
+              <span class="text-purple-400 font-bold">Tangent Derivative:</span><br>
+              d/dt [tan(t)] = sec²(t)<br>
+              Chain: d/dt [A tan(Bt)] = AB sec²(Bt)
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 p-3 rounded-2xl">
+          <div class="text-emerald-400 font-extrabold text-sm mb-1.5">2. Tangent Line Launch Ramp & Chain Rule Training</div>
+          <p class="text-gray-300 leading-relaxed mb-2">
+            The launch ramp is modeled by the sinusoidal profile <span class="mono-math text-emerald-300">y(x) = 2 sin(x)</span>.
+            The instantaneous tangent slope is obtained directly by differentiation:
+            <span class="mono-math text-yellow-300 font-bold">m = y'(x₀) = 2 cos(x₀)</span>.
+            The physical launch angle is <span class="mono-math text-pink-300">θ = arctan(m)</span>, directly controlling 3D projectile ballistic trajectory!
+          </p>
+          <p class="text-gray-300 leading-relaxed">
+            In the Pull-Up Workout station, vertical body displacement is <span class="mono-math text-sky-300">h(t) = sin(ωt)</span>.
+            By the Chain Rule, vertical velocity is <span class="mono-math text-yellow-300 font-bold">h'(t) = ω cos(ωt)</span>.
+            Timing rep clicks near peak velocity grants a <strong>2x XP bonus</strong>!
+          </p>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 p-3 rounded-2xl">
+          <div class="text-pink-400 font-extrabold text-sm mb-1.5">3. Live Worked Example Telemetry (Last Throw)</div>
+          <div id="workedExampleDetails" class="mono-math text-[11px] bg-black/70 p-3 rounded-xl border border-gray-700 space-y-1">
+            <div class="text-gray-400">Perform a throw at the Launch Line to generate step-by-step calculus telemetry!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    /*************************************************************************
+     * 1. BALANCED PROGRESSION DATA: 7 FOODS, 6 3D BIOMES, SIZES & MUTATIONS
+     *************************************************************************/
+    const SIZES = [
+      { id: 'regular',  name: 'Regular',  mult: 1.0,  scale: 1.0,  weight: 6400, chanceNum: 1.56,  chanceStr: '1 in 1.6 (64%)',   color: '#9ca3af' },
+      { id: 'big',      name: 'Big',      mult: 1.8,  scale: 1.22, weight: 2200, chanceNum: 4.55,  chanceStr: '1 in 4.5 (22%)',   color: '#38bdf8' },
+      { id: 'huge',     name: 'Huge',     mult: 3.5,  scale: 1.48, weight: 950,  chanceNum: 10.5,  chanceStr: '1 in 10.5 (9.5%)', color: '#4ade80' },
+      { id: 'giant',    name: 'Giant',    mult: 7.0,  scale: 1.78, weight: 350,  chanceNum: 28.5,  chanceStr: '1 in 28.5 (3.5%)', color: '#f59e0b' },
+      { id: 'titanic',  name: 'Titanic',  mult: 15.0, scale: 2.15, weight: 90,   chanceNum: 111,   chanceStr: '1 in 111 (0.9%)',  color: '#ec4899' },
+      { id: 'colossal', name: 'Colossal', mult: 40.0, scale: 2.65, weight: 10,   chanceNum: 1000,  chanceStr: '1 in 1,000 (0.1%)', color: '#a855f7' }
+    ];
+
+    const MUTATIONS = [
+      { id: 'normal',  name: 'NORMAL',                   mult: 1.0,  chanceNum: 1.25, chanceStr: '1 in 1.3',   color: '#9ca3af', hex: 0x9ca3af },
+      { id: 'silver',  name: 'SILVER',                   mult: 2.0,  chanceNum: 8.0,  chanceStr: '1 in 8',     color: '#e2e8f0', hex: 0xe2e8f0 },
+      { id: 'golden',  name: 'CRITICAL POINT • GOLDEN',  mult: 5.0,  chanceNum: 35,   chanceStr: '1 in 35',    color: '#facc15', hex: 0xfacc15 },
+      { id: 'rainbow', name: 'CRITICAL POINT • RAINBOW', mult: 10.0, chanceNum: 150,  chanceStr: '1 in 150',   color: '#f472b6', hex: 0xf472b6 },
+      { id: 'cosmic',  name: 'CRITICAL POINT • COSMIC',  mult: 25.0, chanceNum: 1000, chanceStr: '1 in 1,000', color: '#c084fc', hex: 0xc084fc }
+    ];
+
+    const FOODS = [
+      {
+        id: 'carrot', name: 'Carrot', icon: '🥕', tier: 'Tier 1 • Common', cost: 0,
+        type: 'sincos', A: 2, B: 1.2, C: 0, D: 1.2,
+        formulaStr: 'P(t) = 2sin(1.2t)', derivStr: "P'(t) = 2.4cos(1.2t)",
+        distMult: 2.2, foodMult: 1.0, luck: 1.0, color: 0xf97316
+      },
+      {
+        id: 'apple', name: 'Apple', icon: '🍎', tier: 'Tier 1 • Common', cost: 80,
+        type: 'sincos', A: 0, B: 1.4, C: 3, D: 1.4,
+        formulaStr: 'P(t) = 3cos(1.4t)', derivStr: "P'(t) = -4.2sin(1.4t)",
+        distMult: 4.8, foodMult: 1.8, luck: 1.4, color: 0xef4444
+      },
+      {
+        id: 'banana', name: 'Banana', icon: '🍌', tier: 'Tier 2 • Uncommon', cost: 450,
+        type: 'sincos', A: 3, B: 1.5, C: 2, D: 1.5,
+        formulaStr: 'P(t) = 3sin(1.5t) + 2cos(1.5t)', derivStr: "P'(t) = 4.5cos(1.5t) - 3sin(1.5t)",
+        distMult: 9.5, foodMult: 3.2, luck: 2.2, color: 0xfacc15
+      },
+      {
+        id: 'toast', name: 'Toast', icon: '🍞', tier: 'Tier 2 • Rare', cost: 3500,
+        type: 'sincos', A: 4, B: 2.0, C: -2, D: 2.0,
+        formulaStr: 'P(t) = 4sin(2t) - 2cos(2t)', derivStr: "P'(t) = 8cos(2t) + 4sin(2t)",
+        distMult: 20.0, foodMult: 6.5, luck: 4.0, color: 0xd97706
+      },
+      {
+        id: 'orange', name: 'Orange', icon: '🍊', tier: 'Tier 3 • Epic', cost: 30000,
+        type: 'sincos', A: 5, B: 2.4, C: 3, D: 1.2,
+        formulaStr: 'P(t) = 5sin(2.4t) + 3cos(1.2t)', derivStr: "P'(t) = 12cos(2.4t) - 3.6sin(1.2t)",
+        distMult: 42.0, foodMult: 15.0, luck: 8.5, color: 0xfb923c
+      },
+      {
+        id: 'pear', name: 'Golden Pear', icon: '🍐', tier: 'Tier 4 • Legendary', cost: 250000,
+        type: 'sincos', A: 4, B: 1.4, C: 6, D: 2.8,
+        formulaStr: 'P(t) = 4sin(1.4t) + 6cos(2.8t)', derivStr: "P'(t) = 5.6cos(1.4t) - 16.8sin(2.8t)",
+        distMult: 75.0, foodMult: 35.0, luck: 20.0, color: 0xa3e635
+      },
+      {
+        id: 'lobster', name: 'Cosmic Lobster', icon: '🦞', tier: 'Tier 5 • Cosmic', cost: 1800000,
+        type: 'tan', A: 2.5, B: 0.9, C: 0, D: 0.9,
+        formulaStr: 'P(t) = 2.5tan(0.9t)', derivStr: "P'(t) = 2.25sec²(0.9t)",
+        distMult: 140.0, foodMult: 90.0, luck: 60.0, color: 0xc084fc
+      }
+    ];
+
+    const BIOMES = [
+      { id: 'forest',   name: 'Forest',            minDist: 0,    maxDist: 100,  rewardPower: 25,   colorHex: 0x22c55e, cssColor: '#22c55e', icon: '🌲', zStart: -22,  zEnd: -70 },
+      { id: 'savanna',  name: 'Savanna',           minDist: 100,  maxDist: 300,  rewardPower: 75,   colorHex: 0xeab308, cssColor: '#eab308', icon: '🌾', zStart: -70,  zEnd: -120 },
+      { id: 'desert',   name: 'Desert',            minDist: 300,  maxDist: 800,  rewardPower: 200,  colorHex: 0xf97316, cssColor: '#f97316', icon: '🌵', zStart: -120, zEnd: -170 },
+      { id: 'jungle',   name: 'Jungle',            minDist: 800,  maxDist: 2000, rewardPower: 600,  colorHex: 0x059669, cssColor: '#059669', icon: '🌴', zStart: -170, zEnd: -220 },
+      { id: 'ocean',    name: 'Deep Ocean',        minDist: 2000, maxDist: 5000, rewardPower: 1800, colorHex: 0x0284c7, cssColor: '#0284c7', icon: '🌊', zStart: -220, zEnd: -270 },
+      { id: 'mythical', name: 'Mythical Paradise', minDist: 5000, maxDist: 99999,rewardPower: 6000, colorHex: 0x9333ea, cssColor: '#9333ea', icon: '✨', zStart: -270, zEnd: -340 }
+    ];
+
+    const ANIMALS = [
+      // Forest (0 - 100m)
+      { id: 'frog',     name: 'Frog',              biome: 'forest',   emoji: '🐸', rarity: 'Common',    baseIncome: 2,        baseOdds: 1.67,  oddsStr: '1 in 1.7 (60%)',  color: 0x22c55e, scale: 0.9,  weight: 60 },
+      { id: 'bunny',    name: 'Bunny',             biome: 'forest',   emoji: '🐰', rarity: 'Uncommon',  baseIncome: 6,        baseOdds: 3.57,  oddsStr: '1 in 3.6 (28%)',  color: 0xf3f4f6, scale: 0.95, weight: 28 },
+      { id: 'bear',     name: 'Grizzly Bear',      biome: 'forest',   emoji: '🐻', rarity: 'Rare',      baseIncome: 18,       baseOdds: 8.33,  oddsStr: '1 in 8.3 (12%)',  color: 0x78350f, scale: 1.25, weight: 12 },
+      // Savanna (100 - 300m)
+      { id: 'zebra',    name: 'Zebra',             biome: 'savanna',  emoji: '🦓', rarity: 'Common',    baseIncome: 45,       baseOdds: 1.72,  oddsStr: '1 in 1.7 (58%)',  color: 0xe2e8f0, scale: 1.05, weight: 58 },
+      { id: 'giraffe',  name: 'Giraffe',           biome: 'savanna',  emoji: '🦒', rarity: 'Rare',      baseIncome: 120,      baseOdds: 3.33,  oddsStr: '1 in 3.3 (30%)',  color: 0xfacc15, scale: 1.35, weight: 30 },
+      { id: 'lion',     name: 'King Lion',         biome: 'savanna',  emoji: '🦁', rarity: 'Epic',      baseIncome: 350,      baseOdds: 8.33,  oddsStr: '1 in 8.3 (12%)',  color: 0xd97706, scale: 1.25, weight: 12 },
+      // Desert (300 - 800m)
+      { id: 'camel',    name: 'Dune Camel',        biome: 'desert',   emoji: '🐪', rarity: 'Uncommon',  baseIncome: 800,      baseOdds: 1.72,  oddsStr: '1 in 1.7 (58%)',  color: 0xb45309, scale: 1.2,  weight: 58 },
+      { id: 'scorpion', name: 'Gold Scorpion',     biome: 'desert',   emoji: '🦂', rarity: 'Rare',      baseIncome: 2000,     baseOdds: 3.33,  oddsStr: '1 in 3.3 (30%)',  color: 0xeab308, scale: 1.0,  weight: 30 },
+      { id: 'sphinx',   name: 'Pharaoh Fox',       biome: 'desert',   emoji: '🦊', rarity: 'Legendary', baseIncome: 5500,     baseOdds: 8.33,  oddsStr: '1 in 8.3 (12%)',  color: 0xf97316, scale: 1.15, weight: 12 },
+      // Jungle (800 - 2,000m)
+      { id: 'toucan',   name: 'Emerald Toucan',    biome: 'jungle',   emoji: '🦜', rarity: 'Rare',      baseIncome: 14000,    baseOdds: 1.72,  oddsStr: '1 in 1.7 (58%)',  color: 0x10b981, scale: 1.0,  weight: 58 },
+      { id: 'gorilla',  name: 'Silverback',        biome: 'jungle',   emoji: '🦍', rarity: 'Epic',      baseIncome: 35000,    baseOdds: 3.33,  oddsStr: '1 in 3.3 (30%)',  color: 0x374151, scale: 1.35, weight: 30 },
+      { id: 'tiger',    name: 'Bengal Tiger',      biome: 'jungle',   emoji: '🐅', rarity: 'Legendary', baseIncome: 90000,    baseOdds: 8.33,  oddsStr: '1 in 8.3 (12%)',  color: 0xfb923c, scale: 1.25, weight: 12 },
+      // Deep Ocean (2,000 - 5,000m)
+      { id: 'seal',     name: 'Arctic Seal',       biome: 'ocean',    emoji: '🦭', rarity: 'Rare',      baseIncome: 220000,   baseOdds: 1.72,  oddsStr: '1 in 1.7 (58%)',  color: 0x93c5fd, scale: 1.05, weight: 58 },
+      { id: 'shark',    name: 'Megalodon',         biome: 'ocean',    emoji: '🦈', rarity: 'Epic',      baseIncome: 550000,   baseOdds: 3.33,  oddsStr: '1 in 3.3 (30%)',  color: 0x2563eb, scale: 1.4,  weight: 30 },
+      { id: 'kraken',   name: 'Abyssal Kraken',    biome: 'ocean',    emoji: '🦑', rarity: 'Mythic',    baseIncome: 1500000,  baseOdds: 8.33,  oddsStr: '1 in 8.3 (12%)',  color: 0xdb2777, scale: 1.5,  weight: 12 },
+      // Mythical Paradise (5,000m+)
+      { id: 'unicorn',  name: 'Starlight Unicorn', biome: 'mythical', emoji: '🦄', rarity: 'Epic',      baseIncome: 4000000,  baseOdds: 1.72,  oddsStr: '1 in 1.7 (58%)',  color: 0xf472b6, scale: 1.25, weight: 58 },
+      { id: 'phoenix',  name: 'Solar Phoenix',     biome: 'mythical', emoji: '🦅', rarity: 'Mythic',    baseIncome: 12000000, baseOdds: 3.33,  oddsStr: '1 in 3.3 (30%)',  color: 0xfacc15, scale: 1.4,  weight: 30 },
+      { id: 'dragon',   name: 'Celestial Dragon',  biome: 'mythical', emoji: '🐉', rarity: 'Cosmic',    baseIncome: 40000000, baseOdds: 8.33,  oddsStr: '1 in 8.3 (12%)',  color: 0xa855f7, scale: 1.65, weight: 12 }
+    ];
+
+    const STATIONS = {
+      throw:  { x: 0,   z: -14, radius: 5.5, name: 'Orange Checkered Launch Line' },
+      pullup: { x: -16, z: 4,   radius: 4.2, name: 'Pull-Up Bar Station' },
+      shop:   { x: -16, z: -8,  radius: 4.5, name: 'Food Shop Stall' },
+      sell:   { x: 16,  z: -6,  radius: 4.5, name: 'Red & White Sell Stall' },
+      plot:   { x: 0,   z: 7,   radius: 11.0, name: 'Fenced Lawn Plot' }
+    };
+
+    /*************************************************************************
+     * 2. GAME STATE & PERSISTENCE ENGINE
+     *************************************************************************/
+    const SAVE_KEY = 'TF4A_CALC_SAVE_V4';
+
+    let state = {
+      cash: 50,
+      baseStrength: 18,
+      pullUpLevel: 1,
+      pullUpXp: 0,
+      pullUpMaxXp: 5,
+      plotCapacity: 5, // Starts at 5, upgradable up to 20!
+      inventory: [],
+      unlockedFoods: ['carrot'],
+      equippedFoodId: 'carrot',
+      unlockedIndex: new Set(['frog']),
+      claimedBiomeRewards: new Set(),
+      playerBestCatches: [], // Personal Hall of Fame (Top 5 Luckiest Catches)
+      t: 0,
+      wavePaused: false,
+      rampX0: 1.05,
+      activeZone: null,
+      autoSkipRepeats: false,
+      activeThrow: null,
+      throwCount: 0,
+      lastWorkedExample: null,
+      playerPos: { x: 0, z: -14 },
+      playerRot: 0,
+      isPullingUp: false,
+      settings: {
+        musicVol: 70,
+        sfxVol: 85,
+        viewOthersPets: true,
+        viewYourPets: true
+      }
+    };
+
+    /*************************************************************************
+     * 3. PROCEDURAL WEB AUDIO SYNTHESIZER (MUSIC & SFX - ZERO EXTERNAL ASSETS)
+     *************************************************************************/
+    class ProceduralAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+        this.musicGain = null;
+        this.sfxGain = null;
+        this.bgmTimer = null;
+        this.isPlayingBgm = false;
+        this.stepIndex = 0;
+      }
+
+      init() {
+        if (this.ctx) return;
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.value = 1.0;
+          this.masterGain.connect(this.ctx.destination);
+
+          this.musicGain = this.ctx.createGain();
+          this.musicGain.gain.value = (state.settings.musicVol || 70) / 100;
+          this.musicGain.connect(this.masterGain);
+
+          this.sfxGain = this.ctx.createGain();
+          this.sfxGain.gain.value = (state.settings.sfxVol || 85) / 100;
+          this.sfxGain.connect(this.masterGain);
+
+          this.startBgmLoop();
+        } catch (e) {
+          console.warn('Web Audio not supported or blocked:', e);
+        }
+      }
+
+      ensureContext() {
+        if (!this.ctx) {
+          this.init();
+        } else if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      setMusicVol(pct) {
+        if (this.musicGain && this.ctx) {
+          this.musicGain.gain.setValueAtTime(pct / 100, this.ctx.currentTime);
+        }
+      }
+
+      setSfxVol(pct) {
+        if (this.sfxGain && this.ctx) {
+          this.sfxGain.gain.setValueAtTime(pct / 100, this.ctx.currentTime);
+        }
+      }
+
+      // Procedural Upbeat Roblox BGM Synthesizer Loop (124 BPM)
+      startBgmLoop() {
+        if (this.isPlayingBgm || !this.ctx) return;
+        this.isPlayingBgm = true;
+
+        const melody = [
+          523.25, 659.25, 783.99, 1046.50, // C5, E5, G5, C6
+          587.33, 698.46, 880.00, 1046.50, // D5, F5, A5, C6
+          659.25, 783.99, 987.77, 1174.66, // E5, G5, B5, D6
+          783.99, 659.25, 523.25, 392.00   // G5, E5, C5, G4
+        ];
+        const bass = [
+          130.81, 130.81, 164.81, 196.00, // C3, C3, E3, G3
+          146.83, 146.83, 174.61, 220.00, // D3, D3, F3, A3
+          164.81, 164.81, 196.00, 246.94, // E3, E3, G3, B3
+          196.00, 196.00, 164.81, 130.81  // G3, G3, E3, C3
+        ];
+
+        const stepDuration = 0.24; // ~124 BPM sixteenth notes
+
+        const scheduleNote = () => {
+          if (!this.isPlayingBgm || !this.ctx) return;
+          const now = this.ctx.currentTime;
+          const mFreq = melody[this.stepIndex % melody.length];
+          const bFreq = bass[this.stepIndex % bass.length];
+
+          // Lead synth note
+          if (mFreq) {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            const filter = this.ctx.createBiquadFilter();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(mFreq, now);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1400, now);
+
+            g.gain.setValueAtTime(0.06, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.9);
+
+            osc.connect(filter);
+            filter.connect(g);
+            g.connect(this.musicGain);
+
+            osc.start(now);
+            osc.stop(now + stepDuration);
+          }
+
+          // Bass groove
+          if (this.stepIndex % 2 === 0) {
+            const bOsc = this.ctx.createOscillator();
+            const bG = this.ctx.createGain();
+            bOsc.type = 'sine';
+            bOsc.frequency.setValueAtTime(bFreq, now);
+            bG.gain.setValueAtTime(0.08, now);
+            bG.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 1.8);
+            bOsc.connect(bG);
+            bG.connect(this.musicGain);
+            bOsc.start(now);
+            bOsc.stop(now + stepDuration * 1.8);
+          }
+
+          this.stepIndex++;
+          this.bgmTimer = setTimeout(scheduleNote, stepDuration * 1000);
+        };
+
+        scheduleNote();
+      }
+
+      playClickSound() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+        g.gain.setValueAtTime(0.2, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(g);
+        g.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      }
+
+      playThrowSound(isSurge, isCritical) {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // Base Whoosh
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(isSurge ? 1100 : 660, now + 0.28);
+        g.gain.setValueAtTime(0.35, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(g);
+        g.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.3);
+
+        // Max Surge Sonic Boom
+        if (isSurge) {
+          const boom = this.ctx.createOscillator();
+          const boomG = this.ctx.createGain();
+          boom.type = 'sawtooth';
+          boom.frequency.setValueAtTime(140, now);
+          boom.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+          boomG.gain.setValueAtTime(0.4, now);
+          boomG.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+          boom.connect(boomG);
+          boomG.connect(this.sfxGain);
+          boom.start(now);
+          boom.stop(now + 0.42);
+        }
+
+        // Critical Point Sparkle Chime
+        if (isCritical) {
+          [1200, 1600, 2400].forEach((freq, idx) => {
+            const ch = this.ctx.createOscillator();
+            const chG = this.ctx.createGain();
+            ch.type = 'sine';
+            ch.frequency.setValueAtTime(freq, now + idx * 0.06);
+            chG.gain.setValueAtTime(0.25, now + idx * 0.06);
+            chG.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.25);
+            ch.connect(chG);
+            chG.connect(this.sfxGain);
+            ch.start(now + idx * 0.06);
+            ch.stop(now + idx * 0.06 + 0.25);
+          });
+        }
+      }
+
+      playCatchSound(isNew, rarity) {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = isNew ? [523.25, 659.25, 783.99, 1046.50, 1318.51] : [587.33, 783.99, 1046.50];
+        notes.forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.08);
+          g.gain.setValueAtTime(0.3, now + i * 0.08);
+          g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+          osc.connect(g);
+          g.connect(this.sfxGain);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.35);
+        });
+      }
+
+      playPullUpSound(isPerfect) {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = isPerfect ? 'triangle' : 'sine';
+        osc.frequency.setValueAtTime(isPerfect ? 880 : 440, now);
+        osc.frequency.exponentialRampToValueAtTime(isPerfect ? 1320 : 660, now + 0.12);
+        g.gain.setValueAtTime(0.28, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+        osc.connect(g);
+        g.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.14);
+      }
+
+      playCoinSound() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(987.77, now); // B5
+        osc2.frequency.setValueAtTime(1318.51, now + 0.07); // E6
+
+        g.gain.setValueAtTime(0.2, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+        osc1.connect(g);
+        osc2.connect(g);
+        g.connect(this.sfxGain);
+
+        osc1.start(now);
+        osc1.stop(now + 0.08);
+        osc2.start(now + 0.07);
+        osc2.stop(now + 0.25);
+      }
+
+      playLevelUpSound() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const chords = [523.25, 659.25, 783.99, 1046.50];
+        chords.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+          g.gain.setValueAtTime(0.25, now + idx * 0.05);
+          g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.4);
+          osc.connect(g);
+          g.connect(this.sfxGain);
+          osc.start(now + idx * 0.05);
+          osc.stop(now + idx * 0.05 + 0.4);
+        });
+      }
+
+      playUnlockSound() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        [440, 554.37, 659.25, 880, 1108.73].forEach((f, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now + idx * 0.06);
+          g.gain.setValueAtTime(0.25, now + idx * 0.06);
+          g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.3);
+          osc.connect(g);
+          g.connect(this.sfxGain);
+          osc.start(now + idx * 0.06);
+          osc.stop(now + idx * 0.06 + 0.3);
+        });
+      }
+    }
+
+    const audio = new ProceduralAudioEngine();
+    // Wake up audio on first interaction
+    ['click', 'keydown', 'touchstart'].forEach(ev => {
+      window.addEventListener(ev, () => audio.ensureContext(), { once: true });
+    });
+
+    /*************************************************************************
+     * 4. DIFFERENTIAL CALCULUS ENGINE (TRIG DERIVATIVES, TANGENTS & CHAIN RULE)
+     *************************************************************************/
+    function getTotalStrength() {
+      let bonus = 0;
+      state.claimedBiomeRewards.forEach(biomeId => {
+        const b = BIOMES.find(item => item.id === biomeId);
+        if (b) bonus += b.rewardPower;
+      });
+      return state.baseStrength + bonus;
+    }
+
+    function getEquippedFood() {
+      return FOODS.find(f => f.id === state.equippedFoodId) || FOODS[0];
+    }
+
+    function evaluateFoodCalculus(food, t) {
+      if (food.type === 'tan') {
+        const arg = food.B * t;
+        const cosVal = Math.cos(arg);
+        const safeCos = Math.abs(cosVal) < 0.22 ? (cosVal >= 0 ? 0.22 : -0.22) : cosVal;
+        const pos = food.A * (Math.sin(arg) / safeCos);
+        const secSq = 1 / (safeCos * safeCos);
+        const deriv = food.A * food.B * secSq;
+        const maxDeriv = food.A * food.B * (1 / (0.22 * 0.22));
+        return { pos, deriv, maxDeriv };
+      } else {
+        const pos = food.A * Math.sin(food.B * t) + food.C * Math.cos(food.D * t);
+        const deriv = food.A * food.B * Math.cos(food.B * t) - food.C * food.D * Math.sin(food.D * t);
+        const maxDeriv = Math.abs(food.A * food.B) + Math.abs(food.C * food.D);
+        return { pos, deriv, maxDeriv };
+      }
+    }
+
+    function evaluateRampCalculus(x0) {
+      const y0 = 2 * Math.sin(x0);
+      const slope = 2 * Math.cos(x0);
+      const angleRad = Math.atan(slope);
+      const angleDeg = (angleRad * 180) / Math.PI;
+      const angleEfficiency = Math.max(0.4, Math.sin(2 * angleRad));
+      return { y0, slope, angleRad, angleDeg, angleEfficiency };
+    }
+
+    function evaluatePullUpCalculus(t) {
+      const omega = 3.6;
+      const h = Math.sin(omega * t);
+      const v = omega * Math.cos(omega * t);
+      const isNearPeak = Math.abs(v) >= 0.8 * omega;
+      return { h, v, omega, isNearPeak };
+    }
+
+    function updateRampSlider(val) {
+      state.rampX0 = parseFloat(val);
+      const ramp = evaluateRampCalculus(state.rampX0);
+      document.getElementById('rampXVal').textContent = state.rampX0.toFixed(2);
+      document.getElementById('rampSlopeVal').textContent = `${ramp.slope.toFixed(2)} (${ramp.angleDeg.toFixed(0)}°)`;
+      if (typeof update3DRampVisuals === 'function') {
+        update3DRampVisuals();
+      }
+    }
+
+    function togglePauseWave() {
+      state.wavePaused = !state.wavePaused;
+      const btn = document.getElementById('pauseWaveBtn');
+      btn.textContent = state.wavePaused ? '▶ Resume t' : '⏸ Pause t';
+      btn.className = state.wavePaused
+        ? 'bg-amber-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded border border-black'
+        : 'bg-gray-800 hover:bg-gray-700 text-white text-[10px] font-bold px-2 py-0.5 rounded border border-gray-600';
+    }
+
+    function toggleMinimizeCalcHUD(minimize) {
+      const minBar = document.getElementById('calcMinimizedBar');
+      const expPan = document.getElementById('calcExpandedPanel');
+      if (minimize) {
+        expPan.classList.add('hidden');
+        minBar.classList.remove('hidden');
+        minBar.classList.add('flex');
+      } else {
+        minBar.classList.add('hidden');
+        minBar.classList.remove('flex');
+        expPan.classList.remove('hidden');
+        resizeOscilloscope();
+      }
+    }
+
+    function saveWorkedExampleTelemetry(th) {
+      state.lastWorkedExample = {
+        foodName: th.food.name,
+        formulaStr: th.food.formulaStr,
+        derivStr: th.food.derivStr,
+        t0: th.t0,
+        posVal: th.calc.pos,
+        derivVal: th.calc.deriv,
+        maxDeriv: th.calc.maxDeriv,
+        derivRatio: Math.abs(th.calc.deriv) / (th.calc.maxDeriv || 1),
+        rampX0: state.rampX0,
+        rampSlope: th.ramp.slope,
+        angleDeg: th.ramp.angleDeg,
+        isCritical: th.isCriticalPoint,
+        isSurge: th.isMaxDerivSurge,
+        distance: th.distance,
+        animal: th.chosenAnimal,
+        size: th.chosenSize,
+        mutation: th.chosenMutation,
+        odds: th.totalOdds,
+        income: th.finalIncome
+      };
+      renderWorkedExampleModal();
+    }
+
+    function renderWorkedExampleModal() {
+      const c = document.getElementById('workedExampleDetails');
+      if (!c) return;
+      const w = state.lastWorkedExample;
+      if (!w) {
+        c.innerHTML = '<div class="text-gray-400">Step onto the Launch Line and tap throw to capture real-time differential calculus telemetry!</div>';
+        return;
+      }
+      c.innerHTML = `
+        <div class="text-yellow-400 font-extrabold border-b border-gray-700 pb-1">
+          📊 TELEMETRY: Throw #${state.throwCount} (${w.foodName})
+        </div>
+        <div><strong>Time of Launch:</strong> t₀ = ${w.t0.toFixed(3)} s</div>
+        <div><strong>Position Function:</strong> ${w.formulaStr} = <span class="text-cyan-400">${w.posVal.toFixed(3)}</span></div>
+        <div><strong>Instantaneous Derivative:</strong> ${w.derivStr} = <span class="text-amber-400 font-bold">${w.derivVal.toFixed(3)}</span></div>
+        <div><strong>Ramp Tangent Line:</strong> y(x) = 2sin(x) ⟹ m = y'(${w.rampX0.toFixed(2)}) = 2cos(${w.rampX0.toFixed(2)}) = <span class="text-emerald-400 font-bold">${w.rampSlope.toFixed(3)}</span> (Launch θ = ${w.angleDeg.toFixed(1)}°)</div>
+        <div class="my-1 border-t border-gray-800 pt-1">
+          <strong>Calculus Strategy Evaluation:</strong><br>
+          • Derivative Ratio: |P'(t₀)| / Max = ${(w.derivRatio * 100).toFixed(1)}%<br>
+          • Critical Point Test (P' ≈ 0): ${w.isCritical ? '<span class="text-yellow-400 font-bold">CRITICAL EXTREMUM DETECTED (Guaranteed 5x-25x Mutation!)</span>' : 'None'}<br>
+          • Max Surge Test (|P'| ≥ 82%): ${w.isSurge ? '<span class="text-cyan-400 font-bold">DERIVATIVE VELOCITY SURGE (+30% Distance!)</span>' : 'Standard'}
+        </div>
+        <div class="border-t border-gray-800 pt-1 text-lime-400">
+          <strong>Outcome:</strong> Final Ballistic Distance = <strong>${w.distance.toFixed(1)}m</strong> ⟹ Caught <strong>${w.size ? w.size.name.toUpperCase() : ''} ${w.mutation.name} ${w.animal.name}</strong> (Rarity: 1 in ${formatNum(w.odds || 10)}) earning <strong>$${formatNum(w.income)}/s</strong>!
+        </div>
+      `;
+    }
+
+    /*************************************************************************
+     * 5. 3D THREE.JS WEBGL VOXEL WORLD, CANYON & LAUNCH ARC
+     *************************************************************************/
+    const container = document.getElementById('webglContainer');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x38bdf8); // Vibrant Roblox sky blue
+    scene.fog = new THREE.FogExp2(0x38bdf8, 0.0035);
+
+    const camera = new THREE.PerspectiveCamera(54, window.innerWidth / window.innerHeight, 0.2, 800);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    container.appendChild(renderer.domElement);
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      resizeOscilloscope();
+    });
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.9);
+    sunLight.position.set(45, 80, 50);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 400;
+    sunLight.shadow.camera.left = -60;
+    sunLight.shadow.camera.right = 60;
+    sunLight.shadow.camera.top = 60;
+    sunLight.shadow.camera.bottom = -60;
+    scene.add(sunLight);
+
+    // Helper: Create Authentic Roblox Studded Canvas Texture
+    function createStuddedTexture(c1, c2, repeatsX, repeatsY) {
+      const cnv = document.createElement('canvas');
+      cnv.width = 128;
+      cnv.height = 128;
+      const g = cnv.getContext('2d');
+
+      g.fillStyle = c1;
+      g.fillRect(0, 0, 128, 128);
+      g.fillStyle = c2;
+      g.fillRect(0, 0, 64, 64);
+      g.fillRect(64, 64, 64, 64);
+
+      const centers = [[32, 32], [96, 32], [32, 96], [96, 96]];
+      centers.forEach(([cx, cy]) => {
+        g.fillStyle = 'rgba(0, 0, 0, 0.18)';
+        g.beginPath();
+        g.arc(cx, cy + 2, 12, 0, Math.PI * 2);
+        g.fill();
+
+        g.fillStyle = 'rgba(255, 255, 255, 0.22)';
+        g.beginPath();
+        g.arc(cx, cy, 12, 0, Math.PI * 2);
+        g.fill();
+
+        g.fillStyle = 'rgba(0, 0, 0, 0.12)';
+        g.beginPath();
+        g.arc(cx, cy, 9.5, 0, Math.PI * 2);
+        g.fill();
+
+        g.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        g.beginPath();
+        g.arc(cx - 2, cy - 2, 7, 0, Math.PI * 2);
+        g.fill();
+      });
+
+      const tex = new THREE.CanvasTexture(cnv);
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.LinearMipMapLinearFilter;
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(repeatsX, repeatsY);
+      return tex;
+    }
+
+    // 1) Base Lawn Hub Ground (z = -22 to +28)
+    const hubTex = createStuddedTexture('#4ade80', '#22c55e', 24, 24);
+    const hubGround = new THREE.Mesh(
+      new THREE.PlaneGeometry(56, 52),
+      new THREE.MeshLambertMaterial({ map: hubTex })
+    );
+    hubGround.rotation.x = -Math.PI / 2;
+    hubGround.position.set(0, 0, 4);
+    hubGround.receiveShadow = true;
+    scene.add(hubGround);
+
+    // 2) Orange & Yellow Checkered Launch Line Strip (z = -14)
+    const launchTex = createStuddedTexture('#f59e0b', '#fde047', 16, 2);
+    const launchStrip = new THREE.Mesh(
+      new THREE.BoxGeometry(38, 0.25, 4.5),
+      new THREE.MeshLambertMaterial({ map: launchTex })
+    );
+    launchStrip.position.set(0, 0.12, -14);
+    launchStrip.receiveShadow = true;
+    scene.add(launchStrip);
+
+    // Glowing Neon Boundary Strips flanking Launch Line
+    [-16.25, -11.75].forEach(stripZ => {
+      const neonBorder = new THREE.Mesh(
+        new THREE.BoxGeometry(38.2, 0.32, 0.35),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      neonBorder.position.set(0, 0.16, stripZ);
+      scene.add(neonBorder);
+    });
+
+    // Yellow Floating Down-Arrow Marker at Launch Line
+    const launchArrowMesh = new THREE.Mesh(
+      new THREE.ConeGeometry(0.85, 1.6, 4),
+      new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+    );
+    launchArrowMesh.rotation.x = Math.PI;
+    launchArrowMesh.position.set(0, 3.8, -14);
+    scene.add(launchArrowMesh);
+
+    // 3) 3D Sinusoidal Launch Ramp & Tangent Arrow at Launch Line
+    const rampGroup = new THREE.Group();
+    rampGroup.position.set(0, 0.2, -14.5);
+    scene.add(rampGroup);
+
+    const rampArrow = new THREE.ArrowHelper(
+      new THREE.Vector3(0, 0.707, -0.707).normalize(),
+      new THREE.Vector3(0, 1.4, 0),
+      5.2,
+      0xfde047,
+      1.3,
+      0.85
+    );
+    rampGroup.add(rampArrow);
+
+    function update3DRampVisuals() {
+      const ramp = evaluateRampCalculus(state.rampX0);
+      const dir = new THREE.Vector3(0, Math.sin(ramp.angleRad), -Math.cos(ramp.angleRad)).normalize();
+      rampArrow.setDirection(dir);
+    }
+    update3DRampVisuals();
+
+    // 4) 3D LIVE TANGENT TRAJECTORY ARC IN THE WORLD
+    const ARC_POINTS_COUNT = 64;
+    const trajectoryPositions = new Float32Array(ARC_POINTS_COUNT * 3);
+    const trajectoryGeo = new THREE.BufferGeometry();
+    trajectoryGeo.setAttribute('position', new THREE.BufferAttribute(trajectoryPositions, 3));
+    const trajectoryMat = new THREE.LineBasicMaterial({
+      color: 0x38bdf8,
+      linewidth: 3,
+      transparent: true,
+      opacity: 0.85
+    });
+    const trajectoryLineMesh = new THREE.Line(trajectoryGeo, trajectoryMat);
+    scene.add(trajectoryLineMesh);
+
+    function update3DTrajectoryArc() {
+      if (state.activeZone !== 'throw') {
+        trajectoryLineMesh.visible = false;
+        return;
+      }
+      trajectoryLineMesh.visible = true;
+      const food = getEquippedFood();
+      const calc = evaluateFoodCalculus(food, state.t);
+      const ramp = evaluateRampCalculus(state.rampX0);
+      const previewDist = Math.max(20, Math.pow(getTotalStrength(), 0.85) * food.distMult * (1 + Math.abs(calc.deriv) * 0.22) * ramp.angleEfficiency);
+      const normDist = Math.min(1, Math.pow(previewDist / 5000, 0.52));
+      const targetZ = -14 - normDist * 290;
+
+      const posAttr = trajectoryGeo.attributes.position;
+      const startX = playerGroup ? playerGroup.position.x : 0;
+      const startY = 2.2;
+      const startZ = -14;
+
+      for (let i = 0; i < ARC_POINTS_COUNT; i++) {
+        const p = i / (ARC_POINTS_COUNT - 1);
+        const z = startZ + p * (targetZ - startZ);
+        const waveArcY = startY + Math.sin(p * Math.PI) * (10 + ramp.slope * 4.5) + Math.sin(p * Math.PI * 4 + state.t * 3) * 0.6;
+        posAttr.setXYZ(i, startX, waveArcY, z);
+      }
+      posAttr.needsUpdate = true;
+      trajectoryMat.color.setHex(food.color);
+    }
+
+    // 5) Fenced Player Lawn Plot ("My Plot" in center-back z = -4 to +18, x = -11 to +11)
+    const fenceMat = new THREE.MeshLambertMaterial({ color: 0xd97706 });
+    function buildPlotFences() {
+      const fenceGroup = new THREE.Group();
+      const postGeo = new THREE.BoxGeometry(0.55, 2.2, 0.55);
+      for (let x = -11; x <= 11; x += 2.75) {
+        for (const z of [-4, 18]) {
+          if (z === -4 && Math.abs(x) < 3) continue;
+          const post = new THREE.Mesh(postGeo, fenceMat);
+          post.position.set(x, 1.1, z);
+          fenceGroup.add(post);
+        }
+      }
+      for (let z = -4; z <= 18; z += 2.75) {
+        for (const x of [-11, 11]) {
+          const post = new THREE.Mesh(postGeo, fenceMat);
+          post.position.set(x, 1.1, z);
+          fenceGroup.add(post);
+        }
+      }
+      const railFB = new THREE.Mesh(new THREE.BoxGeometry(22, 0.28, 0.22), fenceMat);
+      railFB.position.set(0, 1.45, 18);
+      fenceGroup.add(railFB);
+      const railL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.28, 22), fenceMat);
+      railL.position.set(-11, 1.45, 7);
+      fenceGroup.add(railL);
+      const railR = railL.clone();
+      railR.position.x = 11;
+      fenceGroup.add(railR);
+
+      const archMat = new THREE.MeshLambertMaterial({ color: 0x92400e });
+      const archL = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3.8, 0.4), archMat);
+      archL.position.set(-3.2, 1.9, -4);
+      const archR = archL.clone();
+      archR.position.x = 3.2;
+      const archTop = new THREE.Mesh(new THREE.BoxGeometry(6.8, 0.4, 0.4), archMat);
+      archTop.position.set(0, 3.8, -4);
+      fenceGroup.add(archL, archR, archTop);
+
+      scene.add(fenceGroup);
+    }
+    buildPlotFences();
+
+    // 6) Build 3D Physical Stations: Pull-Up Bar, Blue Food Shop Stall, Red Sell Stall
+    function createGlowingRing(x, z, colorHex) {
+      const ringGeo = new THREE.RingGeometry(2.8, 3.3, 32);
+      const ringMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(x, 0.08, z);
+      scene.add(ring);
+      return ring;
+    }
+
+    function buildStall3D(x, z, roofColor1, roofColor2, labelText) {
+      const g = new THREE.Group();
+      g.position.set(x, 0, z);
+      const counter = new THREE.Mesh(
+        new THREE.BoxGeometry(5.2, 2.2, 3.2),
+        new THREE.MeshLambertMaterial({ color: 0x92400e })
+      );
+      counter.position.y = 1.1;
+      counter.castShadow = true;
+      g.add(counter);
+
+      const postGeo = new THREE.BoxGeometry(0.35, 4.8, 0.35);
+      const postMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+      [[-2.2, -1.3], [2.2, -1.3], [-2.2, 1.3], [2.2, 1.3]].forEach(([px, pz]) => {
+        const p = new THREE.Mesh(postGeo, postMat);
+        p.position.set(px, 2.4, pz);
+        g.add(p);
+      });
+
+      for (let i = 0; i < 5; i++) {
+        const stripe = new THREE.Mesh(
+          new THREE.BoxGeometry(1.15, 0.6, 3.8),
+          new THREE.MeshLambertMaterial({ color: i % 2 === 0 ? roofColor1 : roofColor2 })
+        );
+        stripe.position.set(-2.3 + i * 1.15, 4.9, 0);
+        g.add(stripe);
+      }
+      scene.add(g);
+    }
+
+    buildStall3D(STATIONS.shop.x, STATIONS.shop.z, 0x2563eb, 0xffffff, 'FOOD SHOP');
+    createGlowingRing(STATIONS.shop.x, STATIONS.shop.z + 2.5, 0x3b82f6);
+
+    buildStall3D(STATIONS.sell.x, STATIONS.sell.z, 0xef4444, 0xffffff, 'SELL');
+    createGlowingRing(STATIONS.sell.x, STATIONS.sell.z + 2.5, 0xef4444);
+
+    const pullUpGroup = new THREE.Group();
+    pullUpGroup.position.set(STATIONS.pullup.x, 0, STATIONS.pullup.z);
+    const barPostGeo = new THREE.BoxGeometry(0.5, 5.2, 0.5);
+    const barPostMat = new THREE.MeshLambertMaterial({ color: 0x92400e });
+    const leftPost = new THREE.Mesh(barPostGeo, barPostMat);
+    leftPost.position.set(-2.0, 2.6, 0);
+    const rightPost = new THREE.Mesh(barPostGeo, barPostMat);
+    rightPost.position.set(2.0, 2.6, 0);
+    const crossBar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.14, 4.4, 16),
+      new THREE.MeshLambertMaterial({ color: 0xfde68a })
+    );
+    crossBar.rotation.z = Math.PI / 2;
+    crossBar.position.set(0, 4.8, 0);
+    pullUpGroup.add(leftPost, rightPost, crossBar);
+    scene.add(pullUpGroup);
+    createGlowingRing(STATIONS.pullup.x, STATIONS.pullup.z, 0x38bdf8);
+
+    // 7) 6 SEQUENTIAL 3D BIOME RUNWAY ZONES & BROWN VOXEL CANYON WALLS
+    BIOMES.forEach((b, idx) => {
+      const length = Math.abs(b.zEnd - b.zStart);
+      const zCenter = (b.zStart + b.zEnd) / 2;
+      const bTex = createStuddedTexture(b.cssColor, '#1e293b', 16, 16);
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(44, length),
+        new THREE.MeshLambertMaterial({ map: bTex })
+      );
+      plane.rotation.x = -Math.PI / 2;
+      plane.position.set(0, 0.02, zCenter);
+      plane.receiveShadow = true;
+      scene.add(plane);
+
+      // Decorative trees along canyon edges
+      for (let z = b.zStart - 6; z > b.zEnd + 4; z -= 14) {
+        [-17, 17].forEach(xSide => {
+          const trunk = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 4.2, 1.2),
+            new THREE.MeshLambertMaterial({ color: 0x78350f })
+          );
+          trunk.position.set(xSide, 2.1, z);
+          const leaves = new THREE.Mesh(
+            new THREE.BoxGeometry(4.0, 4.0, 4.0),
+            new THREE.MeshLambertMaterial({ color: b.colorHex })
+          );
+          leaves.position.set(xSide, 5.5, z);
+          scene.add(trunk, leaves);
+        });
+      }
+    });
+
+    // Stepped Brown Voxel Dirt Canyon Walls
+    const dirtTex = createStuddedTexture('#78350f', '#5a2507', 8, 48);
+    const wallMat = new THREE.MeshLambertMaterial({ map: dirtTex });
+    const wallTopMat = new THREE.MeshLambertMaterial({ color: 0x22c55e });
+
+    [-29, 29].forEach(xWall => {
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(12, 24, 400), wallMat);
+      wall.position.set(xWall, 12, -160);
+      const topGrass = new THREE.Mesh(new THREE.BoxGeometry(12.8, 2.6, 400), wallTopMat);
+      topGrass.position.set(xWall, 24.5, -160);
+      scene.add(wall, topGrass);
+    });
+
+    // 8) MOUNTED CANYON WALL 3D "LUCKIEST CATCHES - YOUR BEST RECORDS" BILLBOARD
+    // Removed TOP MONEY board as requested; dedicated to player's best catches!
+    const luckiestBoardCanvas = document.createElement('canvas');
+    luckiestBoardCanvas.width = 768;
+    luckiestBoardCanvas.height = 640;
+    const luckiestBoardTex = new THREE.CanvasTexture(luckiestBoardCanvas);
+
+    const luckiestBoardGroup = new THREE.Group();
+    luckiestBoardGroup.position.set(-22.4, 9.5, -14);
+    luckiestBoardGroup.rotation.y = Math.PI / 2;
+
+    const boardFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(11.5, 9.5, 0.4),
+      new THREE.MeshLambertMaterial({ color: 0x111827 })
+    );
+    const boardBorder = new THREE.Mesh(
+      new THREE.BoxGeometry(11.9, 9.9, 0.35),
+      new THREE.MeshLambertMaterial({ color: 0xfacc15 })
+    );
+    boardBorder.position.z = -0.05;
+    luckiestBoardGroup.add(boardFrame, boardBorder);
+
+    const boardFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(11.2, 9.0),
+      new THREE.MeshBasicMaterial({ map: luckiestBoardTex })
+    );
+    boardFace.position.z = 0.22;
+    luckiestBoardGroup.add(boardFace);
+    scene.add(luckiestBoardGroup);
+
+    function update3DLuckiestBoardTexture() {
+      const ctx = luckiestBoardCanvas.getContext('2d');
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 768, 640);
+
+      // Gold Top Banner
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(0, 0, 768, 85);
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 36px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🏆 LUCKIEST CATCHES (YOUR BEST RECORDS)', 384, 58);
+
+      const catches = state.playerBestCatches || [];
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 24px Fredoka, sans-serif';
+
+      for (let i = 0; i < 5; i++) {
+        const y = 145 + i * 95;
+        ctx.fillStyle = i % 2 === 0 ? '#1e293b' : '#334155';
+        ctx.fillRect(25, y - 40, 718, 75);
+
+        if (catches[i]) {
+          const c = catches[i];
+          ctx.fillStyle = '#facc15';
+          ctx.fillText(`#${i + 1}`, 45, y + 8);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(`${c.emoji} ${c.name} [${c.size.name}]`, 110, y + 8);
+
+          ctx.fillStyle = c.mutation.color || '#4ade80';
+          ctx.fillText(`${c.mutation.name.split('•').pop().trim()}`, 430, y + 8);
+
+          ctx.fillStyle = '#fbbf24';
+          ctx.textAlign = 'right';
+          ctx.fillText(`1 in ${formatNum(c.odds)}`, 715, y + 8);
+          ctx.textAlign = 'left';
+        } else {
+          ctx.fillStyle = '#64748b';
+          ctx.fillText(`#${i + 1} — No Record Yet (Throw Food!)`, 45, y + 8);
+        }
+      }
+      luckiestBoardTex.needsUpdate = true;
+    }
+
+    // 9) 3D MOVING CALCULUS SKILL SHOT TARGETS IN THE CANYON
+    const critRingGroup = new THREE.Group();
+    critRingGroup.position.set(0, 6.5, -95);
+    const critRingMesh = new THREE.Mesh(
+      new THREE.TorusGeometry(3.6, 0.45, 16, 32),
+      new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+    );
+    critRingGroup.add(critRingMesh);
+    scene.add(critRingGroup);
+
+    const surgeGateGroup = new THREE.Group();
+    surgeGateGroup.position.set(0, 0, -195);
+    const gatePostGeo = new THREE.BoxGeometry(0.8, 14, 0.8);
+    const gateMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const gateL = new THREE.Mesh(gatePostGeo, gateMat);
+    gateL.position.set(-6, 7, 0);
+    const gateR = new THREE.Mesh(gatePostGeo, gateMat);
+    gateR.position.set(6, 7, 0);
+    const gateTop = new THREE.Mesh(new THREE.BoxGeometry(13.6, 0.8, 0.8), gateMat);
+    gateTop.position.set(0, 14, 0);
+    surgeGateGroup.add(gateL, gateR, gateTop);
+    scene.add(surgeGateGroup);
+
+    const targetLabels = [
+      { pos: new THREE.Vector3(0, 11.2, -95), text: "🎯 CRITICAL POINT RING: P'(t) ≈ 0 (5x-25x Mutation!)", color: '#facc15' },
+      { pos: new THREE.Vector3(0, 15.5, -195), text: "⚡ MAX VELOCITY GATE: |P'(t)| = MAX (+35% Range!)", color: '#38bdf8' }
+    ];
+    targetLabels.forEach(tl => {
+      const el = document.createElement('div');
+      el.className = 'absolute -translate-x-1/2 -translate-y-full text-center pointer-events-none font-black text-[11px] rblx-stroke-sm';
+      el.style.color = tl.color;
+      el.textContent = tl.text;
+      document.getElementById('labelsContainer').appendChild(el);
+      tl.el = el;
+    });
+
+    // 10) 3D BLOCKY ROBLOX PLAYER CHARACTER
+    const playerGroup = new THREE.Group();
+    const headMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(1.1, 1.1, 1.1),
+      new THREE.MeshLambertMaterial({ color: 0xfde047 })
+    );
+    headMesh.position.y = 3.25;
+    headMesh.castShadow = true;
+
+    const torsoMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(1.5, 1.6, 0.8),
+      new THREE.MeshLambertMaterial({ color: 0xef4444 })
+    );
+    torsoMesh.position.y = 1.9;
+    torsoMesh.castShadow = true;
+
+    const leftArm = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 1.5, 0.5),
+      new THREE.MeshLambertMaterial({ color: 0xfde047 })
+    );
+    leftArm.position.set(-1.05, 1.9, 0);
+
+    const rightArm = leftArm.clone();
+    rightArm.position.set(1.05, 1.9, 0);
+
+    const leftLeg = new THREE.Mesh(
+      new THREE.BoxGeometry(0.65, 1.1, 0.65),
+      new THREE.MeshLambertMaterial({ color: 0x2563eb })
+    );
+    leftLeg.position.set(-0.4, 0.55, 0);
+
+    const rightLeg = leftLeg.clone();
+    rightLeg.position.set(0.4, 0.55, 0);
+
+    const heldFoodMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 0.7, 0.7),
+      new THREE.MeshLambertMaterial({ color: 0xf97316 })
+    );
+    heldFoodMesh.position.set(1.15, 2.2, -0.6);
+
+    playerGroup.add(headMesh, torsoMesh, leftArm, rightArm, leftLeg, rightLeg, heldFoodMesh);
+    playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
+    scene.add(playerGroup);
+
+    // 11) 3D VOXEL ANIMAL GENERATOR WITH SIZE & MUTATION SCALING
+    const plotPetsGroup = new THREE.Group();
+    scene.add(plotPetsGroup);
+    let activePlotPetEntities = [];
+
+    function createBlockyAnimalMesh(animal, size, mutation) {
+      const g = new THREE.Group();
+      const sizeMult = size ? size.scale : 1.0;
+      const mutBoost = (mutation && mutation.mult >= 5) ? 1.15 : 1.0;
+      const s = animal.scale * sizeMult * mutBoost;
+
+      const bodyMat = new THREE.MeshLambertMaterial({ color: animal.color });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.4 * s, 1.1 * s, 1.7 * s), bodyMat);
+      body.position.y = 0.75 * s;
+      body.castShadow = true;
+      g.add(body);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(1.1 * s, 1.0 * s, 1.0 * s), bodyMat);
+      head.position.set(0, 1.35 * s, -0.8 * s);
+      head.castShadow = true;
+      g.add(head);
+
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+      const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.18 * s, 0.18 * s, 0.1 * s), eyeMat);
+      eyeL.position.set(-0.3 * s, 1.45 * s, -1.32 * s);
+      const eyeR = eyeL.clone();
+      eyeR.position.x = 0.3 * s;
+      g.add(eyeL, eyeR);
+
+      // Mutation Glowing Particle Aura / Halo Ring
+      if (mutation && mutation.mult >= 5) {
+        const auraGeo = new THREE.TorusGeometry(1.2 * s, 0.12 * s, 12, 24);
+        const auraMat = new THREE.MeshBasicMaterial({ color: mutation.hex });
+        const aura = new THREE.Mesh(auraGeo, auraMat);
+        aura.rotation.x = Math.PI / 2;
+        aura.position.y = 0.25;
+        g.add(aura);
+      }
+      return g;
+    }
+
+    function sync3DPlotPets() {
+      while (plotPetsGroup.children.length > 0) {
+        plotPetsGroup.remove(plotPetsGroup.children[0]);
+      }
+      activePlotPetEntities.forEach(ent => ent.labelEl && ent.labelEl.remove());
+      activePlotPetEntities = [];
+
+      if (!state.settings.viewYourPets) return;
+
+      const equippedPets = state.inventory.filter(i => i.equipped);
+      const labelsRoot = document.getElementById('labelsContainer');
+
+      equippedPets.forEach((pet, idx) => {
+        const animal = ANIMALS.find(a => a.id === pet.animalId);
+        const mesh = createBlockyAnimalMesh(animal, pet.size, pet.mutation);
+        const cols = 5;
+        const px = -7.5 + (idx % cols) * 3.75 + (Math.random() - 0.5) * 0.8;
+        const pz = -1.5 + Math.floor(idx / cols) * 4.2 + (Math.random() - 0.5) * 0.8;
+        mesh.position.set(px, 0, pz);
+        plotPetsGroup.add(mesh);
+
+        const labelEl = document.createElement('div');
+        labelEl.className = 'absolute -translate-x-1/2 -translate-y-full text-center pointer-events-none leading-tight';
+        const sizeTag = pet.size && pet.size.id !== 'regular' ? `[${pet.size.name.toUpperCase()}] ` : '';
+        labelEl.innerHTML = `
+          <div class="text-[11px] font-extrabold text-white rblx-stroke-sm">${animal.emoji} ${sizeTag}${animal.name}</div>
+          <div class="text-[10px] font-extrabold rblx-stroke-sm" style="color:${pet.mutation.color}">
+            ${pet.mutation.name.split('•').pop().trim()} $${formatNum(pet.income)}/s
+          </div>
+        `;
+        labelsRoot.appendChild(labelEl);
+
+        activePlotPetEntities.push({
+          pet,
+          mesh,
+          labelEl,
+          vx: (Math.random() - 0.5) * 2.2,
+          vz: (Math.random() - 0.5) * 2.2,
+          hopPhase: Math.random() * Math.PI * 2
+        });
+      });
+    }
+
+    function spawnFloatingCashPopups() {
+      if (!state.settings.viewYourPets) return;
+      const labelsRoot = document.getElementById('labelsContainer');
+      activePlotPetEntities.forEach(ent => {
+        const cashPopup = document.createElement('div');
+        cashPopup.className = 'absolute font-black text-lime-400 text-sm rblx-stroke floating-cash-anim';
+        cashPopup.textContent = `+$${formatNum(ent.pet.income)}`;
+        labelsRoot.appendChild(cashPopup);
+
+        const pos = ent.mesh.position.clone().add(new THREE.Vector3(0, 3.2, 0));
+        project3DToScreen(pos, cashPopup);
+
+        setTimeout(() => cashPopup.remove(), 1250);
+      });
+    }
+
+    // 12) THROW PROJECTILE MESH & CUTSCENE SHOWCASE
+    const projectileGroup = new THREE.Group();
+    projectileGroup.visible = false;
+    const projectileMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.85, 0.85, 0.85),
+      new THREE.MeshLambertMaterial({ color: 0xf97316 })
+    );
+    projectileGroup.add(projectileMesh);
+    scene.add(projectileGroup);
+
+    const cutsceneGroup = new THREE.Group();
+    cutsceneGroup.visible = false;
+    scene.add(cutsceneGroup);
+
+    // Station Floating 3D Labels
+    const stationLabels = [];
+    function initStationLabels() {
+      const labelsRoot = document.getElementById('labelsContainer');
+      const list = [
+        { key: 'throw',  pos: new THREE.Vector3(0, 5.0, -14),  text: '🎯 LAUNCH LINE (STEP HERE TO THROW)', color: '#fde047' },
+        { key: 'pullup', pos: new THREE.Vector3(-16, 5.8, 4),  text: '🏋️ PULL-UP WORKOUT (CHAIN RULE)', color: '#38bdf8' },
+        { key: 'shop',   pos: new THREE.Vector3(-16, 5.8, -8), text: '🛒 FOOD SHOP STALL', color: '#60a5fa' },
+        { key: 'sell',   pos: new THREE.Vector3(16, 5.8, -6),  text: '💰 SELL STALL', color: '#f87171' },
+        { key: 'plot',   pos: new THREE.Vector3(0, 4.6, -4),   text: '🏡 MY LAWN PLOT (MAX 20 PETS)', color: '#4ade80' }
+      ];
+      list.forEach(st => {
+        const el = document.createElement('div');
+        el.className = 'absolute -translate-x-1/2 -translate-y-full text-center pointer-events-none font-extrabold text-[11px] rblx-stroke-sm';
+        el.style.color = st.color;
+        el.textContent = st.text;
+        labelsRoot.appendChild(el);
+        stationLabels.push({ ...st, el });
+      });
+    }
+
+    /*************************************************************************
+     * 6. CONTROLS, CAMERA ORBIT & VIRTUAL JOYSTICK
+     *************************************************************************/
+    const keys = {};
+    let camYaw = 0;
+    let camPitch = 0.32;
+    let isDraggingCam = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    window.addEventListener('keydown', e => {
+      keys[e.key.toLowerCase()] = true;
+      if (e.code === 'Space') {
+        if (state.activeZone === 'throw') {
+          e.preventDefault();
+          executeCalculusThrow();
+        } else if (state.activeZone === 'pullup') {
+          e.preventDefault();
+          doCalculusPullUpRep();
+        }
+      }
+    });
+    window.addEventListener('keyup', e => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    // Mouse Drag Camera Orbit
+    window.addEventListener('mousedown', e => {
+      if (e.target.closest('button, input, select, #joystickZone, .pointer-events-auto')) return;
+      isDraggingCam = true;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+    window.addEventListener('mousemove', e => {
+      if (!isDraggingCam) return;
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      camYaw -= dx * 0.005;
+      camPitch = Math.max(0.08, Math.min(1.2, camPitch + dy * 0.005));
+    });
+    window.addEventListener('mouseup', () => { isDraggingCam = false; });
+
+    // Touch Drag Camera Orbit
+    let touchStartCamX = 0;
+    let touchStartCamY = 0;
+    window.addEventListener('touchstart', e => {
+      if (e.target.closest('button, input, #joystickZone, .pointer-events-auto')) return;
+      if (e.touches.length === 1) {
+        touchStartCamX = e.touches[0].clientX;
+        touchStartCamY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+    window.addEventListener('touchmove', e => {
+      if (e.target.closest('button, input, #joystickZone, .pointer-events-auto')) return;
+      if (e.touches.length === 1) {
+        const dx = e.touches[0].clientX - touchStartCamX;
+        const dy = e.touches[0].clientY - touchStartCamY;
+        touchStartCamX = e.touches[0].clientX;
+        touchStartCamY = e.touches[0].clientY;
+        camYaw -= dx * 0.006;
+        camPitch = Math.max(0.08, Math.min(1.2, camPitch + dy * 0.006));
+      }
+    }, { passive: true });
+
+    // Virtual Touch Joystick
+    let joystickActive = false;
+    let joystickDir = { x: 0, y: 0 };
+    const joyZone = document.getElementById('joystickZone');
+    const joyKnob = document.getElementById('joystickKnob');
+
+    function handleJoystickMove(clientX, clientY) {
+      const rect = joyZone.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      const dist = Math.hypot(dx, dy);
+      const maxR = rect.width / 2;
+      const clampedDist = Math.min(dist, maxR);
+      const angle = Math.atan2(dy, dx);
+      const nx = Math.cos(angle) * (clampedDist / maxR);
+      const ny = Math.sin(angle) * (clampedDist / maxR);
+      joystickDir = { x: nx, y: ny };
+      joyKnob.style.transform = `translate(${nx * maxR}px, ${ny * maxR}px)`;
+    }
+
+    function resetJoystick() {
+      joystickActive = false;
+      joystickDir = { x: 0, y: 0 };
+      joyKnob.style.transform = `translate(0px, 0px)`;
+    }
+
+    joyZone.addEventListener('touchstart', e => {
+      joystickActive = true;
+      handleJoystickMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    joyZone.addEventListener('touchmove', e => {
+      if (!joystickActive) return;
+      handleJoystickMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    joyZone.addEventListener('touchend', resetJoystick, { passive: true });
+    joyZone.addEventListener('touchcancel', resetJoystick, { passive: true });
+
+    function walkToStation(stationKey) {
+      audio.playClickSound();
+      const st = STATIONS[stationKey];
+      if (!st) return;
+      state.playerPos.x = st.x;
+      state.playerPos.z = st.z;
+      playerGroup.position.set(st.x, 0, st.z);
+      checkZoneTrigger();
+    }
+
+    /*************************************************************************
+     * 7. PLAYER MOVEMENT & ZONE INTERACTION ENGINE
+     *************************************************************************/
+    let walkCycle = 0;
+    function updatePlayerMovement(dt) {
+      if (state.activeThrow || state.isPullingUp) return;
+
+      let mx = 0;
+      let mz = 0;
+
+      if (keys['w'] || keys['arrowup']) mz -= 1;
+      if (keys['s'] || keys['arrowdown']) mz += 1;
+      if (keys['a'] || keys['arrowleft']) mx -= 1;
+      if (keys['d'] || keys['arrowright']) mx += 1;
+
+      if (joystickActive) {
+        mx = joystickDir.x;
+        mz = joystickDir.y;
+      }
+
+      const len = Math.hypot(mx, mz);
+      if (len > 0.05) {
+        const moveSpeed = 16.5;
+        const sinY = Math.sin(camYaw);
+        const cosY = Math.cos(camYaw);
+        const forwardX = -sinY;
+        const forwardZ = -cosY;
+        const rightX = cosY;
+        const rightZ = -sinY;
+
+        const vx = (rightX * mx + forwardX * (-mz)) / (len > 1 ? len : 1);
+        const vz = (rightZ * mx + forwardZ * (-mz)) / (len > 1 ? len : 1);
+
+        state.playerPos.x += vx * moveSpeed * dt;
+        state.playerPos.z += vz * moveSpeed * dt;
+
+        state.playerPos.x = Math.max(-23, Math.min(23, state.playerPos.x));
+        state.playerPos.z = Math.max(-20, Math.min(26, state.playerPos.z));
+
+        playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
+        state.playerRot = Math.atan2(vx, vz);
+        playerGroup.rotation.y = state.playerRot;
+
+        walkCycle += dt * 14;
+        leftLeg.rotation.x = Math.sin(walkCycle) * 0.7;
+        rightLeg.rotation.x = -Math.sin(walkCycle) * 0.7;
+        leftArm.rotation.x = -Math.sin(walkCycle) * 0.7;
+        rightArm.rotation.x = Math.sin(walkCycle) * 0.7;
+        playerGroup.position.y = Math.abs(Math.sin(walkCycle)) * 0.25;
+      } else {
+        leftLeg.rotation.x = 0;
+        rightLeg.rotation.x = 0;
+        leftArm.rotation.x = 0;
+        rightArm.rotation.x = 0;
+        playerGroup.position.y = 0;
+      }
+
+      checkZoneTrigger();
+    }
+
+    function checkZoneTrigger() {
+      let detectedZone = null;
+      for (const [key, st] of Object.entries(STATIONS)) {
+        const dist = Math.hypot(state.playerPos.x - st.x, state.playerPos.z - st.z);
+        if (dist <= st.radius) {
+          detectedZone = key;
+          break;
+        }
+      }
+
+      if (detectedZone !== state.activeZone) {
+        state.activeZone = detectedZone;
+        onZoneChanged(detectedZone);
+      }
+    }
+
+    function onZoneChanged(zone) {
+      const banner = document.getElementById('zoneBanner');
+      const icon = document.getElementById('zoneBannerIcon');
+      const text = document.getElementById('zoneBannerText');
+      const throwHUD = document.getElementById('throwZoneHUD');
+
+      throwHUD.classList.add('hidden');
+      throwHUD.classList.remove('flex');
+
+      if (zone === 'throw') {
+        icon.textContent = '🎯';
+        text.textContent = 'Orange Checkered Launch Line! (Press SPACE or Click TAP TO THROW)';
+        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none pulse-glow';
+        throwHUD.classList.remove('hidden');
+        throwHUD.classList.add('flex');
+        update3DTrajectoryArc();
+      } else if (zone === 'pullup') {
+        icon.textContent = '🏋️';
+        text.textContent = 'Pull-Up Bar Station! Chain Rule Training Mode Active.';
+        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        enterPullUpStation();
+      } else if (zone === 'shop') {
+        icon.textContent = '🛒';
+        text.textContent = 'Food Shop Stall! Buy bait & expand lawn capacity.';
+        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        openModal('shopModal');
+      } else if (zone === 'sell') {
+        icon.textContent = '💰';
+        text.textContent = 'Sell Stall! Liquidate duplicate or unequipped pets.';
+        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        openModal('sellModal');
+      } else if (zone === 'plot') {
+        icon.textContent = '🏡';
+        text.textContent = `My Plot! ${state.inventory.filter(i => i.equipped).length}/${state.plotCapacity} pets roaming.`;
+        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+      } else {
+        icon.textContent = '🏃';
+        text.textContent = 'Walk to the Orange Checkered Launch Line to Throw Food!';
+        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none opacity-85';
+      }
+    }
+
+    /*************************************************************************
+     * 8. PULL-UP BAR CHAIN RULE WORKOUT (MATCHING SCREENSHOT 78)
+     *************************************************************************/
+    let pullUpRepTime = 0;
+    function enterPullUpStation() {
+      state.isPullingUp = true;
+      state.playerPos.x = STATIONS.pullup.x;
+      state.playerPos.z = STATIONS.pullup.z;
+      playerGroup.position.set(STATIONS.pullup.x, 2.0, STATIONS.pullup.z);
+      playerGroup.rotation.y = 0;
+
+      leftArm.rotation.x = Math.PI;
+      rightArm.rotation.x = Math.PI;
+
+      document.getElementById('pullUpZoneHUD').classList.remove('hidden');
+      document.getElementById('pullUpZoneHUD').classList.add('flex');
+      renderPullUpHUD();
+    }
+
+    function exitPullUpStation() {
+      state.isPullingUp = false;
+      leftArm.rotation.x = 0;
+      rightArm.rotation.x = 0;
+      playerGroup.position.y = 0;
+      document.getElementById('pullUpZoneHUD').classList.add('hidden');
+      document.getElementById('pullUpZoneHUD').classList.remove('flex');
+      state.playerPos.z += 4.5;
+      playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
+      checkZoneTrigger();
+    }
+
+    function doCalculusPullUpRep() {
+      if (!state.isPullingUp) return;
+      const calc = evaluatePullUpCalculus(pullUpRepTime);
+      const isPerfect = calc.isNearPeak;
+      const xpGain = isPerfect ? 2 : 1;
+
+      state.pullUpXp += xpGain;
+      audio.playPullUpSound(isPerfect);
+
+      showFloatingPopup(playerGroup.position, isPerfect ? '+2 XP (PERFECT VELOCITY!)' : '+1 XP', isPerfect ? '#facc15' : '#38bdf8');
+
+      if (state.pullUpXp >= state.pullUpMaxXp) {
+        state.pullUpXp = 0;
+        state.pullUpLevel++;
+        state.pullUpMaxXp = Math.round(state.pullUpMaxXp * 1.5);
+        state.baseStrength += 5;
+        audio.playLevelUpSound();
+        showToast(`🎉 Pull-Up Level ${state.pullUpLevel}! Base Strength +5 💪`, 'bg-sky-400 text-black');
+        checkNewFoodUnlock();
+      }
+
+      renderPullUpHUD();
+      updateHUD();
+      saveGame();
+    }
+
+    function renderPullUpHUD() {
+      document.getElementById('pullUpLevelTitle').textContent = `Level ${state.pullUpLevel}`;
+      document.getElementById('pullUpXpFraction').textContent = `${state.pullUpXp}/${state.pullUpMaxXp}`;
+      const pct = (state.pullUpXp / state.pullUpMaxXp) * 100;
+      document.getElementById('pullUpProgressBar').style.width = `${pct}%`;
+    }
+
+    /*************************************************************************
+     * 9. HARMONIC THROW EXECUTION, REBALANCED DISTANCE & ODDS ENGINE
+     *************************************************************************/
+    function executeCalculusThrow() {
+      if (state.activeThrow || state.activeZone !== 'throw') {
+        if (state.activeZone !== 'throw') {
+          showToast('🎯 Walk onto the Orange Checkered Launch Line to Throw!', 'bg-amber-400 text-black');
+          walkToStation('throw');
+        }
+        return;
+      }
+
+      const food = getEquippedFood();
+      const t0 = state.t;
+      const calc = evaluateFoodCalculus(food, t0);
+      const ramp = evaluateRampCalculus(state.rampX0);
+
+      const absDeriv = Math.abs(calc.deriv);
+      const derivRatio = absDeriv / (calc.maxDeriv || 1);
+
+      const isCriticalPoint = food.type !== 'tan' && derivRatio <= 0.18;
+      const isMaxDerivSurge = derivRatio >= 0.82;
+      const surgeBonus = isMaxDerivSurge ? 1.30 : 1.0;
+
+      // REBALANCED PROGRESSION FORMULA:
+      // Distance strictly controlled by strength power 0.85 and food.distMult!
+      // At 48 strength with Carrot, distance ~89m (solidly within Forest: 0 - 100m).
+      const rawDist = (Math.pow(getTotalStrength(), 0.85) * food.distMult) * (1 + absDeriv * 0.22) * ramp.angleEfficiency * surgeBonus;
+      const distance = Math.max(18, rawDist);
+
+      // Determine landing biome
+      let landingBiome = BIOMES[0];
+      for (const b of BIOMES) {
+        if (distance >= b.minDist) landingBiome = b;
+      }
+
+      // Roll Animal from Landing Biome
+      const biomeAnimals = ANIMALS.filter(a => a.biome === landingBiome.id);
+      const weightedPool = biomeAnimals.map((a, idx) => {
+        const boost = idx === 0 ? 1 : idx === 1 ? Math.pow(food.luck, 0.35) : Math.pow(food.luck, 0.65);
+        return { animal: a, weight: a.weight * boost };
+      });
+      const totalW = weightedPool.reduce((s, i) => s + i.weight, 0);
+      let r = Math.random() * totalW;
+      let chosenAnimal = weightedPool[0].animal;
+      for (const item of weightedPool) {
+        if (r < item.weight) { chosenAnimal = item.animal; break; }
+        r -= item.weight;
+      }
+
+      // Roll Animal Size based on probability chances
+      let chosenSize = SIZES[0];
+      const totalSizeWeight = SIZES.reduce((s, sz) => s + sz.weight, 0);
+      let rSize = Math.random() * totalSizeWeight;
+      for (const sz of SIZES) {
+        if (rSize < sz.weight) { chosenSize = sz; break; }
+        rSize -= sz.weight;
+      }
+
+      // Roll Mutation based on Critical Point Calculus condition
+      let chosenMutation = MUTATIONS[0];
+      if (isCriticalPoint) {
+        const cr = Math.random();
+        if (cr < 0.15) chosenMutation = MUTATIONS[4]; // Cosmic 25x
+        else if (cr < 0.45) chosenMutation = MUTATIONS[3]; // Rainbow 10x
+        else chosenMutation = MUTATIONS[2]; // Golden 5x
+      } else {
+        const sr = Math.random();
+        if (sr < 0.05) chosenMutation = MUTATIONS[2]; // Golden 5x
+        else if (sr < 0.25) chosenMutation = MUTATIONS[1]; // Silver 2x
+      }
+
+      // Calculate Combined Exact Catch Probability (1 in X)
+      const totalOdds = chosenAnimal.baseOdds * chosenSize.chanceNum * chosenMutation.chanceNum;
+      const pctStr = (100 / totalOdds).toFixed(totalOdds >= 100 ? 3 : 1) + '%';
+      const oddsDisplayStr = totalOdds >= 1000 ? `1 IN ${formatNum(totalOdds)}` : `1 IN ${totalOdds.toFixed(1)}`;
+
+      const finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult);
+      const isNewDiscovery = !state.unlockedIndex.has(chosenAnimal.id);
+
+      // Distance mapping to 3D Z coordinate
+      const normDist = Math.min(1, Math.pow(distance / 5000, 0.52));
+      const targetZ = -14 - normDist * 290;
+
+      state.throwCount++;
+      projectileMesh.material.color.setHex(food.color);
+      projectileGroup.position.set(0, 2.2, -14);
+      projectileGroup.visible = true;
+
+      audio.playThrowSound(isMaxDerivSurge, isCriticalPoint);
+      if (isMaxDerivSurge) triggerScreenShake();
+
+      state.activeThrow = {
+        phase: 'flying',
+        progress: 0,
+        distance,
+        targetZ,
+        landingBiome,
+        chosenAnimal,
+        chosenSize,
+        chosenMutation,
+        totalOdds,
+        pctStr,
+        oddsDisplayStr,
+        finalIncome,
+        isNewDiscovery,
+        isCriticalPoint,
+        isMaxDerivSurge,
+        t0,
+        calc,
+        ramp,
+        food,
+        revealTimer: 0
+      };
+
+      saveWorkedExampleTelemetry(state.activeThrow);
+
+      // Record to Player's Personal Best Catches (Hall of Fame)
+      recordPersonalBestCatch(state.activeThrow);
+
+      // Auto-Skip repeat catches option
+      if (!isNewDiscovery && state.autoSkipRepeats) {
+        finalizeAnimalAward(state.activeThrow);
+        projectileGroup.visible = false;
+        state.activeThrow = null;
+        showToast(`⚡ Auto-Skipped: Caught ${chosenSize.name} ${chosenMutation.name} ${chosenAnimal.name} ($${formatNum(finalIncome)}/s) [${oddsDisplayStr}] at ${distance.toFixed(1)}m!`, 'bg-lime-400 text-black');
+        return;
+      }
+
+      document.getElementById('flightOverlay').classList.remove('hidden');
+      document.getElementById('flightOverlay').classList.add('flex');
+      document.getElementById('skipFlightBtn').style.display = isNewDiscovery ? 'none' : 'flex';
+    }
+
+    function recordPersonalBestCatch(th) {
+      if (!state.playerBestCatches) state.playerBestCatches = [];
+      const entry = {
+        id: th.chosenAnimal.id,
+        name: th.chosenAnimal.name,
+        emoji: th.chosenAnimal.emoji,
+        size: th.chosenSize,
+        mutation: th.chosenMutation,
+        odds: th.totalOdds,
+        distance: th.distance,
+        income: th.finalIncome
+      };
+
+      state.playerBestCatches.push(entry);
+      // Sort by rarest (highest odds number)
+      state.playerBestCatches.sort((a, b) => b.odds - a.odds);
+      if (state.playerBestCatches.length > 5) {
+        state.playerBestCatches = state.playerBestCatches.slice(0, 5);
+      }
+      update3DLuckiestBoardTexture();
+    }
+
+    function skipThrowAnimation() {
+      if (!state.activeThrow) return;
+      const th = state.activeThrow;
+      finalizeAnimalAward(th);
+      projectileGroup.visible = false;
+      cutsceneGroup.visible = false;
+      document.getElementById('flightOverlay').classList.add('hidden');
+      document.getElementById('flightOverlay').classList.remove('flex');
+      document.getElementById('catchRevealModal').classList.add('hidden');
+      document.getElementById('catchRevealModal').classList.remove('flex');
+      state.activeThrow = null;
+      showToast(`🐾 Caught ${th.chosenSize.name} ${th.chosenMutation.name} ${th.chosenAnimal.name} (+$${formatNum(th.finalIncome)}/s)!`, 'bg-lime-400 text-black');
+    }
+
+    function transitionTo3DCatchCutscene(th) {
+      th.phase = 'reveal';
+      projectileGroup.visible = false;
+      document.getElementById('flightOverlay').classList.add('hidden');
+      document.getElementById('flightOverlay').classList.remove('flex');
+
+      while (cutsceneGroup.children.length > 0) {
+        cutsceneGroup.remove(cutsceneGroup.children[0]);
+      }
+      const animalMesh = createBlockyAnimalMesh(th.chosenAnimal, th.chosenSize, th.chosenMutation);
+      animalMesh.position.set(0, 0, th.targetZ);
+
+      const bait = projectileMesh.clone();
+      bait.position.set(1.1, 0.4, th.targetZ - 0.5);
+      bait.scale.set(0.65, 0.65, 0.65);
+      cutsceneGroup.add(animalMesh, bait);
+      cutsceneGroup.visible = true;
+
+      // Populate Cutscene Modal UI with Exact Rarity Odds & Size Chances
+      document.getElementById('catchNewBadge').style.display = th.isNewDiscovery ? 'block' : 'none';
+      document.getElementById('catchOddsBadge').textContent = `🎲 CHANCE: ${th.oddsDisplayStr} (${th.pctStr})`;
+      document.getElementById('catchAnimalName').textContent = th.chosenAnimal.name.toUpperCase();
+      document.getElementById('catchSizeTag').textContent = `${th.chosenSize.name.toUpperCase()} (${th.chosenSize.mult}x Size)`;
+      document.getElementById('catchSizeTag').style.color = th.chosenSize.color;
+      document.getElementById('catchMutationTag').textContent = `${th.chosenMutation.name} (${th.chosenMutation.mult}x)`;
+      document.getElementById('catchMutationTag').style.color = th.chosenMutation.color;
+      document.getElementById('catchIncomeRate').textContent = `+$${formatNum(th.finalIncome)}/s`;
+
+      document.getElementById('catchRevealModal').classList.remove('hidden');
+      document.getElementById('catchRevealModal').classList.add('flex');
+
+      audio.playCatchSound(th.isNewDiscovery, th.chosenAnimal.rarity);
+    }
+
+    function finalizeAnimalAward(th) {
+      state.unlockedIndex.add(th.chosenAnimal.id);
+      const newPet = {
+        uid: 'pet_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        animalId: th.chosenAnimal.id,
+        size: th.chosenSize,
+        mutation: th.chosenMutation,
+        income: th.finalIncome,
+        equipped: false
+      };
+
+      const currentEquipped = state.inventory.filter(i => i.equipped).length;
+      if (currentEquipped < state.plotCapacity) {
+        newPet.equipped = true;
+      }
+      state.inventory.push(newPet);
+
+      sync3DPlotPets();
+      updateHUD();
+      checkNewFoodUnlock();
+      saveGame();
+    }
+
+    function handleCatchRevealTap() {
+      if (state.activeThrow && state.activeThrow.phase === 'reveal') {
+        skipThrowAnimation();
+      }
+    }
+
+    function closeCatchReveal(e) {
+      if (e) e.stopPropagation();
+      skipThrowAnimation();
+    }
+
+    function toggleAutoSkipRepeats(checked) {
+      state.autoSkipRepeats = checked;
+      saveGame();
+    }
+
+    function triggerScreenShake() {
+      document.body.classList.remove('shake-active');
+      void document.body.offsetWidth;
+      document.body.classList.add('shake-active');
+      setTimeout(() => document.body.classList.remove('shake-active'), 450);
+    }
+
+    function showFloatingPopup(pos3D, text, color) {
+      const el = document.createElement('div');
+      el.className = 'absolute font-black text-sm rblx-stroke floating-cash-anim';
+      el.style.color = color;
+      el.textContent = text;
+      document.getElementById('labelsContainer').appendChild(el);
+      project3DToScreen(pos3D.clone().add(new THREE.Vector3(0, 3.5, 0)), el);
+      setTimeout(() => el.remove(), 1250);
+    }
+
+    /*************************************************************************
+     * 10. MODAL MANAGERS: FOOD SHOP, SELL, ANIMALS, INDEX & RECORDS
+     *************************************************************************/
+    function openModal(id) {
+      audio.playClickSound();
+      document.getElementById(id).classList.remove('hidden');
+      document.getElementById(id).classList.add('flex');
+      if (id === 'shopModal') renderFoodShop();
+      if (id === 'sellModal') renderSellStall();
+      if (id === 'animalsModal') renderMyAnimals();
+      if (id === 'indexModal') renderAnimalIndex();
+      if (id === 'leaderboardModal') renderLeaderboardModal();
+      if (id === 'calcLabModal') renderWorkedExampleModal();
+    }
+
+    function closeModal(id) {
+      audio.playClickSound();
+      document.getElementById(id).classList.add('hidden');
+      document.getElementById(id).classList.remove('flex');
+    }
+
+    function renderFoodShop() {
+      const grid = document.getElementById('foodShopGrid');
+      grid.innerHTML = '';
+
+      FOODS.forEach(food => {
+        const isOwned = state.unlockedFoods.includes(food.id);
+        const isEquipped = state.equippedFoodId === food.id;
+
+        const card = document.createElement('div');
+        card.className = `bg-gray-800 rounded-2xl p-2.5 sm:p-3 border-3 flex flex-col items-center justify-between shadow-lg ${
+          isEquipped ? 'border-lime-400 ring-2 ring-lime-400' : isOwned ? 'border-gray-600' : 'border-gray-700 opacity-90'
+        }`;
+
+        card.innerHTML = `
+          <div class="text-center">
+            <div class="text-white font-extrabold text-xs sm:text-sm">${food.name}</div>
+            <div class="text-[9px] text-gray-400 font-bold">${food.tier}</div>
+          </div>
+          <div class="text-3xl sm:text-4xl my-2">${food.icon}</div>
+          <div class="mono-math text-[9px] text-yellow-300 font-bold text-center truncate w-full mb-1">
+            ${food.formulaStr}
+          </div>
+          <div class="text-[9px] text-gray-400 mb-2">Distance: ${food.distMult}x • Luck: ${food.luck}x</div>
+          ${
+            isEquipped
+              ? `<button class="rblx-btn bg-gray-600 text-gray-300 font-black text-xs px-3 py-1 rounded-xl w-full cursor-default">EQUIPPED</button>`
+              : isOwned
+              ? `<button onclick="selectFood('${food.id}')" class="rblx-btn bg-sky-400 hover:bg-sky-300 text-black font-black text-xs px-3 py-1 rounded-xl w-full">EQUIP</button>`
+              : `<button onclick="buyFood('${food.id}')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-3 py-1 rounded-xl w-full">$${formatNum(food.cost)}</button>`
+          }
+        `;
+        grid.appendChild(card);
+      });
+
+      document.getElementById('shopPlotCapText').textContent = `${state.plotCapacity}/20 Max`;
+      const upBtn = document.getElementById('upgradePlotBtn');
+      if (state.plotCapacity >= 20) {
+        upBtn.textContent = 'MAX REACHED';
+        upBtn.className = 'rblx-btn bg-gray-600 text-gray-400 font-extrabold text-xs px-3 py-1.5 rounded-xl cursor-default';
+      } else {
+        const cost = Math.round(150 * Math.pow(1.85, state.plotCapacity - 5));
+        upBtn.textContent = `UPGRADE ($${formatNum(cost)})`;
+      }
+    }
+
+    function buyFood(foodId) {
+      const food = FOODS.find(f => f.id === foodId);
+      if (!food) return;
+      if (state.cash < food.cost) {
+        audio.playClickSound();
+        showToast('❌ Not enough cash to buy ' + food.name + '!', 'bg-rose-500 text-white');
+        return;
+      }
+      state.cash -= food.cost;
+      state.unlockedFoods.push(food.id);
+      state.equippedFoodId = food.id;
+      audio.playUnlockSound();
+      showToast(`🎉 Bought and equipped ${food.name}!`, 'bg-lime-400 text-black');
+      renderFoodShop();
+      updateHUD();
+      saveGame();
+    }
+
+    function selectFood(foodId) {
+      audio.playClickSound();
+      state.equippedFoodId = foodId;
+      renderFoodShop();
+      updateHUD();
+      saveGame();
+    }
+
+    function upgradePlotCapacity() {
+      if (state.plotCapacity >= 20) return;
+      const cost = Math.round(150 * Math.pow(1.85, state.plotCapacity - 5));
+      if (state.cash < cost) {
+        audio.playClickSound();
+        showToast('❌ Not enough cash for plot upgrade!', 'bg-rose-500 text-white');
+        return;
+      }
+      state.cash -= cost;
+      state.plotCapacity++;
+      audio.playUnlockSound();
+      showToast(`🏡 Lawn Plot expanded to ${state.plotCapacity}/20 pets!`, 'bg-lime-400 text-black');
+      renderFoodShop();
+      updateHUD();
+      saveGame();
+    }
+
+    function renderSellStall() {
+      const grid = document.getElementById('sellListGrid');
+      grid.innerHTML = '';
+      const unequipped = state.inventory.filter(i => !i.equipped);
+
+      if (unequipped.length === 0) {
+        grid.innerHTML = '<div class="col-span-2 text-center text-gray-400 py-6">No unequipped pets in inventory to sell!</div>';
+        return;
+      }
+
+      unequipped.forEach(pet => {
+        const animal = ANIMALS.find(a => a.id === pet.animalId);
+        const sellValue = Math.max(10, pet.income * 25);
+        const card = document.createElement('div');
+        card.className = 'bg-gray-800 rounded-xl p-2.5 flex items-center justify-between border border-gray-700 shadow';
+        const sizeTag = pet.size && pet.size.id !== 'regular' ? `[${pet.size.name}] ` : '';
+        card.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">${animal.emoji}</span>
+            <div>
+              <div class="text-white font-extrabold text-xs">${sizeTag}${animal.name}</div>
+              <div class="text-[10px]" style="color:${pet.mutation.color}">${pet.mutation.name}</div>
+            </div>
+          </div>
+          <button onclick="sellSingleAnimal('${pet.uid}')" class="rblx-btn bg-rose-500 hover:bg-rose-400 text-white font-extrabold text-xs px-3 py-1 rounded-xl">
+            SELL (+$${formatNum(sellValue)})
+          </button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function sellSingleAnimal(uid) {
+      const idx = state.inventory.findIndex(i => i.uid === uid);
+      if (idx === -1) return;
+      const pet = state.inventory[idx];
+      const sellValue = Math.max(10, pet.income * 25);
+      state.cash += sellValue;
+      state.inventory.splice(idx, 1);
+      audio.playCoinSound();
+      renderSellStall();
+      updateHUD();
+      saveGame();
+    }
+
+    function sellAllUnequipped() {
+      const unequipped = state.inventory.filter(i => !i.equipped);
+      if (unequipped.length === 0) return;
+      let total = 0;
+      unequipped.forEach(pet => { total += Math.max(10, pet.income * 25); });
+      state.cash += total;
+      state.inventory = state.inventory.filter(i => i.equipped);
+      audio.playCoinSound();
+      showToast(`💰 Sold ${unequipped.length} unequipped pets for +$${formatNum(total)}!`, 'bg-lime-400 text-black');
+      renderSellStall();
+      updateHUD();
+      saveGame();
+    }
+
+    function renderMyAnimals() {
+      const list = document.getElementById('myAnimalsList');
+      list.innerHTML = '';
+      const equippedCount = state.inventory.filter(i => i.equipped).length;
+      document.getElementById('animalsPlotBadge').textContent = `${equippedCount}/${state.plotCapacity}`;
+
+      if (state.inventory.length === 0) {
+        list.innerHTML = '<div class="text-center text-gray-400 py-8">No animals caught yet! Walk to the Launch Line to throw food.</div>';
+        return;
+      }
+
+      state.inventory.forEach(pet => {
+        const animal = ANIMALS.find(a => a.id === pet.animalId);
+        const card = document.createElement('div');
+        card.className = 'bg-gray-800 rounded-2xl p-2.5 flex items-center justify-between border-2 border-black shadow';
+        const sizeTag = pet.size && pet.size.id !== 'regular' ? `[${pet.size.name.toUpperCase()}] ` : '';
+        card.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <div class="w-12 h-12 bg-gray-900 rounded-xl border border-gray-700 flex items-center justify-center text-2xl">
+              ${animal.emoji}
+            </div>
+            <div>
+              <div class="text-white font-extrabold text-xs sm:text-sm">${sizeTag}${animal.name}</div>
+              <div class="text-[10px] font-bold" style="color:${pet.mutation.color}">${pet.mutation.name}</div>
+              <div class="text-[10px] text-lime-400 font-bold">+$${formatNum(pet.income)}/s</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleEquipAnimal('${pet.uid}')" class="rblx-btn ${
+              pet.equipped ? 'bg-sky-500 text-white' : 'bg-lime-400 text-black'
+            } font-extrabold text-xs px-3 py-1.5 rounded-xl">
+              ${pet.equipped ? 'PICK UP' : 'EQUIP'}
+            </button>
+            <button onclick="sellSingleAnimal('${pet.uid}'); renderMyAnimals()" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs px-2.5 py-1.5 rounded-xl">
+              SELL
+            </button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function toggleEquipAnimal(uid) {
+      const pet = state.inventory.find(i => i.uid === uid);
+      if (!pet) return;
+      audio.playClickSound();
+
+      if (pet.equipped) {
+        pet.equipped = false;
+      } else {
+        const equippedCount = state.inventory.filter(i => i.equipped).length;
+        if (equippedCount >= state.plotCapacity) {
+          showToast(`❌ Lawn Plot full (${state.plotCapacity}/${state.plotCapacity})! Expand plot in Shop or pick up a pet.`, 'bg-rose-500 text-white');
+          return;
+        }
+        pet.equipped = true;
+      }
+
+      sync3DPlotPets();
+      renderMyAnimals();
+      updateHUD();
+      saveGame();
+    }
+
+    function equipBestAnimals() {
+      audio.playClickSound();
+      state.inventory.sort((a, b) => b.income - a.income);
+      state.inventory.forEach((pet, idx) => {
+        pet.equipped = idx < state.plotCapacity;
+      });
+      sync3DPlotPets();
+      renderMyAnimals();
+      updateHUD();
+      audio.playLevelUpSound();
+      showToast('⭐ Equipped your highest income animals on the lawn!', 'bg-amber-400 text-black');
+      saveGame();
+    }
+
+    function renderAnimalIndex() {
+      const cont = document.getElementById('indexBiomeContainer');
+      cont.innerHTML = '';
+      document.getElementById('indexModalCount').textContent = `Unlocked: ${state.unlockedIndex.size}/18`;
+
+      BIOMES.forEach(biome => {
+        const biomeAnimals = ANIMALS.filter(a => a.biome === biome.id);
+        const unlockedInBiome = biomeAnimals.filter(a => state.unlockedIndex.has(a.id)).length;
+        const isComplete = unlockedInBiome === biomeAnimals.length;
+        const isClaimed = state.claimedBiomeRewards.has(biome.id);
+
+        const sec = document.createElement('div');
+        sec.className = 'bg-gray-800 rounded-2xl p-3 border-2 border-black flex flex-col gap-2 shadow-lg';
+
+        let rewardBtnHtml = '';
+        if (isClaimed) {
+          rewardBtnHtml = `<span class="bg-gray-700 text-lime-400 font-bold text-[10px] px-2.5 py-1 rounded-xl">✓ REWARD CLAIMED (+${biome.rewardPower} 💪)</span>`;
+        } else if (isComplete) {
+          rewardBtnHtml = `<button onclick="claimBiomeIndexReward('${biome.id}')" class="rblx-btn bg-gradient-to-r from-amber-400 to-yellow-300 text-black font-black text-xs px-3 py-1 rounded-xl animate-bounce">🎁 CLAIM (+${biome.rewardPower} 💪)</button>`;
+        } else {
+          rewardBtnHtml = `<span class="text-gray-400 text-[10px]">Reward: +${biome.rewardPower} 💪 (${unlockedInBiome}/3)</span>`;
+        }
+
+        sec.innerHTML = `
+          <div class="flex items-center justify-between border-b border-gray-700 pb-1.5">
+            <div class="flex items-center gap-1.5">
+              <span class="text-lg">${biome.icon}</span>
+              <span class="text-white font-extrabold text-xs sm:text-sm">${biome.name} (${biome.minDist} - ${biome.maxDist}m)</span>
+            </div>
+            <div>${rewardBtnHtml}</div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            ${biomeAnimals.map(a => {
+              const discovered = state.unlockedIndex.has(a.id);
+              return `
+                <div class="bg-gray-900 rounded-xl p-2 border ${discovered ? 'border-gray-600' : 'border-gray-800 opacity-60'} flex flex-col items-center text-center">
+                  <div class="text-2xl sm:text-3xl my-1 filter ${discovered ? '' : 'brightness-0'}">
+                    ${discovered ? a.emoji : '❓'}
+                  </div>
+                  <div class="text-white font-extrabold text-[10px] sm:text-xs truncate w-full">
+                    ${discovered ? a.name : '???'}
+                  </div>
+                  <div class="text-[9px] text-gray-400">${discovered ? a.rarity : 'Undiscovered'}</div>
+                  <div class="text-[9px] text-amber-300 font-bold">${a.oddsStr}</div>
+                  <div class="text-[9px] text-lime-400 font-bold">${discovered ? '$' + formatNum(a.baseIncome) + '/s' : ''}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+        cont.appendChild(sec);
+      });
+    }
+
+    function claimBiomeIndexReward(biomeId) {
+      const b = BIOMES.find(item => item.id === biomeId);
+      if (!b || state.claimedBiomeRewards.has(biomeId)) return;
+      state.claimedBiomeRewards.add(biomeId);
+      audio.playUnlockSound();
+      showToast(`🎁 Claimed ${b.name} Mastery Reward! Permanent +${b.rewardPower} Throw Strength!`, 'bg-amber-400 text-black');
+      renderAnimalIndex();
+      updateHUD();
+      saveGame();
+    }
+
+    // Personal Luckiest Catches (Hall of Fame Modal)
+    function renderLeaderboardModal() {
+      const list = document.getElementById('leaderboardList');
+      list.innerHTML = '';
+      const catches = state.playerBestCatches || [];
+
+      if (catches.length === 0) {
+        list.innerHTML = '<div class="text-center text-gray-400 py-8">No catches recorded yet! Head to the Launch Line to start your record collection.</div>';
+        return;
+      }
+
+      catches.forEach((c, idx) => {
+        const item = document.createElement('div');
+        item.className = 'bg-gray-800 p-3 rounded-2xl flex items-center justify-between border-2 border-black shadow';
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-yellow-400 font-black text-sm sm:text-base w-7">#${idx + 1}</span>
+            <span class="text-2xl">${c.emoji}</span>
+            <div>
+              <div class="text-white font-extrabold text-xs sm:text-sm">
+                ${c.size.name.toUpperCase()} ${c.name}
+              </div>
+              <div class="text-[10px] font-bold" style="color:${c.mutation.color}">
+                ${c.mutation.name} • +$${formatNum(c.income)}/s
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-amber-300 font-black text-xs sm:text-sm">1 IN ${formatNum(c.odds)}</div>
+            <div class="text-[9px] text-gray-400 font-bold">${c.distance.toFixed(1)}m away</div>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    let lastNotifiedFoodIndex = 0;
+    function checkNewFoodUnlock() {
+      FOODS.forEach((food, idx) => {
+        if (idx === 0) return;
+        if (!state.unlockedFoods.includes(food.id) && idx > lastNotifiedFoodIndex) {
+          if (state.cash >= food.cost || getTotalStrength() >= idx * 25) {
+            lastNotifiedFoodIndex = idx;
+            document.getElementById('newFoodIconBox').textContent = food.icon;
+            document.getElementById('newFoodTitle').textContent = food.name.toUpperCase();
+            document.getElementById('newFoodCost').textContent = `$${formatNum(food.cost)}`;
+            openModal('newFoodModal');
+            audio.playUnlockSound();
+          }
+        }
+      });
+    }
+
+    /*************************************************************************
+     * 11. SETTINGS & AUDIO CONTROLS
+     *************************************************************************/
+    function setMusicVolume(val) {
+      state.settings.musicVol = parseInt(val);
+      document.getElementById('musicVolLabel').textContent = `${val}%`;
+      audio.setMusicVol(state.settings.musicVol);
+      saveGame();
+    }
+
+    function setSfxVolume(val) {
+      state.settings.sfxVol = parseInt(val);
+      document.getElementById('sfxVolLabel').textContent = `${val}%`;
+      audio.setSfxVol(state.settings.sfxVol);
+      saveGame();
+    }
+
+    function toggleViewOthersPets(checked) {
+      state.settings.viewOthersPets = checked;
+      document.getElementById('viewOthersLabel').textContent = checked ? 'ON' : 'OFF';
+      document.getElementById('viewOthersLabel').className = checked ? 'text-xs text-lime-400' : 'text-xs text-gray-500';
+      saveGame();
+    }
+
+    function toggleViewYourPets(checked) {
+      state.settings.viewYourPets = checked;
+      document.getElementById('viewYoursLabel').textContent = checked ? 'ON' : 'OFF';
+      document.getElementById('viewYoursLabel').className = checked ? 'text-xs text-lime-400' : 'text-xs text-gray-500';
+      sync3DPlotPets();
+      saveGame();
+    }
+
+    /*************************************************************************
+     * 12. TEACHER GOD-MODE DEMO BUTTON & AUTO-SAVE ENGINE
+     *************************************************************************/
+    function activateTeacherGodMode() {
+      audio.playLevelUpSound();
+      state.cash = 10000000;
+      state.baseStrength = 5000;
+      state.plotCapacity = 20;
+      state.unlockedFoods = FOODS.map(f => f.id);
+      state.equippedFoodId = 'lobster';
+      ANIMALS.forEach(a => state.unlockedIndex.add(a.id));
+      BIOMES.forEach(b => state.claimedBiomeRewards.add(b.id));
+
+      state.inventory = [];
+      state.playerBestCatches = [];
+
+      for (let i = 0; i < 20; i++) {
+        const anim = ANIMALS[ANIMALS.length - 1 - (i % 6)];
+        const sz = SIZES[Math.min(SIZES.length - 1, 3 + (i % 3))]; // Giant, Titanic, Colossal
+        const mut = MUTATIONS[2 + (i % 3)]; // Golden, Rainbow, Cosmic
+        const income = Math.round(anim.baseIncome * sz.mult * mut.mult);
+        const odds = anim.baseOdds * sz.chanceNum * mut.chanceNum;
+
+        state.inventory.push({
+          uid: 'god_pet_' + i,
+          animalId: anim.id,
+          size: sz,
+          mutation: mut,
+          income: income,
+          equipped: true
+        });
+
+        if (i < 5) {
+          state.playerBestCatches.push({
+            id: anim.id,
+            name: anim.name,
+            emoji: anim.emoji,
+            size: sz,
+            mutation: mut,
+            odds: odds,
+            distance: 5500 + i * 400,
+            income: income
+          });
+        }
+      }
+
+      state.playerBestCatches.sort((a, b) => b.odds - a.odds);
+      update3DLuckiestBoardTexture();
+      sync3DPlotPets();
+      updateHUD();
+      showToast('👨‍🏫 TEACHER DEMO ACTIVATED! $10M Cash, 20 Mutated Pets & All Trig Tiers Unlocked!', 'bg-yellow-400 text-black');
+      saveGame();
+    }
+
+    function resetPlayerProgress() {
+      if (confirm('Reset all game data back to student start?')) {
+        localStorage.removeItem(SAVE_KEY);
+        location.reload();
+      }
+    }
+
+    function saveGame() {
+      try {
+        const data = {
+          cash: state.cash,
+          baseStrength: state.baseStrength,
+          pullUpLevel: state.pullUpLevel,
+          pullUpXp: state.pullUpXp,
+          pullUpMaxXp: state.pullUpMaxXp,
+          plotCapacity: state.plotCapacity,
+          inventory: state.inventory,
+          unlockedFoods: state.unlockedFoods,
+          equippedFoodId: state.equippedFoodId,
+          unlockedIndex: Array.from(state.unlockedIndex),
+          claimedBiomeRewards: Array.from(state.claimedBiomeRewards),
+          playerBestCatches: state.playerBestCatches,
+          autoSkipRepeats: state.autoSkipRepeats,
+          settings: state.settings
+        };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.warn('LocalStorage save failed:', e);
+      }
+    }
+
+    function loadGame() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        if (d.cash !== undefined) state.cash = d.cash;
+        if (d.baseStrength !== undefined) state.baseStrength = d.baseStrength;
+        if (d.pullUpLevel !== undefined) state.pullUpLevel = d.pullUpLevel;
+        if (d.pullUpXp !== undefined) state.pullUpXp = d.pullUpXp;
+        if (d.pullUpMaxXp !== undefined) state.pullUpMaxXp = d.pullUpMaxXp;
+        if (d.plotCapacity !== undefined) state.plotCapacity = d.plotCapacity;
+        if (d.inventory) state.inventory = d.inventory;
+        if (d.unlockedFoods) state.unlockedFoods = d.unlockedFoods;
+        if (d.equippedFoodId) state.equippedFoodId = d.equippedFoodId;
+        if (d.unlockedIndex) state.unlockedIndex = new Set(d.unlockedIndex);
+        if (d.claimedBiomeRewards) state.claimedBiomeRewards = new Set(d.claimedBiomeRewards);
+        if (d.playerBestCatches) state.playerBestCatches = d.playerBestCatches;
+        if (d.autoSkipRepeats !== undefined) state.autoSkipRepeats = d.autoSkipRepeats;
+        if (d.settings) state.settings = { ...state.settings, ...d.settings };
+
+        document.getElementById('musicSlider').value = state.settings.musicVol;
+        document.getElementById('musicVolLabel').textContent = `${state.settings.musicVol}%`;
+        document.getElementById('sfxSlider').value = state.settings.sfxVol;
+        document.getElementById('sfxVolLabel').textContent = `${state.settings.sfxVol}%`;
+        document.getElementById('autoSkipCheckbox').checked = state.autoSkipRepeats;
+      } catch (e) {
+        console.warn('LocalStorage load failed:', e);
+      }
+    }
+
+    function formatNum(n) {
+      if (n >= 1e12) return (n / 1e12).toFixed(2) + 'T';
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+      return Math.round(n).toString();
+    }
+
+    function getPassiveIncome() {
+      return state.inventory.filter(i => i.equipped).reduce((sum, pet) => sum + pet.income, 0);
+    }
+
+    function hasUnclaimedIndexReward() {
+      for (const b of BIOMES) {
+        const biomeAnimals = ANIMALS.filter(a => a.biome === b.id);
+        const unlockedInBiome = biomeAnimals.filter(a => state.unlockedIndex.has(a.id)).length;
+        if (unlockedInBiome === biomeAnimals.length && !state.claimedBiomeRewards.has(b.id)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function updateHUD() {
+      document.getElementById('cashDisplay').textContent = `$${formatNum(state.cash)}`;
+      const rate = getPassiveIncome();
+      document.getElementById('incomeRateDisplay').textContent = `+$${formatNum(rate)}/s (Plot)`;
+
+      const totalStr = getTotalStrength();
+      document.getElementById('strengthDisplay').textContent = `${totalStr}`;
+      const bonusStr = totalStr - state.baseStrength;
+      document.getElementById('indexBonusDisplay').textContent = `+${bonusStr} Index Bonus`;
+
+      const food = getEquippedFood();
+      document.getElementById('hudFoodIcon').textContent = food.icon;
+      document.getElementById('hudFoodName').textContent = food.name;
+      document.getElementById('hudFoodFunc').textContent = food.formulaStr;
+
+      const equippedCount = state.inventory.filter(i => i.equipped).length;
+      document.getElementById('plotCountBadge').textContent = `${equippedCount}/${state.plotCapacity}`;
+      document.getElementById('indexBadge').textContent = `${state.unlockedIndex.size}/18`;
+
+      const rewardDot = document.getElementById('indexRewardDot');
+      if (hasUnclaimedIndexReward()) {
+        rewardDot.classList.remove('hidden');
+      } else {
+        rewardDot.classList.add('hidden');
+      }
+    }
+
+    function showToast(msg, cls = 'bg-lime-400 text-black') {
+      const existing = document.getElementById('toastNotice');
+      if (existing) existing.remove();
+
+      const t = document.createElement('div');
+      t.id = 'toastNotice';
+      t.className = `fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl border-2 border-black font-extrabold text-xs sm:text-sm shadow-2xl transition-all duration-300 ${cls}`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 300);
+      }, 2600);
+    }
+
+    /*************************************************************************
+     * 13. LIVE CALCULUS OSCILLOSCOPE HTML5 CANVAS RENDERER
+     *************************************************************************/
+    const oscCanvas = document.getElementById('oscCanvas');
+    const oscCtx = oscCanvas.getContext('2d');
+
+    function resizeOscilloscope() {
+      const rect = oscCanvas.getBoundingClientRect();
+      oscCanvas.width = rect.width * (window.devicePixelRatio || 1);
+      oscCanvas.height = rect.height * (window.devicePixelRatio || 1);
+    }
+
+    function updateCalculusUIAndOscilloscope() {
+      const food = getEquippedFood();
+      const t = state.t;
+      const calc = evaluateFoodCalculus(food, t);
+      const ramp = evaluateRampCalculus(state.rampX0);
+
+      const absDeriv = Math.abs(calc.deriv);
+      const derivRatio = absDeriv / (calc.maxDeriv || 1);
+
+      const isCriticalPoint = food.type !== 'tan' && derivRatio <= 0.18;
+      const isMaxDerivSurge = derivRatio >= 0.82;
+
+      document.getElementById('livePosEq').textContent = `${food.formulaStr} = ${calc.pos >= 0 ? '+' : ''}${calc.pos.toFixed(2)}`;
+      document.getElementById('liveDerivEq').textContent = `${food.derivStr} = ${calc.deriv >= 0 ? '+' : ''}${calc.deriv.toFixed(2)}`;
+      document.getElementById('minDerivReadout').textContent = `P'(t) = ${calc.deriv >= 0 ? '+' : ''}${calc.deriv.toFixed(2)}`;
+      document.getElementById('minSlopeReadout').textContent = `m = ${ramp.slope.toFixed(2)} (${ramp.angleDeg.toFixed(0)}°)`;
+
+      const regBadge = document.getElementById('calcRegimeBadge');
+      const critInd = document.getElementById('critPointIndicator');
+      if (isCriticalPoint) {
+        regBadge.textContent = 'CRITICAL POINT (MUTATION)';
+        regBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-yellow-400 text-black shadow animate-pulse';
+        critInd.classList.remove('hidden');
+      } else if (isMaxDerivSurge) {
+        regBadge.textContent = 'MAX DERIVATIVE SURGE';
+        regBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-400 text-black shadow';
+        critInd.classList.add('hidden');
+      } else {
+        regBadge.textContent = 'HARMONIC TRANSIT';
+        regBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gray-600 text-white';
+        critInd.classList.add('hidden');
+      }
+
+      const marker = document.getElementById('meterMarker');
+      const readout = document.getElementById('meterReadout');
+      if (marker && readout) {
+        const normPos = Math.max(0, Math.min(1, (calc.pos + (food.type === 'tan' ? 5 : 6)) / 12));
+        marker.style.top = `${(1 - normPos) * 88}%`;
+        const powerNumber = Math.round(absDeriv * 5);
+        readout.textContent = `+${powerNumber}`;
+      }
+
+      const W = oscCanvas.width;
+      const H = oscCanvas.height;
+      if (W === 0 || H === 0) return;
+
+      oscCtx.clearRect(0, 0, W, H);
+      const midY = H / 2;
+
+      oscCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      oscCtx.lineWidth = 1;
+      oscCtx.beginPath();
+      oscCtx.moveTo(0, midY);
+      oscCtx.lineTo(W, midY);
+      oscCtx.stroke();
+
+      const timeWindow = 4.0;
+      const scaleY = H * 0.35 / (food.type === 'tan' ? 6 : Math.max(4, food.A + food.C + 1));
+
+      // P(t) Wave
+      oscCtx.strokeStyle = '#38bdf8';
+      oscCtx.lineWidth = 2.5;
+      oscCtx.beginPath();
+      for (let x = 0; x < W; x += 3) {
+        const tau = t - timeWindow + (x / W) * timeWindow;
+        const pt = evaluateFoodCalculus(food, tau);
+        const y = midY - pt.pos * scaleY;
+        if (x === 0) oscCtx.moveTo(x, y);
+        else oscCtx.lineTo(x, y);
+      }
+      oscCtx.stroke();
+
+      // P'(t) Curve
+      const derivScale = H * 0.35 / (calc.maxDeriv || 8);
+      oscCtx.strokeStyle = '#facc15';
+      oscCtx.lineWidth = 2.0;
+      oscCtx.beginPath();
+      for (let x = 0; x < W; x += 3) {
+        const tau = t - timeWindow + (x / W) * timeWindow;
+        const pt = evaluateFoodCalculus(food, tau);
+        const y = midY - pt.deriv * derivScale;
+        if (x === 0) oscCtx.moveTo(x, y);
+        else oscCtx.lineTo(x, y);
+      }
+      oscCtx.stroke();
+
+      // Tangent Line
+      const curY = midY - calc.pos * scaleY;
+      const tangentSlopePixel = -calc.deriv * scaleY * (timeWindow / W);
+      oscCtx.strokeStyle = '#f472b6';
+      oscCtx.lineWidth = 2.5;
+      oscCtx.beginPath();
+      oscCtx.moveTo(W - 40, curY - tangentSlopePixel * (-40));
+      oscCtx.lineTo(W, curY);
+      oscCtx.stroke();
+
+      oscCtx.fillStyle = '#f472b6';
+      oscCtx.beginPath();
+      oscCtx.arc(W - 2, curY, 5, 0, Math.PI * 2);
+      oscCtx.fill();
+    }
+
+    /*************************************************************************
+     * 14. 3D TO 2D SCREEN PROJECTION & MAIN ANIMATION LOOP
+     *************************************************************************/
+    function project3DToScreen(vec3, el) {
+      const v = vec3.clone().project(camera);
+      if (v.z > 1) {
+        el.style.display = 'none';
+        return;
+      }
+      const x = (v.x * 0.5 + 0.5) * window.innerWidth;
+      const y = (-(v.y * 0.5) + 0.5) * window.innerHeight;
+      el.style.display = 'block';
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+    }
+
+    let lastFrameTime = performance.now();
+    function animateLoop(now) {
+      const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+      lastFrameTime = now;
+
+      if (!state.wavePaused) {
+        state.t += dt;
+        pullUpRepTime += dt;
+      }
+
+      updatePlayerMovement(dt);
+      updateCalculusUIAndOscilloscope();
+      update3DTrajectoryArc();
+
+      // Animate Target Skill-Shot Rings
+      critRingMesh.rotation.z += dt * 1.5;
+      critRingMesh.rotation.x += dt * 0.8;
+      critRingGroup.position.y = 6.5 + Math.sin(state.t * 2.5) * 1.5;
+      targetLabels.forEach(tl => project3DToScreen(tl.pos, tl.el));
+
+      // Animate Plot Pets Hopping Inside Fenced Lawn Plot
+      if (state.settings.viewYourPets) {
+        activePlotPetEntities.forEach(ent => {
+          ent.hopPhase += dt * 7.5;
+          ent.mesh.position.x += ent.vx * dt;
+          ent.mesh.position.z += ent.vz * dt;
+          if (ent.mesh.position.x < -9.5 || ent.mesh.position.x > 9.5) ent.vx *= -1;
+          if (ent.mesh.position.z < -2.5 || ent.mesh.position.z > 16.5) ent.vz *= -1;
+          ent.mesh.position.y = Math.abs(Math.sin(ent.hopPhase)) * 0.65;
+          ent.mesh.rotation.y = Math.atan2(ent.vx, -ent.vz);
+
+          const tagPos = ent.mesh.position.clone().add(new THREE.Vector3(0, 2.6, 0));
+          project3DToScreen(tagPos, ent.labelEl);
+        });
+      }
+
+      // Project Station World Labels
+      stationLabels.forEach(st => project3DToScreen(st.pos, st.el));
+
+      // Active Projectile Flight or 3D Cutscene Camera
+      if (state.activeThrow) {
+        const th = state.activeThrow;
+        if (th.phase === 'flying') {
+          th.progress += dt * 0.65;
+          const p = Math.min(1, th.progress);
+          const curZ = -14 + p * (th.targetZ - (-14));
+          const waveArcY = 2.2 + Math.sin(p * Math.PI) * (12 + th.ramp.slope * 4.8) + Math.sin(p * Math.PI * 6) * 1.2;
+          projectileGroup.position.set(0, waveArcY, curZ);
+          projectileGroup.rotation.x += dt * 8;
+          projectileGroup.rotation.y += dt * 6;
+
+          camera.position.set(8.5, waveArcY + 6.5, curZ + 15);
+          camera.lookAt(0, waveArcY, curZ - 6);
+
+          const curDist = th.distance * p;
+          document.getElementById('flightDistReadout').textContent = `${curDist.toFixed(1)}m`;
+          document.getElementById('flightBiomeReadout').textContent = `Flying down canyon to ${th.landingBiome.icon} ${th.landingBiome.name}!`;
+
+          if (th.progress >= 1.0) {
+            transitionTo3DCatchCutscene(th);
+          }
+        } else if (th.phase === 'reveal') {
+          th.revealTimer += dt;
+          const animalMesh = cutsceneGroup.children[0];
+          if (animalMesh) {
+            animalMesh.rotation.y = Math.sin(th.revealTimer * 3.5) * 0.7;
+            animalMesh.position.y = Math.abs(Math.sin(th.revealTimer * 8)) * 0.95;
+          }
+          camera.position.set(Math.sin(th.revealTimer * 0.8) * 5.2, 4.2, th.targetZ + 8.5);
+          camera.lookAt(0, 1.8, th.targetZ);
+        }
+      } else {
+        const camDist = 16;
+        const cx = playerGroup.position.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist;
+        const cy = playerGroup.position.y + Math.sin(camPitch) * camDist + 2.4;
+        const cz = playerGroup.position.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
+        camera.position.set(cx, cy, cz);
+        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2.2, playerGroup.position.z - 2);
+      }
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animateLoop);
+    }
+
+    /*************************************************************************
+     * 15. INITIALIZATION & RECURRING LOOPS
+     *************************************************************************/
+    window.onload = function () {
+      loadGame();
+      initStationLabels();
+      sync3DPlotPets();
+      update3DLuckiestBoardTexture();
+      updateRampSlider(state.rampX0);
+      updateHUD();
+      resizeOscilloscope();
+      renderWorkedExampleModal();
+
+      checkZoneTrigger();
+
+      setInterval(() => {
+        const rate = getPassiveIncome();
+        if (rate > 0) {
+          state.cash += rate;
+          updateHUD();
+          spawnFloatingCashPopups();
+          audio.playCoinSound();
+        }
+      }, 1000);
+
+      setInterval(saveGame, 5000);
+
+      requestAnimationFrame(animateLoop);
+    };
+  </script>
+</body>
+</html>
