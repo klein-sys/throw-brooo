@@ -14,7 +14,10 @@ JS_GAMEPLAY = """
     window.addEventListener('keydown', e => {
       keys[e.key.toLowerCase()] = true;
       if (e.code === 'Space') {
-        if (state.activeZone === 'throw') {
+        if (state.activeThrow && state.activeThrow.phase === 'reveal') {
+          e.preventDefault();
+          skipThrowAnimation();
+        } else if (state.activeZone === 'throw') {
           e.preventDefault();
           executeCalculusThrow();
         } else if (state.activeZone === 'pullup') {
@@ -152,31 +155,31 @@ JS_GAMEPLAY = """
         state.playerPos.x += vx * moveSpeed * dt;
         state.playerPos.z += vz * moveSpeed * dt;
 
-        state.playerPos.x = Math.max(-23, Math.min(23, state.playerPos.x));
-        state.playerPos.z = Math.max(-20, Math.min(26, state.playerPos.z));
+        // Boundaries of the expanded hub ground
+        state.playerPos.x = Math.max(-50, Math.min(50, state.playerPos.x));
+        state.playerPos.z = Math.max(-20, Math.min(60, state.playerPos.z));
 
         playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
-        state.playerRot = Math.atan2(vx, vz);
-        playerGroup.rotation.y = state.playerRot;
+        playerGroup.rotation.y = Math.atan2(vx, vz);
 
         walkCycle += dt * 14;
         leftLeg.rotation.x = Math.sin(walkCycle) * 0.7;
         rightLeg.rotation.x = -Math.sin(walkCycle) * 0.7;
-        leftArm.rotation.x = -Math.sin(walkCycle) * 0.7;
-        rightArm.rotation.x = Math.sin(walkCycle) * 0.7;
-        playerGroup.position.y = Math.abs(Math.sin(walkCycle)) * 0.25;
+        leftArm.rotation.x = -Math.sin(walkCycle) * 0.55;
+        rightArm.rotation.x = Math.sin(walkCycle) * 0.55;
       } else {
         leftLeg.rotation.x = 0;
         rightLeg.rotation.x = 0;
         leftArm.rotation.x = 0;
         rightArm.rotation.x = 0;
-        playerGroup.position.y = 0;
       }
 
       checkZoneTrigger();
     }
 
     function checkZoneTrigger() {
+      if (state.activeThrow || state.isPullingUp) return;
+
       let detectedZone = null;
       for (const [key, st] of Object.entries(STATIONS)) {
         const dist = Math.hypot(state.playerPos.x - st.x, state.playerPos.z - st.z);
@@ -260,7 +263,7 @@ JS_GAMEPLAY = """
       playerGroup.position.y = 0;
       document.getElementById('pullUpZoneHUD').classList.add('hidden');
       document.getElementById('pullUpZoneHUD').classList.remove('flex');
-      state.playerPos.z += 4.5;
+      state.playerPos.z += 5.5;
       playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
       checkZoneTrigger();
     }
@@ -301,8 +304,10 @@ JS_GAMEPLAY = """
     /*************************************************************************
      * 9. HARMONIC THROW EXECUTION, REBALANCED DISTANCE & ODDS ENGINE
      *************************************************************************/
+    let isThrowWindup = false;
+
     function executeCalculusThrow() {
-      if (state.activeThrow || state.activeZone !== 'throw') {
+      if (state.activeThrow || state.activeZone !== 'throw' || isThrowWindup) {
         if (state.activeZone !== 'throw') {
           showToast('🎯 Walk onto the Orange Checkered Launch Line to Throw!', 'bg-amber-400 text-black');
           walkToStation('throw');
@@ -323,10 +328,11 @@ JS_GAMEPLAY = """
       const surgeBonus = isMaxDerivSurge ? 1.30 : 1.0;
 
       // REBALANCED PROGRESSION FORMULA:
-      // Distance strictly controlled by strength power 0.85 and food.distMult!
-      // At 48 strength with Carrot, distance ~89m (solidly within Forest: 0 - 100m).
-      const rawDist = (Math.pow(getTotalStrength(), 0.85) * food.distMult) * (1 + absDeriv * 0.22) * ramp.angleEfficiency * surgeBonus;
-      const distance = Math.max(18, rawDist);
+      // Distance strictly controlled by strength power 0.72 and food.distMult!
+      // At 48 strength with Carrot, distance is ~29m (solidly within Forest: 0 - 120m).
+      // Even with Apple, distance is ~55m (still in Forest).
+      const rawDist = (Math.pow(getTotalStrength(), 0.72) * food.distMult) * (1 + absDeriv * 0.18) * ramp.angleEfficiency * surgeBonus;
+      const distance = Math.max(16, rawDist);
 
       // Determine landing biome
       let landingBiome = BIOMES[0];
@@ -371,65 +377,95 @@ JS_GAMEPLAY = """
       }
 
       // Calculate Combined Exact Catch Probability (1 in X)
-      const totalOdds = chosenAnimal.baseOdds * chosenSize.chanceNum * chosenMutation.chanceNum;
-      const pctStr = (100 / totalOdds).toFixed(totalOdds >= 100 ? 3 : 1) + '%';
-      const oddsDisplayStr = totalOdds >= 1000 ? `1 IN ${formatNum(totalOdds)}` : `1 IN ${totalOdds.toFixed(1)}`;
+      const totalOdds = Math.round(chosenAnimal.baseOdds * chosenSize.chanceNum * chosenMutation.chanceNum);
+      const oddsDisplayStr = `1 in ${formatNum(totalOdds)}`;
 
       const finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult);
       const isNewDiscovery = !state.unlockedIndex.has(chosenAnimal.id);
 
-      // Distance mapping to 3D Z coordinate
-      const normDist = Math.min(1, Math.pow(distance / 5000, 0.52));
-      const targetZ = -14 - normDist * 290;
+      // Distance mapping to expanded 3D Z coordinate (-14 to -900)
+      const normDist = Math.min(1, Math.pow(distance / 5500, 0.48));
+      const targetZ = -14 - normDist * 880;
 
-      state.throwCount++;
-      projectileMesh.material.color.setHex(food.color);
-      projectileGroup.position.set(0, 2.2, -14);
-      projectileGroup.visible = true;
+      // START DYNAMIC CHARACTER THROW ANIMATION (Anticipation -> Release)
+      isThrowWindup = true;
+      rightArm.rotation.x = -Math.PI * 0.7;
+      rightArm.rotation.z = 0.35;
+      torsoMesh.rotation.x = -0.22;
 
-      audio.playThrowSound(isMaxDerivSurge, isCriticalPoint);
-      if (isMaxDerivSurge) triggerScreenShake();
+      // Floating readout on throw
+      const readoutText = isMaxDerivSurge ? '⚡ MAX SURGE! +19 POWER' : isCriticalPoint ? '🎯 CRITICAL POINT!' : 'PERFECT!';
+      const readoutColor = isMaxDerivSurge ? '#38bdf8' : isCriticalPoint ? '#facc15' : '#4ade80';
+      showFloatingPopup(playerGroup.position, readoutText, readoutColor);
 
-      state.activeThrow = {
-        phase: 'flying',
-        progress: 0,
-        distance,
-        targetZ,
-        landingBiome,
-        chosenAnimal,
-        chosenSize,
-        chosenMutation,
-        totalOdds,
-        pctStr,
-        oddsDisplayStr,
-        finalIncome,
-        isNewDiscovery,
-        isCriticalPoint,
-        isMaxDerivSurge,
-        t0,
-        calc,
-        ramp,
-        food,
-        revealTimer: 0
-      };
+      setTimeout(() => {
+        // Violently whip right arm forward & release food
+        rightArm.rotation.x = Math.PI * 0.85;
+        rightArm.rotation.z = -0.2;
+        torsoMesh.rotation.x = 0.25;
+        heldFoodMesh.visible = false;
 
-      saveWorkedExampleTelemetry(state.activeThrow);
+        state.throwCount++;
+        projectileMesh.material.color.setHex(food.color);
+        projectileGroup.position.set(playerGroup.position.x, 2.4, -14);
+        projectileGroup.visible = true;
 
-      // Record to Player's Personal Best Catches (Hall of Fame)
-      recordPersonalBestCatch(state.activeThrow);
+        audio.playThrowSound(isMaxDerivSurge, isCriticalPoint);
+        if (isMaxDerivSurge) triggerScreenShake();
 
-      // Auto-Skip repeat catches option
-      if (!isNewDiscovery && state.autoSkipRepeats) {
-        finalizeAnimalAward(state.activeThrow);
-        projectileGroup.visible = false;
-        state.activeThrow = null;
-        showToast(`⚡ Auto-Skipped: Caught ${chosenSize.name} ${chosenMutation.name} ${chosenAnimal.name} ($${formatNum(finalIncome)}/s) [${oddsDisplayStr}] at ${distance.toFixed(1)}m!`, 'bg-lime-400 text-black');
-        return;
-      }
+        state.activeThrow = {
+          phase: 'flying',
+          progress: 0,
+          distance,
+          targetZ,
+          landingBiome,
+          chosenAnimal,
+          chosenSize,
+          chosenMutation,
+          totalOdds,
+          oddsDisplayStr,
+          finalIncome,
+          isNewDiscovery,
+          isCriticalPoint,
+          isMaxDerivSurge,
+          t0,
+          calc,
+          ramp,
+          food,
+          revealTimer: 0,
+          oddsRollTimer: 0,
+          nameRevealStep: 0,
+          chosenAnimalMesh: null
+        };
 
-      document.getElementById('flightOverlay').classList.remove('hidden');
-      document.getElementById('flightOverlay').classList.add('flex');
-      document.getElementById('skipFlightBtn').style.display = isNewDiscovery ? 'none' : 'flex';
+        saveWorkedExampleTelemetry(state.activeThrow);
+        recordPersonalBestCatch(state.activeThrow);
+
+        // Auto-Skip repeat catches option
+        if (!isNewDiscovery && state.autoSkipRepeats) {
+          finalizeAnimalAward(state.activeThrow);
+          projectileGroup.visible = false;
+          state.activeThrow = null;
+          isThrowWindup = false;
+          rightArm.rotation.set(0, 0, 0);
+          torsoMesh.rotation.set(0, 0, 0);
+          heldFoodMesh.visible = true;
+          showToast(`⚡ Auto-Skipped: Caught ${chosenSize.name} ${chosenMutation.name} ${chosenAnimal.name} ($${formatNum(finalIncome)}/s) [${oddsDisplayStr}] at ${distance.toFixed(1)}m!`, 'bg-lime-400 text-black');
+          return;
+        }
+
+        document.getElementById('flightOverlay').classList.remove('hidden');
+        document.getElementById('flightOverlay').classList.add('flex');
+        document.getElementById('skipFlightBtn').style.display = isNewDiscovery ? 'none' : 'flex';
+
+        setTimeout(() => {
+          isThrowWindup = false;
+          rightArm.rotation.set(0, 0, 0);
+          torsoMesh.rotation.set(0, 0, 0);
+          heldFoodMesh.visible = true;
+        }, 250);
+
+      }, 160);
     }
 
     function recordPersonalBestCatch(th) {
@@ -446,7 +482,6 @@ JS_GAMEPLAY = """
       };
 
       state.playerBestCatches.push(entry);
-      // Sort by rarest (highest odds number)
       state.playerBestCatches.sort((a, b) => b.odds - a.odds);
       if (state.playerBestCatches.length > 5) {
         state.playerBestCatches = state.playerBestCatches.slice(0, 5);
@@ -474,32 +509,85 @@ JS_GAMEPLAY = """
       document.getElementById('flightOverlay').classList.add('hidden');
       document.getElementById('flightOverlay').classList.remove('flex');
 
-      while (cutsceneGroup.children.length > 0) {
-        cutsceneGroup.remove(cutsceneGroup.children[0]);
+      // Clear previous cutscene showcase models
+      while (cutsceneGroup.children.length > 2) {
+        cutsceneGroup.remove(cutsceneGroup.children[2]);
       }
+
+      // Spawn Animal Mesh in front of thrown food
       const animalMesh = createBlockyAnimalMesh(th.chosenAnimal, th.chosenSize, th.chosenMutation);
       animalMesh.position.set(0, 0, th.targetZ);
+      th.chosenAnimalMesh = animalMesh;
 
+      // Spawn Thrown Food Bait on the ground right in front of the animal
       const bait = projectileMesh.clone();
-      bait.position.set(1.1, 0.4, th.targetZ - 0.5);
-      bait.scale.set(0.65, 0.65, 0.65);
+      bait.position.set(0, 0.45, th.targetZ - 1.8);
+      bait.scale.set(0.7, 0.7, 0.7);
+
+      // Aura Beacon Cylinder positioned at target
+      cutsceneBeacon.position.set(0, 12, th.targetZ);
+      cutsceneBeacon.material.color.setHex(th.chosenMutation.hex || 0xfacc15);
+
+      // Reset Confetti flakes around animal
+      confettiMeshes.forEach(cm => {
+        cm.position.set(
+          (Math.random() - 0.5) * 14,
+          8 + Math.random() * 12,
+          th.targetZ + (Math.random() - 0.5) * 14
+        );
+      });
+
       cutsceneGroup.add(animalMesh, bait);
       cutsceneGroup.visible = true;
 
-      // Populate Cutscene Modal UI with Exact Rarity Odds & Size Chances
-      document.getElementById('catchNewBadge').style.display = th.isNewDiscovery ? 'block' : 'none';
-      document.getElementById('catchOddsBadge').textContent = `🎲 CHANCE: ${th.oddsDisplayStr} (${th.pctStr})`;
-      document.getElementById('catchAnimalName').textContent = th.chosenAnimal.name.toUpperCase();
-      document.getElementById('catchSizeTag').textContent = `${th.chosenSize.name.toUpperCase()} (${th.chosenSize.mult}x Size)`;
-      document.getElementById('catchSizeTag').style.color = th.chosenSize.color;
-      document.getElementById('catchMutationTag').textContent = `${th.chosenMutation.name} (${th.chosenMutation.mult}x)`;
-      document.getElementById('catchMutationTag').style.color = th.chosenMutation.color;
+      // Setup Starburst Rays Color (Red for normal, Gold for golden, Purple for cosmic)
+      const starburst = document.getElementById('cutsceneStarburst');
+      starburst.className = 'starburst-rays ' + (th.chosenMutation.id === 'golden' ? 'gold' : th.chosenMutation.id === 'cosmic' ? 'cosmic' : '');
+
+      // Setup Rarity Celebratory Header Banner
+      const rarityHeader = document.getElementById('catchRarityHeader');
+      if (th.chosenAnimal.rarity === 'Common') {
+        rarityHeader.textContent = 'NICE CATCH!';
+        rarityHeader.className = 'text-lime-400 font-black text-3xl sm:text-5xl rblx-stroke-lg tracking-wide transform -rotate-1 relative z-10 animate-bounce';
+      } else if (th.chosenAnimal.rarity === 'Uncommon' || th.chosenAnimal.rarity === 'Rare') {
+        rarityHeader.textContent = 'LUCKY!';
+        rarityHeader.className = 'text-amber-400 font-black text-3xl sm:text-5xl rblx-stroke-lg tracking-wide transform -rotate-1 relative z-10 animate-bounce';
+      } else if (th.chosenAnimal.rarity === 'Epic' || th.chosenAnimal.rarity === 'Legendary') {
+        rarityHeader.textContent = 'SUPER LUCKY!';
+        rarityHeader.className = 'text-rose-500 font-black text-3xl sm:text-5xl rblx-stroke-lg tracking-wide transform -rotate-1 relative z-10 animate-bounce';
+      } else {
+        rarityHeader.textContent = 'INSANE LUCK!';
+        rarityHeader.className = 'text-purple-400 font-black text-3xl sm:text-5xl rblx-stroke-lg tracking-wide transform -rotate-1 relative z-10 animate-bounce';
+      }
+
+      // Initialize Suspense Rolling Odds Slot: Starts at "1 in 1" (Exact replication of video!)
+      document.getElementById('catchOddsNumber').textContent = '1 in 1';
+
+      // Initialize Mystery Hangman Name Reveal with underscores (Exact replication of video!)
+      const animalNameUpper = th.chosenAnimal.name.toUpperCase();
+      let blankStr = animalNameUpper.replace(/[A-Z]/g, '_ ');
+      document.getElementById('catchAnimalName').textContent = blankStr;
+
+      // Mutation & Size Tags
+      const mutEl = document.getElementById('catchMutationTag');
+      if (th.chosenMutation && th.chosenMutation.id !== 'normal') {
+        mutEl.textContent = th.chosenMutation.name;
+        mutEl.style.color = th.chosenMutation.color;
+        mutEl.style.display = 'block';
+      } else {
+        mutEl.style.display = 'none';
+      }
+
+      const sizeEl = document.getElementById('catchSizeTag');
+      sizeEl.textContent = th.chosenSize.name.toUpperCase();
+      sizeEl.style.color = th.chosenSize.color;
+
       document.getElementById('catchIncomeRate').textContent = `+$${formatNum(th.finalIncome)}/s`;
 
       document.getElementById('catchRevealModal').classList.remove('hidden');
       document.getElementById('catchRevealModal').classList.add('flex');
 
-      audio.playCatchSound(th.isNewDiscovery, th.chosenAnimal.rarity);
+      audio.playExplosionSound();
     }
 
     function finalizeAnimalAward(th) {
@@ -529,11 +617,6 @@ JS_GAMEPLAY = """
       if (state.activeThrow && state.activeThrow.phase === 'reveal') {
         skipThrowAnimation();
       }
-    }
-
-    function closeCatchReveal(e) {
-      if (e) e.stopPropagation();
-      skipThrowAnimation();
     }
 
     function toggleAutoSkipRepeats(checked) {
@@ -1098,50 +1181,74 @@ JS_GAMEPLAY = """
       document.getElementById('incomeRateDisplay').textContent = `+$${formatNum(rate)}/s (Plot)`;
 
       const totalStr = getTotalStrength();
-      document.getElementById('strengthDisplay').textContent = `${totalStr}`;
-      const bonusStr = totalStr - state.baseStrength;
-      document.getElementById('indexBonusDisplay').textContent = `+${bonusStr} Index Bonus`;
+      const bonus = getIndexMasteryBonus();
+      document.getElementById('strengthDisplay').textContent = totalStr;
+      document.getElementById('indexBonusDisplay').textContent = `+${bonus} Index Bonus`;
+
+      document.getElementById('indexBadge').textContent = `${state.unlockedIndex.size}/18`;
+      const dot = document.getElementById('indexRewardDot');
+      if (hasUnclaimedIndexReward()) dot.classList.remove('hidden');
+      else dot.classList.add('hidden');
+
+      const equippedCount = state.inventory.filter(i => i.equipped).length;
+      document.getElementById('plotCountBadge').textContent = `${equippedCount}/${state.plotCapacity}`;
 
       const food = getEquippedFood();
       document.getElementById('hudFoodIcon').textContent = food.icon;
       document.getElementById('hudFoodName').textContent = food.name;
       document.getElementById('hudFoodFunc').textContent = food.formulaStr;
 
-      const equippedCount = state.inventory.filter(i => i.equipped).length;
-      document.getElementById('plotCountBadge').textContent = `${equippedCount}/${state.plotCapacity}`;
-      document.getElementById('indexBadge').textContent = `${state.unlockedIndex.size}/18`;
+      heldFoodMesh.material.color.setHex(food.color);
+    }
 
-      const rewardDot = document.getElementById('indexRewardDot');
-      if (hasUnclaimedIndexReward()) {
-        rewardDot.classList.remove('hidden');
+    function showToast(msg, colorClass) {
+      const container = document.body;
+      const t = document.createElement('div');
+      t.className = `fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2 rounded-2xl border-2 border-black font-extrabold text-xs sm:text-sm shadow-2xl rblx-stroke-sm transition-all duration-300 pointer-events-none ${colorClass}`;
+      t.textContent = msg;
+      container.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translate(-50%, -15px)';
+        setTimeout(() => t.remove(), 350);
+      }, 2400);
+    }
+
+    function togglePauseWave() {
+      state.wavePaused = !state.wavePaused;
+      document.getElementById('pauseWaveBtn').textContent = state.wavePaused ? '▶ Resume t' : '⏸ Pause t';
+    }
+
+    function toggleMinimizeCalcHUD(minimize) {
+      const minBar = document.getElementById('calcMinimizedBar');
+      const expPanel = document.getElementById('calcExpandedPanel');
+      if (minimize) {
+        expPanel.classList.add('hidden');
+        minBar.classList.remove('hidden');
       } else {
-        rewardDot.classList.add('hidden');
+        minBar.classList.add('hidden');
+        expPanel.classList.remove('hidden');
       }
     }
 
-    function showToast(msg, cls = 'bg-lime-400 text-black') {
-      const existing = document.getElementById('toastNotice');
-      if (existing) existing.remove();
-
-      const t = document.createElement('div');
-      t.id = 'toastNotice';
-      t.className = `fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl border-2 border-black font-extrabold text-xs sm:text-sm shadow-2xl transition-all duration-300 ${cls}`;
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(() => {
-        t.style.opacity = '0';
-        setTimeout(() => t.remove(), 300);
-      }, 2600);
+    function updateRampSlider(val) {
+      state.rampX0 = parseFloat(val);
+      const ramp = evaluateRampCalculus(state.rampX0);
+      document.getElementById('rampXVal').textContent = state.rampX0.toFixed(2);
+      document.getElementById('rampSlopeVal').textContent = `${ramp.slope.toFixed(2)} (${ramp.angleDeg.toFixed(0)}°)`;
+      document.getElementById('minSlopeReadout').textContent = `m = ${ramp.slope.toFixed(2)} (${ramp.angleDeg.toFixed(0)}°)`;
+      update3DRampVisuals();
+      update3DTrajectoryArc();
     }
 
     /*************************************************************************
-     * 13. LIVE CALCULUS OSCILLOSCOPE HTML5 CANVAS RENDERER
+     * 13. LIVE CALCULUS DERIVATIVE OSCILLOSCOPE HTML5 CANVAS RENDERER
      *************************************************************************/
     const oscCanvas = document.getElementById('oscCanvas');
     const oscCtx = oscCanvas.getContext('2d');
 
     function resizeOscilloscope() {
-      const rect = oscCanvas.getBoundingClientRect();
+      const rect = oscCanvas.parentElement.getBoundingClientRect();
       oscCanvas.width = rect.width * (window.devicePixelRatio || 1);
       oscCanvas.height = rect.height * (window.devicePixelRatio || 1);
     }
@@ -1150,44 +1257,47 @@ JS_GAMEPLAY = """
       const food = getEquippedFood();
       const t = state.t;
       const calc = evaluateFoodCalculus(food, t);
-      const ramp = evaluateRampCalculus(state.rampX0);
-
       const absDeriv = Math.abs(calc.deriv);
       const derivRatio = absDeriv / (calc.maxDeriv || 1);
 
       const isCriticalPoint = food.type !== 'tan' && derivRatio <= 0.18;
       const isMaxDerivSurge = derivRatio >= 0.82;
 
-      document.getElementById('livePosEq').textContent = `${food.formulaStr} = ${calc.pos >= 0 ? '+' : ''}${calc.pos.toFixed(2)}`;
-      document.getElementById('liveDerivEq').textContent = `${food.derivStr} = ${calc.deriv >= 0 ? '+' : ''}${calc.deriv.toFixed(2)}`;
-      document.getElementById('minDerivReadout').textContent = `P'(t) = ${calc.deriv >= 0 ? '+' : ''}${calc.deriv.toFixed(2)}`;
-      document.getElementById('minSlopeReadout').textContent = `m = ${ramp.slope.toFixed(2)} (${ramp.angleDeg.toFixed(0)}°)`;
+      const meterPct = Math.max(0, Math.min(100, ((calc.pos + (calc.maxPos || 4)) / ((calc.maxPos || 4) * 2)) * 100));
+      document.getElementById('meterMarker').style.top = `${100 - meterPct}%`;
+      document.getElementById('meterReadout').textContent = (calc.deriv >= 0 ? '+' : '') + Math.round(calc.deriv * 6);
 
-      const regBadge = document.getElementById('calcRegimeBadge');
-      const critInd = document.getElementById('critPointIndicator');
+      document.getElementById('livePosEq').textContent = `${food.formulaStr} = ${(calc.pos >= 0 ? '+' : '') + calc.pos.toFixed(2)}`;
+      document.getElementById('liveDerivEq').textContent = `${food.derivStr} = ${(calc.deriv >= 0 ? '+' : '') + calc.deriv.toFixed(2)}`;
+      document.getElementById('minDerivReadout').textContent = `P'(t) = ${(calc.deriv >= 0 ? '+' : '') + calc.deriv.toFixed(2)}`;
+
+      const badgeCrit = document.getElementById('badgeCritStatus');
+      const badgeSurge = document.getElementById('badgeSurgeStatus');
+      const indCrit = document.getElementById('critPointIndicator');
+      const regimeBadge = document.getElementById('calcRegimeBadge');
+
       if (isCriticalPoint) {
-        regBadge.textContent = 'CRITICAL POINT (MUTATION)';
-        regBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-yellow-400 text-black shadow animate-pulse';
-        critInd.classList.remove('hidden');
-      } else if (isMaxDerivSurge) {
-        regBadge.textContent = 'MAX DERIVATIVE SURGE';
-        regBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-400 text-black shadow';
-        critInd.classList.add('hidden');
+        badgeCrit.className = 'bg-yellow-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
+        indCrit.classList.remove('hidden');
       } else {
-        regBadge.textContent = 'HARMONIC TRANSIT';
-        regBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gray-600 text-white';
-        critInd.classList.add('hidden');
+        badgeCrit.className = 'bg-black/80 border-2 border-yellow-400 rounded-xl px-2.5 py-0.5 text-[10px] text-yellow-300 font-extrabold shadow';
+        indCrit.classList.add('hidden');
       }
 
-      const marker = document.getElementById('meterMarker');
-      const readout = document.getElementById('meterReadout');
-      if (marker && readout) {
-        const normPos = Math.max(0, Math.min(1, (calc.pos + (food.type === 'tan' ? 5 : 6)) / 12));
-        marker.style.top = `${(1 - normPos) * 88}%`;
-        const powerNumber = Math.round(absDeriv * 5);
-        readout.textContent = `+${powerNumber}`;
+      if (isMaxDerivSurge) {
+        badgeSurge.className = 'bg-cyan-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
+        regimeBadge.textContent = 'MAX SURGE';
+        regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-400 text-black shadow';
+      } else if (isCriticalPoint) {
+        regimeBadge.textContent = 'CRITICAL POINT';
+        regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-yellow-400 text-black shadow';
+      } else {
+        badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
+        regimeBadge.textContent = 'STEADY';
+        regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gray-600 text-white shadow';
       }
 
+      // Draw Oscilloscope Canvas
       const W = oscCanvas.width;
       const H = oscCanvas.height;
       if (W === 0 || H === 0) return;
@@ -1281,21 +1391,36 @@ JS_GAMEPLAY = """
       // Animate Target Skill-Shot Rings
       critRingMesh.rotation.z += dt * 1.5;
       critRingMesh.rotation.x += dt * 0.8;
-      critRingGroup.position.y = 6.5 + Math.sin(state.t * 2.5) * 1.5;
+      critRingGroup.position.y = 7.5 + Math.sin(state.t * 2.5) * 1.6;
       targetLabels.forEach(tl => project3DToScreen(tl.pos, tl.el));
 
-      // Animate Plot Pets Hopping Inside Fenced Lawn Plot
+      // Living Animations for Plot Pets Inside Fenced Lawn Plot
       if (state.settings.viewYourPets) {
         activePlotPetEntities.forEach(ent => {
-          ent.hopPhase += dt * 7.5;
+          ent.hopPhase += dt * 6.5;
           ent.mesh.position.x += ent.vx * dt;
           ent.mesh.position.z += ent.vz * dt;
-          if (ent.mesh.position.x < -9.5 || ent.mesh.position.x > 9.5) ent.vx *= -1;
-          if (ent.mesh.position.z < -2.5 || ent.mesh.position.z > 16.5) ent.vz *= -1;
-          ent.mesh.position.y = Math.abs(Math.sin(ent.hopPhase)) * 0.65;
+          if (ent.mesh.position.x < -19 || ent.mesh.position.x > 19) ent.vx *= -1;
+          if (ent.mesh.position.z < 0 || ent.mesh.position.z > 30) ent.vz *= -1;
+          ent.mesh.position.y = Math.abs(Math.sin(ent.hopPhase)) * 0.55;
           ent.mesh.rotation.y = Math.atan2(ent.vx, -ent.vz);
 
-          const tagPos = ent.mesh.position.clone().add(new THREE.Vector3(0, 2.6, 0));
+          // Living Micro-Animations: tail, wings, head
+          if (ent.mesh.userData) {
+            if (ent.mesh.userData.tail) {
+              ent.mesh.userData.tail.rotation.y = Math.sin(ent.hopPhase * 1.4) * 0.35;
+            }
+            if (ent.mesh.userData.leftWing && ent.mesh.userData.rightWing) {
+              const flap = Math.sin(ent.hopPhase * 2.2) * 0.35;
+              ent.mesh.userData.leftWing.rotation.z = flap;
+              ent.mesh.userData.rightWing.rotation.z = -flap;
+            }
+            if (ent.mesh.userData.head) {
+              ent.mesh.userData.head.rotation.x = Math.sin(ent.hopPhase * 0.7) * 0.1;
+            }
+          }
+
+          const tagPos = ent.mesh.position.clone().add(new THREE.Vector3(0, 3.2, 0));
           project3DToScreen(tagPos, ent.labelEl);
         });
       }
@@ -1307,38 +1432,115 @@ JS_GAMEPLAY = """
       if (state.activeThrow) {
         const th = state.activeThrow;
         if (th.phase === 'flying') {
-          th.progress += dt * 0.65;
+          th.progress += dt * 0.52;
           const p = Math.min(1, th.progress);
           const curZ = -14 + p * (th.targetZ - (-14));
-          const waveArcY = 2.2 + Math.sin(p * Math.PI) * (12 + th.ramp.slope * 4.8) + Math.sin(p * Math.PI * 6) * 1.2;
-          projectileGroup.position.set(0, waveArcY, curZ);
+          const waveArcY = 2.4 + Math.sin(p * Math.PI) * (14 + th.ramp.slope * 5.2) + Math.sin(p * Math.PI * 6) * 1.2;
+          projectileGroup.position.set(playerGroup.position.x, waveArcY, curZ);
           projectileGroup.rotation.x += dt * 8;
           projectileGroup.rotation.y += dt * 6;
 
-          camera.position.set(8.5, waveArcY + 6.5, curZ + 15);
-          camera.lookAt(0, waveArcY, curZ - 6);
+          // Camera follows behind and slightly above the spinning projectile (matching video)
+          camera.position.set(playerGroup.position.x + 8.5, waveArcY + 6.0, curZ + 16);
+          camera.lookAt(playerGroup.position.x, waveArcY, curZ - 12);
 
           const curDist = th.distance * p;
           document.getElementById('flightDistReadout').textContent = `${curDist.toFixed(1)}m`;
-          document.getElementById('flightBiomeReadout').textContent = `Flying down canyon to ${th.landingBiome.icon} ${th.landingBiome.name}!`;
+
+          // Check current biome during flight
+          let curB = BIOMES[0];
+          for (const b of BIOMES) {
+            if (curDist >= b.minDist) curB = b;
+          }
+          document.getElementById('flightBiomeName').textContent = curB.name;
+          document.getElementById('flightBiomeIcon').textContent = curB.icon;
+
+          // Multiplier banner (e.g. 19.09X LUCK from video)
+          const liveLuck = (Math.abs(th.calc.deriv) * th.food.luck * 4.2 + 1).toFixed(2);
+          document.getElementById('flightLuckMult').textContent = `${liveLuck}X`;
 
           if (th.progress >= 1.0) {
             transitionTo3DCatchCutscene(th);
           }
         } else if (th.phase === 'reveal') {
           th.revealTimer += dt;
-          const animalMesh = cutsceneGroup.children[0];
+
+          // Animate Eating: Animal bends down, jaws open and close repeatedly eating food!
+          const animalMesh = th.chosenAnimalMesh;
           if (animalMesh) {
-            animalMesh.rotation.y = Math.sin(th.revealTimer * 3.5) * 0.7;
-            animalMesh.position.y = Math.abs(Math.sin(th.revealTimer * 8)) * 0.95;
+            // Eating bobs
+            animalMesh.position.y = Math.abs(Math.sin(th.revealTimer * 7)) * 0.25;
+            if (animalMesh.userData && animalMesh.userData.jaw) {
+              animalMesh.userData.jaw.rotation.x = Math.max(0, Math.sin(th.revealTimer * 12) * 0.45);
+            }
+            if (animalMesh.userData && animalMesh.userData.head) {
+              animalMesh.userData.head.rotation.x = 0.25 + Math.sin(th.revealTimer * 7) * 0.15;
+            }
+            if (animalMesh.userData && animalMesh.userData.tail) {
+              animalMesh.userData.tail.rotation.y = Math.sin(th.revealTimer * 8) * 0.4;
+            }
           }
-          camera.position.set(Math.sin(th.revealTimer * 0.8) * 5.2, 4.2, th.targetZ + 8.5);
+
+          // Animate Confetti falling down around animal
+          confettiMeshes.forEach(cm => {
+            cm.position.y += cm.userData.vy * dt;
+            cm.position.x += cm.userData.vx * dt;
+            cm.position.z += cm.userData.vz * dt;
+            cm.rotation.x += cm.userData.rotSpeed * dt;
+            cm.rotation.y += cm.userData.rotSpeed * dt;
+            if (cm.position.y < 0.2) {
+              cm.position.y = 14 + Math.random() * 4;
+            }
+          });
+
+          // Aura Beacon gentle spin & pulsation
+          cutsceneBeacon.rotation.y += dt * 1.5;
+
+          // Camera swoops down low in front of the food pellet framing the eating animal
+          camera.position.set(0, 3.4, th.targetZ - 6.5);
           camera.lookAt(0, 1.8, th.targetZ);
+
+          // 1) Suspense Odds Slot Machine Roll (Exact match to Recording 003051)
+          if (th.revealTimer < 1.1) {
+            th.oddsRollTimer += dt;
+            if (th.oddsRollTimer > 0.045) {
+              th.oddsRollTimer = 0;
+              const progressFraction = Math.min(1, th.revealTimer / 1.0);
+              const interimOdds = Math.max(1, Math.round(1 + Math.pow(progressFraction, 2.5) * (th.totalOdds - 1)));
+              document.getElementById('catchOddsNumber').textContent = `1 in ${formatNum(interimOdds)}`;
+              audio.playTickSound();
+            }
+          } else {
+            document.getElementById('catchOddsNumber').textContent = `1 in ${formatNum(th.totalOdds)}`;
+          }
+
+          // 2) Mystery Hangman Letter-by-Letter Name Reveal (Exact match to Recording 003051)
+          const targetName = th.chosenAnimal.name.toUpperCase();
+          const cleanChars = targetName.split('');
+          const revealProgress = Math.max(0, Math.min(1, (th.revealTimer - 0.25) / 0.85));
+          const numLettersToReveal = Math.floor(revealProgress * cleanChars.length);
+
+          if (numLettersToReveal > th.nameRevealStep) {
+            th.nameRevealStep = numLettersToReveal;
+            audio.playRevealLetterSound();
+          }
+
+          let displayStr = '';
+          for (let i = 0; i < cleanChars.length; i++) {
+            if (cleanChars[i] === ' ') {
+              displayStr += '  ';
+            } else if (i < numLettersToReveal || revealProgress >= 1.0) {
+              displayStr += cleanChars[i] + ' ';
+            } else {
+              displayStr += '_ ';
+            }
+          }
+          document.getElementById('catchAnimalName').textContent = displayStr.trim();
         }
       } else {
-        const camDist = 16;
+        const camDist = 18;
         const cx = playerGroup.position.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist;
-        const cy = playerGroup.position.y + Math.sin(camPitch) * camDist + 2.4;
+        const cy = playerGroup.position.y + Math.sin(camPitch) * camDist + 2.5;
         const cz = playerGroup.position.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
         camera.position.set(cx, cy, cz);
         camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2.2, playerGroup.position.z - 2);

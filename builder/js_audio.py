@@ -98,28 +98,32 @@ JS_AUDIO = """
             filter.frequency.setValueAtTime(1400, now);
 
             g.gain.setValueAtTime(0.06, now);
-            g.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.9);
+            g.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.85);
 
             osc.connect(filter);
             filter.connect(g);
             g.connect(this.musicGain);
 
             osc.start(now);
-            osc.stop(now + stepDuration);
+            osc.stop(now + stepDuration * 0.9);
           }
 
-          // Bass groove
-          if (this.stepIndex % 2 === 0) {
+          // Bass arpeggio note
+          if (bFreq) {
             const bOsc = this.ctx.createOscillator();
-            const bG = this.ctx.createGain();
+            const bGain = this.ctx.createGain();
+
             bOsc.type = 'sine';
             bOsc.frequency.setValueAtTime(bFreq, now);
-            bG.gain.setValueAtTime(0.08, now);
-            bG.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 1.8);
-            bOsc.connect(bG);
-            bG.connect(this.musicGain);
+
+            bGain.gain.setValueAtTime(0.09, now);
+            bGain.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.85);
+
+            bOsc.connect(bGain);
+            bGain.connect(this.musicGain);
+
             bOsc.start(now);
-            bOsc.stop(now + stepDuration * 1.8);
+            bOsc.stop(now + stepDuration * 0.9);
           }
 
           this.stepIndex++;
@@ -129,6 +133,12 @@ JS_AUDIO = """
         scheduleNote();
       }
 
+      stopBgm() {
+        this.isPlayingBgm = false;
+        if (this.bgmTimer) clearTimeout(this.bgmTimer);
+      }
+
+      // SFX Generation Methods
       playClickSound() {
         this.ensureContext();
         if (!this.ctx) return;
@@ -150,48 +160,47 @@ JS_AUDIO = """
         this.ensureContext();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
-
-        // Base Whoosh
+        // Whoosh sound
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
-        osc.type = 'sine';
+        osc.type = 'triangle';
         osc.frequency.setValueAtTime(220, now);
-        osc.frequency.exponentialRampToValueAtTime(isSurge ? 1100 : 660, now + 0.28);
-        g.gain.setValueAtTime(0.35, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.frequency.exponentialRampToValueAtTime(isSurge ? 880 : 550, now + 0.28);
+        g.gain.setValueAtTime(0.3, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
         osc.connect(g);
         g.connect(this.sfxGain);
         osc.start(now);
-        osc.stop(now + 0.3);
+        osc.stop(now + 0.32);
 
-        // Max Surge Sonic Boom
         if (isSurge) {
-          const boom = this.ctx.createOscillator();
-          const boomG = this.ctx.createGain();
-          boom.type = 'sawtooth';
-          boom.frequency.setValueAtTime(140, now);
-          boom.frequency.exponentialRampToValueAtTime(40, now + 0.4);
-          boomG.gain.setValueAtTime(0.4, now);
-          boomG.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
-          boom.connect(boomG);
-          boomG.connect(this.sfxGain);
-          boom.start(now);
-          boom.stop(now + 0.42);
+          // Surge boom sound
+          const sub = this.ctx.createOscillator();
+          const subG = this.ctx.createGain();
+          sub.type = 'sine';
+          sub.frequency.setValueAtTime(160, now);
+          sub.frequency.exponentialRampToValueAtTime(50, now + 0.45);
+          subG.gain.setValueAtTime(0.4, now);
+          subG.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          sub.connect(subG);
+          subG.connect(this.sfxGain);
+          sub.start(now);
+          sub.stop(now + 0.45);
         }
 
-        // Critical Point Sparkle Chime
         if (isCritical) {
-          [1200, 1600, 2400].forEach((freq, idx) => {
-            const ch = this.ctx.createOscillator();
-            const chG = this.ctx.createGain();
-            ch.type = 'sine';
-            ch.frequency.setValueAtTime(freq, now + idx * 0.06);
-            chG.gain.setValueAtTime(0.25, now + idx * 0.06);
-            chG.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.25);
-            ch.connect(chG);
-            chG.connect(this.sfxGain);
-            ch.start(now + idx * 0.06);
-            ch.stop(now + idx * 0.06 + 0.25);
+          // Critical harmonic chime
+          [880, 1174.66, 1760].forEach((freq, idx) => {
+            const chime = this.ctx.createOscillator();
+            const cg = this.ctx.createGain();
+            chime.type = 'sine';
+            chime.frequency.setValueAtTime(freq, now + idx * 0.04);
+            cg.gain.setValueAtTime(0.18, now + idx * 0.04);
+            cg.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.25);
+            chime.connect(cg);
+            cg.connect(this.sfxGain);
+            chime.start(now + idx * 0.04);
+            chime.stop(now + idx * 0.04 + 0.25);
           });
         }
       }
@@ -212,6 +221,60 @@ JS_AUDIO = """
           g.connect(this.sfxGain);
           osc.start(now + i * 0.08);
           osc.stop(now + i * 0.08 + 0.35);
+        });
+      }
+
+      // Slot machine ticking SFX for odds roll
+      playTickSound() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1400 + Math.random() * 400, now);
+        g.gain.setValueAtTime(0.15, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+        osc.connect(g);
+        g.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.025);
+      }
+
+      // Letter reveal hit SFX
+      playRevealLetterSound() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(620, now);
+        osc.frequency.exponentialRampToValueAtTime(1100, now + 0.06);
+        g.gain.setValueAtTime(0.22, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.connect(g);
+        g.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.07);
+      }
+
+      // Grand fanfare / explosion SFX
+      playExplosionSound() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98].forEach((f, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(f, now + idx * 0.05);
+          g.gain.setValueAtTime(0.28, now + idx * 0.05);
+          g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.45);
+          osc.connect(g);
+          g.connect(this.sfxGain);
+          osc.start(now + idx * 0.05);
+          osc.stop(now + idx * 0.05 + 0.45);
         });
       }
 
@@ -297,9 +360,7 @@ JS_AUDIO = """
     }
 
     const audio = new ProceduralAudioEngine();
-    // Wake up audio on first interaction
     ['click', 'keydown', 'touchstart'].forEach(ev => {
       window.addEventListener(ev, () => audio.ensureContext(), { once: true });
     });
 """
-

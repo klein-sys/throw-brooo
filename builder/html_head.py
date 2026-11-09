@@ -8,7 +8,7 @@ HTML_HEAD = """<!DOCTYPE html>
   <title>Throw Food For Animals 3D: Calculus Edition (MATH 101)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
     * {
       user-select: none;
@@ -33,6 +33,16 @@ HTML_HEAD = """<!DOCTYPE html>
         -2.5px  2.5px 0 #000,
          2.5px  2.5px 0 #000,
          0px    4.5px 0 #000;
+    }
+    .rblx-stroke-lg {
+      text-shadow:
+        -3.5px -3.5px 0 #000,
+         3.5px -3.5px 0 #000,
+        -3.5px  3.5px 0 #000,
+         3.5px  3.5px 0 #000,
+        -4px    0px   0 #000,
+         4px    0px   0 #000,
+         0px    5.5px 0 #000;
     }
     .rblx-stroke-sm {
       text-shadow:
@@ -116,6 +126,64 @@ HTML_HEAD = """<!DOCTYPE html>
     .shake-active {
       animation: screenShake 0.45s ease-out;
     }
+
+    /* Starburst Flare Rays from Roblox Video Cutscene */
+    @keyframes starburstSpin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    .starburst-rays {
+      position: absolute;
+      width: 480px;
+      height: 480px;
+      left: 50%;
+      top: 50%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        rgba(239, 68, 68, 0.45) 0deg 15deg,
+        transparent 15deg 30deg
+      );
+      border-radius: 50%;
+      animation: starburstSpin 14s linear infinite;
+      pointer-events: none;
+      filter: blur(1px);
+    }
+    .starburst-rays.gold {
+      background: repeating-conic-gradient(
+        from 0deg,
+        rgba(250, 204, 21, 0.5) 0deg 15deg,
+        transparent 15deg 30deg
+      );
+    }
+    .starburst-rays.cosmic {
+      background: repeating-conic-gradient(
+        from 0deg,
+        rgba(192, 132, 252, 0.55) 0deg 15deg,
+        transparent 15deg 30deg
+      );
+    }
+
+    /* Radial Comic Vignette Zoom Lines during Cutscene */
+    .comic-vignette {
+      background: radial-gradient(
+        circle,
+        rgba(0, 0, 0, 0) 45%,
+        rgba(0, 0, 0, 0.35) 75%,
+        rgba(0, 0, 0, 0.75) 100%
+      );
+    }
+
+    /* Hangman mystery letter flip */
+    @keyframes letterPop {
+      0% { transform: scale(0.4) translateY(10px); opacity: 0; }
+      70% { transform: scale(1.25) translateY(-2px); opacity: 1; }
+      100% { transform: scale(1.0) translateY(0); opacity: 1; }
+    }
+    .letter-reveal-pop {
+      display: inline-block;
+      animation: letterPop 0.18s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    }
+
     /* Toggle Switch Custom */
     .toggle-checkbox:checked {
       right: 0;
@@ -128,4 +196,3 @@ HTML_HEAD = """<!DOCTYPE html>
 </head>
 <body class="relative w-screen h-screen overflow-hidden select-none bg-slate-900 text-white">
 """
-

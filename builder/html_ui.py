@@ -253,56 +253,83 @@ HTML_UI = """
     </div>
   </div>
 
-  <!-- 3D FLIGHT TRACKING OVERLAY & SKIP BUTTON -->
+  <!-- 3D FLIGHT TRACKING OVERLAY & SKIP BUTTON (MATCHING RECORDING 003051) -->
   <div id="flightOverlay" class="fixed inset-0 pointer-events-none z-30 hidden flex-col justify-between p-4 sm:p-6">
-    <div class="self-center bg-black/85 border-3 border-black rounded-2xl px-5 py-2 shadow-2xl flex items-center gap-3">
-      <span class="text-2xl animate-spin">🌀</span>
-      <div>
-        <div id="flightDistReadout" class="text-yellow-400 font-extrabold text-lg sm:text-2xl rblx-stroke-sm">0.0m</div>
-        <div id="flightBiomeReadout" class="text-[10px] sm:text-xs text-white font-bold">Flying down the canyon...</div>
+    <!-- Top Center Dark Translucent Pill Banner (from video) -->
+    <div class="self-center flex flex-col items-center gap-1">
+      <div class="bg-black/85 border-3 border-black rounded-3xl px-8 py-2.5 shadow-2xl flex flex-col items-center min-w-[240px]">
+        <!-- Luck Multiplier with bold stroke (from video: e.g. 19.09X LUCK) -->
+        <div id="flightLuckMult" class="text-rose-500 font-black text-3xl sm:text-4xl rblx-stroke-lg tracking-wide leading-none">
+          19.09X
+        </div>
+        <div class="text-white font-black text-xs sm:text-sm tracking-widest mt-0.5">LUCK</div>
+      </div>
+      <!-- Biome Name Translucent Banner (from video: e.g. Forest 🌲, Savanna 🌾, Desert 🏜️) -->
+      <div class="bg-black/60 border border-white/20 rounded-full px-5 py-1 backdrop-blur-sm flex items-center gap-2 shadow-lg">
+        <span id="flightBiomeIcon" class="text-lg">🌲</span>
+        <span id="flightBiomeName" class="text-white font-black text-xs sm:text-sm rblx-stroke-sm">Forest</span>
+        <span class="text-gray-400 text-xs">|</span>
+        <span id="flightDistReadout" class="text-yellow-400 font-extrabold text-xs sm:text-sm mono-math">0.0m</span>
       </div>
     </div>
-    <div class="self-center pointer-events-auto">
-      <button id="skipFlightBtn" onclick="skipThrowAnimation()" class="rblx-btn bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-sm sm:text-base px-6 py-2 rounded-2xl shadow-2xl flex items-center gap-1.5">
+
+    <!-- Skippable Flight Button -->
+    <div class="self-center pointer-events-auto mb-4">
+      <button id="skipFlightBtn" onclick="skipThrowAnimation()" class="rblx-btn bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-sm sm:text-base px-8 py-2.5 rounded-2xl shadow-2xl flex items-center gap-1.5">
         <span>⏭ SKIP ANIMATION</span>
       </button>
     </div>
   </div>
 
-  <!-- 3D CATCH REVEAL CUTSCENE MODAL (SHOWING SIZE, MUTATION & EXACT ODDS) -->
-  <div id="catchRevealModal" onclick="handleCatchRevealTap()" class="fixed inset-0 bg-black/45 z-40 hidden flex-col items-center justify-between py-8 px-4 cursor-pointer">
-    <!-- Top celebration badge if NEW -->
-    <div id="catchNewBadge" class="bg-yellow-400 text-black font-black text-sm sm:text-lg px-4 py-1 rounded-2xl border-3 border-black shadow-2xl -rotate-6 transform animate-bounce">
-      NEW ANIMAL DISCOVERED!
+  <!-- 3D CATCH REVEAL CUTSCENE MODAL (EXACT REPLICATION OF RECORDING 003051) -->
+  <div id="catchRevealModal" onclick="handleCatchRevealTap()" class="fixed inset-0 comic-vignette z-40 hidden flex-col items-center justify-between py-6 px-4 cursor-pointer select-none">
+    
+    <!-- Top Center Header with Starburst Rays & Rolling Odds Slot (Matching Video) -->
+    <div class="relative w-full flex flex-col items-center justify-center pt-2">
+      <!-- Spinning Starburst Rays Background -->
+      <div id="cutsceneStarburst" class="starburst-rays"></div>
+
+      <!-- Celebratory Rarity Banner (e.g. SUPER LUCKY!, LUCKY!, NICE CATCH!) -->
+      <div id="catchRarityHeader" class="text-rose-500 font-black text-3xl sm:text-5xl rblx-stroke-lg tracking-wide transform -rotate-1 relative z-10 animate-bounce">
+        SUPER LUCKY!
+      </div>
+
+      <!-- Rolling Exact Odds Slot (from video: e.g. 1 in 1 -> rolls to 1 in 51) -->
+      <div id="catchOddsNumber" class="text-white font-black text-4xl sm:text-6xl rblx-stroke-lg tracking-tight mt-1 relative z-10">
+        1 in 51
+      </div>
     </div>
 
     <!-- Center is transparent for Three.js 3D camera zooming into the animal eating food! -->
     <div class="flex-1 w-full flex items-center justify-center"></div>
 
-    <!-- Bottom Catch Details Card -->
-    <div class="flex flex-col items-center gap-1.5 text-center bg-black/75 backdrop-blur-md border-3 border-black px-6 sm:px-10 py-3.5 rounded-3xl shadow-2xl pointer-events-auto" onclick="event.stopPropagation()">
-      <!-- Catch Odds Banner -->
-      <div id="catchOddsBadge" class="bg-gradient-to-r from-amber-400 to-yellow-300 text-black font-black text-xs sm:text-sm px-4 py-0.5 rounded-full border-2 border-black shadow-lg">
-        🎲 CHANCE: 1 IN 4.5 (22%)
+    <!-- Bottom Center Mystery Hangman Name Reveal & Badges (Matching Video) -->
+    <div class="flex flex-col items-center gap-1 text-center pointer-events-auto" onclick="event.stopPropagation()">
+      
+      <!-- Mutation Tag (Above Animal Name, e.g. GOLD, RAINBOW, COSMIC) -->
+      <div id="catchMutationTag" class="text-yellow-400 font-black text-sm sm:text-lg rblx-stroke-sm tracking-wider uppercase">
+        GOLD
       </div>
 
-      <div id="catchAnimalName" class="text-white font-extrabold text-2xl sm:text-4xl rblx-stroke mt-1">FROG</div>
-      
-      <!-- Size & Mutation Tags -->
-      <div class="flex flex-wrap items-center justify-center gap-2">
-        <div id="catchSizeTag" class="text-emerald-400 font-extrabold text-xs sm:text-base rblx-stroke-sm bg-gray-900/80 px-2.5 py-0.5 rounded-xl border border-emerald-500">
-          TITANIC (15x Size)
-        </div>
-        <div id="catchMutationTag" class="text-cyan-400 font-extrabold text-xs sm:text-base rblx-stroke-sm bg-gray-900/80 px-2.5 py-0.5 rounded-xl border border-cyan-500">
-          GOLDEN (5x Mutation)
-        </div>
+      <!-- Huge Cartoon Animal Name with Mystery Letter-by-Letter Slot Reveal -->
+      <div id="catchAnimalName" class="text-white font-black text-3xl sm:text-6xl rblx-stroke-lg tracking-wider">
+        DIMETRODON
       </div>
 
-      <div id="catchIncomeRate" class="text-lime-400 font-extrabold text-lg sm:text-2xl rblx-stroke-sm mt-0.5">$300/s</div>
-      
-      <button onclick="closeCatchReveal(event)" class="rblx-btn bg-lime-400 hover:bg-lime-300 text-black font-extrabold text-sm sm:text-base px-8 py-2 rounded-2xl mt-1">
-        CLAIM PET (tap to continue)
-      </button>
+      <!-- Size Tag (Below Animal Name, e.g. REGULAR, BIG, TITANIC, COLOSSAL) -->
+      <div id="catchSizeTag" class="text-sky-300 font-black text-base sm:text-2xl rblx-stroke-sm tracking-wide uppercase">
+        BIG
+      </div>
+
+      <!-- Income Rate Popup (e.g. $56T/s or +$300/s) -->
+      <div id="catchIncomeRate" class="text-lime-400 font-black text-2xl sm:text-4xl rblx-stroke-sm tracking-wide mt-0.5">
+        +$300/s
+      </div>
+
+      <!-- Prompt: tap to continue -->
+      <div id="catchTapPrompt" class="text-white/80 font-bold text-xs sm:text-sm tracking-wide mt-1 animate-pulse">
+        tap to continue
+      </div>
     </div>
   </div>
 
