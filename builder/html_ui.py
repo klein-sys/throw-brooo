@@ -8,10 +8,10 @@ HTML_UI = """
   <div id="labelsContainer" class="absolute inset-0 pointer-events-none z-10 overflow-hidden"></div>
 
   <!-- TOP NAVIGATION BAR: TITLE, QUICK-WALK TELEPORTS & SHORTCUTS -->
-  <div class="fixed top-2 left-1/2 -translate-x-1/2 z-20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-[98%] max-w-5xl pointer-events-none">
+  <div id="topNav" class="game-hud fixed top-2 left-1/2 -translate-x-1/2 z-20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-[98%] max-w-5xl pointer-events-none">
     
     <!-- Title & Math Pill -->
-    <div class="bg-gray-900/95 border-2 border-black rounded-2xl px-3 py-1 flex items-center gap-2 shadow-xl pointer-events-auto">
+    <div id="gameTitle" class="bg-gray-900/95 border-2 border-black rounded-2xl px-3 py-1 flex items-center gap-2 shadow-xl pointer-events-auto">
       <span class="text-yellow-400 font-extrabold text-xs sm:text-base rblx-stroke-sm">🥕 THROW FOOD 3D</span>
       <span class="hidden sm:inline-block bg-cyan-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-black shadow">
         MATH 101 CALCULUS
@@ -19,7 +19,7 @@ HTML_UI = """
     </div>
 
     <!-- Quick-Walk Station Teleport Bar -->
-    <div class="bg-gray-900/95 border-2 border-black rounded-2xl p-1 flex items-center gap-1 shadow-xl pointer-events-auto">
+    <div id="stationNav" role="navigation" aria-label="Activity stations" class="bg-gray-900/95 border-2 border-black rounded-2xl p-1 flex items-center gap-1 shadow-xl pointer-events-auto">
       <button onclick="walkToStation('throw')" class="rblx-btn bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-xl">
         🎯 Throw Line
       </button>
@@ -38,22 +38,22 @@ HTML_UI = """
     </div>
 
     <!-- Teacher God-Mode Demo Pill (For live presentations) -->
-    <button onclick="activateTeacherGodMode()" title="Instant End-Game Preview for Professors Aquino & Gatdula" class="rblx-btn bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-black font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl pointer-events-auto flex items-center gap-1">
+    <button id="demoModeBtn" onclick="activateTeacherGodMode()" title="Instant End-Game Preview for Professors Aquino & Gatdula" class="rblx-btn bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-black font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl pointer-events-auto flex items-center gap-1">
       <span>👨‍🏫 DEMO MODE</span>
     </button>
 
     <!-- Equipped Bait Pill -->
-    <div onclick="openModal('shopModal')" title="Click to change bait in Food Shop" class="cursor-pointer bg-purple-700/95 hover:bg-purple-600 border-2 border-black rounded-2xl px-2.5 py-1 flex items-center gap-1.5 shadow-xl pointer-events-auto">
+    <button id="baitPill" onclick="openModal('shopModal')" title="Click to change bait in Food Shop" class="cursor-pointer bg-purple-700/95 hover:bg-purple-600 border-2 border-black rounded-2xl px-2.5 py-1 flex items-center gap-1.5 shadow-xl pointer-events-auto">
       <span id="hudFoodIcon" class="text-base sm:text-lg">🥕</span>
       <div class="leading-tight">
         <div id="hudFoodName" class="text-white font-extrabold text-[11px] sm:text-xs rblx-stroke-sm">Carrot</div>
         <div id="hudFoodFunc" class="text-[9px] sm:text-[10px] text-yellow-300 mono-math font-bold">P(t)=2sin(1.2t)</div>
       </div>
-    </div>
+    </button>
   </div>
 
   <!-- CURRENT ZONE BANNER NOTIFIER -->
-  <div id="zoneBanner" class="fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-all duration-200">
+  <div id="zoneBanner" class="game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-all duration-200">
     <div class="bg-black/75 backdrop-blur-md border-2 border-white/30 text-white px-4 py-1 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 shadow-2xl">
       <span id="zoneBannerIcon">🏃</span>
       <span id="zoneBannerText">Walk to the Orange Checkered Launch Line to Throw Food!</span>
@@ -61,7 +61,7 @@ HTML_UI = """
   </div>
 
   <!-- LEFT HUD: SIDEBAR ICONS (INDEX, SHOP, ANIMALS, CALC LAB) & STATS -->
-  <div class="fixed left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5">
+  <div id="sidebar" class="game-hud fixed left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5">
     
     <!-- Index Button (Matching Screenshot 75) -->
     <button onclick="openModal('indexModal')" class="rblx-btn bg-gradient-to-b from-blue-500 to-blue-700 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex flex-col items-center justify-center relative group">
@@ -98,7 +98,7 @@ HTML_UI = """
   </div>
 
   <!-- BOTTOM-LEFT STATS: MUSCLE STRENGTH & CASH DISPLAY -->
-  <div class="fixed bottom-3 left-3 z-20 flex flex-col gap-1.5 pointer-events-auto">
+  <div id="gameStats" class="game-hud fixed bottom-3 left-3 z-20 flex flex-col gap-1.5 pointer-events-auto">
     <!-- Strength Pill with Muscle Icon, Number, Bonus & Settings Gear ⚙️ -->
     <div class="flex items-center gap-2 bg-black/75 backdrop-blur-sm border-2 border-black rounded-2xl px-3 py-1 shadow-2xl">
       <span class="text-2xl sm:text-3xl filter drop-shadow">💪</span>
@@ -124,13 +124,13 @@ HTML_UI = """
   </div>
 
   <!-- VIRTUAL ON-SCREEN JOYSTICK FOR MOBILE / TABLET NAVIGATION -->
-  <div id="joystickZone" class="fixed bottom-4 left-36 sm:left-44 z-20 w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-black/40 border-3 border-white/30 backdrop-blur-sm flex items-center justify-center touch-none">
+  <div id="joystickZone" role="group" aria-label="Movement joystick; drag to walk" class="game-hud fixed bottom-4 left-36 sm:left-44 z-20 w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-black/40 border-3 border-white/30 backdrop-blur-sm flex items-center justify-center touch-none">
     <div id="joystickKnob" class="w-12 h-12 rounded-full bg-white/85 border-3 border-black shadow-xl pointer-events-none transition-transform duration-75"></div>
   </div>
 
   <!-- MINIMIZABLE LIVE TRIGONOMETRIC DERIVATIVE HUD (BOTTOM CENTER) -->
   <!-- 1) Minimized Pill Bar -->
-  <div id="calcMinimizedBar" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-20 hidden pointer-events-auto">
+  <div id="calcMinimizedBar" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 hidden pointer-events-auto">
     <button onclick="toggleMinimizeCalcHUD(false)" class="rblx-btn bg-gray-900/95 border-2 border-black text-white px-4 py-1.5 rounded-full flex items-center gap-2 shadow-2xl">
       <span class="text-cyan-400 font-extrabold text-xs">📈 Expand Calculus HUD</span>
       <span class="text-gray-400 text-xs">|</span>
@@ -141,7 +141,7 @@ HTML_UI = """
   </div>
 
   <!-- 2) Expanded Calculus Oscilloscope Panel -->
-  <div id="calcExpandedPanel" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-xl bg-gray-900/95 border-3 border-black rounded-2xl p-2.5 sm:p-3 shadow-2xl pointer-events-auto transition-all">
+  <div id="calcExpandedPanel" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-xl bg-gray-900/95 border-3 border-black rounded-2xl p-2.5 sm:p-3 shadow-2xl pointer-events-auto transition-all">
     <!-- Panel Header: Title, Minimizer, Pause & Status Badges -->
     <div class="flex items-center justify-between gap-1 pb-1.5 border-b border-gray-700">
       <div class="flex items-center gap-2">
@@ -190,10 +190,10 @@ HTML_UI = """
   </div>
 
   <!-- THROW HUD (ACTIVE ONLY ON LAUNCH LINE) -->
-  <div id="throwZoneHUD" class="fixed right-3 bottom-3 z-20 hidden items-end gap-2.5 pointer-events-auto">
+  <div id="throwZoneHUD" class="game-hud fixed right-3 bottom-3 z-20 hidden items-end gap-2.5 pointer-events-auto">
     <!-- Vertical Harmonic Derivative Throw Meter -->
     <div class="flex flex-col items-center">
-      <div class="relative w-10 sm:w-12 h-56 sm:h-64 rounded-full border-4 border-black p-1 shadow-2xl flex flex-col justify-between overflow-hidden"
+      <div id="throwPowerMeter" class="relative w-10 sm:w-12 h-56 sm:h-64 rounded-full border-4 border-black p-1 shadow-2xl flex flex-col justify-between overflow-hidden"
            style="background: linear-gradient(to top, #ef4444 0%, #f97316 25%, #eab308 50%, #84cc16 75%, #22c55e 100%);">
         <div class="w-full h-[3px] bg-black/60 my-auto"></div>
         <div class="w-full h-[3px] bg-black/60 my-auto"></div>
@@ -215,7 +215,7 @@ HTML_UI = """
         </div>
         <div id="badgeSurgeStatus" class="bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow flex items-center justify-between">
           <span>⚡ MAX SURGE (|P'|=Max):</span>
-          <span class="text-cyan-400 font-bold">+35% DISTANCE</span>
+          <span class="text-cyan-400 font-bold">+30% DISTANCE</span>
         </div>
       </div>
 
@@ -234,7 +234,7 @@ HTML_UI = """
   </div>
 
   <!-- PULL-UP BAR HUD (MATCHING SCREENSHOT 78) -->
-  <div id="pullUpZoneHUD" class="fixed inset-x-0 bottom-4 z-20 hidden flex-col items-center gap-2 pointer-events-auto">
+  <div id="pullUpZoneHUD" class="game-hud fixed inset-x-0 bottom-4 z-20 hidden flex-col items-center gap-2 pointer-events-auto">
     <button onclick="exitPullUpStation()" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-extrabold text-base sm:text-xl px-8 py-2 rounded-2xl rblx-stroke-sm shadow-2xl">
       STOP
     </button>
@@ -247,8 +247,10 @@ HTML_UI = """
       <div class="w-full h-4 bg-gray-950 rounded-full border-2 border-black overflow-hidden relative">
         <div id="pullUpProgressBar" class="h-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-100" style="width: 80%;"></div>
       </div>
-      <button onclick="doCalculusPullUpRep()" class="rblx-btn bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-black font-black text-xs sm:text-sm py-1.5 rounded-xl mt-1">
-        🏋️ PULL UP! (Tap Near Peak Velocity h'(t) for 2x XP)
+      <div id="trainingCue">Tap when the meter turns gold for 2× XP</div>
+      <div class="training-meter" aria-hidden="true"><div id="trainingVelocityFill"></div></div>
+      <button id="pullUpActionBtn" onclick="doCalculusPullUpRep()" class="rblx-btn bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-black font-black text-xs sm:text-sm py-1.5 rounded-xl mt-1">
+        🏋️ PULL UP! • Tap or press Space
       </button>
     </div>
   </div>
@@ -304,7 +306,7 @@ HTML_UI = """
     <div class="flex-1 w-full flex items-center justify-center"></div>
 
     <!-- Bottom Center Mystery Hangman Name Reveal & Badges (Matching Video) -->
-    <div class="flex flex-col items-center gap-1 text-center pointer-events-auto" onclick="event.stopPropagation()">
+    <div class="flex flex-col items-center gap-1 text-center pointer-events-auto">
       
       <!-- Mutation Tag (Above Animal Name, e.g. GOLD, RAINBOW, COSMIC) -->
       <div id="catchMutationTag" class="text-yellow-400 font-black text-sm sm:text-lg rblx-stroke-sm tracking-wider uppercase">
@@ -327,18 +329,18 @@ HTML_UI = """
       </div>
 
       <!-- Prompt: tap to continue -->
-      <div id="catchTapPrompt" class="text-white/80 font-bold text-xs sm:text-sm tracking-wide mt-1 animate-pulse">
-        tap to continue
-      </div>
+      <button id="catchTapPrompt" type="button" class="text-white/80 font-bold text-xs sm:text-sm tracking-wide mt-1 animate-pulse">
+        Collect animal · Space
+      </button>
     </div>
   </div>
 
   <!-- "NEW FOOD UNLOCKED!" POPUP MODAL (SCREENSHOT 81) -->
-  <div id="newFoodModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div id="newFoodModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-gray-950 border-4 border-black rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col">
       <div class="rblx-modal-header px-4 py-2 flex items-center justify-between">
         <span class="text-white font-extrabold text-sm sm:text-base rblx-stroke-sm">NEW FOOD UNLOCKED!</span>
-        <button onclick="closeModal('newFoodModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2 py-0.5 rounded-lg">✕</button>
+        <button onclick="closeModal('newFoodModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2 py-0.5 rounded-lg">✕</button>
       </div>
       <div class="p-6 flex items-center gap-4 bg-gray-900">
         <div id="newFoodIconBox" class="w-20 h-20 bg-gray-800 rounded-2xl border-3 border-black flex items-center justify-center text-4xl shadow-inner">
@@ -351,7 +353,7 @@ HTML_UI = """
         </div>
       </div>
       <div class="p-4 bg-gray-950 flex justify-end border-t border-gray-800">
-        <button onclick="closeModal('newFoodModal'); openModal('shopModal')" class="rblx-btn bg-lime-400 hover:bg-lime-300 text-black font-extrabold text-base px-6 py-2 rounded-2xl">
+        <button onclick="closeModal('newFoodModal'); openModal('shopModal')" aria-label="Close panel" class="rblx-btn bg-lime-400 hover:bg-lime-300 text-black font-extrabold text-base px-6 py-2 rounded-2xl">
           SHOP
         </button>
       </div>
@@ -359,13 +361,13 @@ HTML_UI = """
   </div>
 
   <!-- SETTINGS MODAL (SCREENSHOT 82) -->
-  <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div id="settingsModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
       <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
         <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Settings</span>
-        <button onclick="closeModal('settingsModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('settingsModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
-      <div class="p-5 flex flex-col gap-4 text-white text-sm sm:text-base font-bold">
+      <div id="settingsContent" class="p-5 flex flex-col gap-4 text-white text-sm sm:text-base font-bold">
         <div class="flex items-center justify-between gap-3">
           <span class="w-20">Music</span>
           <input id="musicSlider" type="range" min="0" max="100" value="70" oninput="setMusicVolume(this.value)" class="flex-1 h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
@@ -390,10 +392,17 @@ HTML_UI = """
             <input type="checkbox" id="viewYoursToggle" checked onchange="toggleViewYourPets(this.checked)" class="w-6 h-6 accent-lime-400 cursor-pointer">
           </div>
         </div>
+        <label class="flex items-center justify-between gap-3" for="graphicsSelect">
+          <span>Graphics</span>
+          <select id="graphicsSelect" onchange="setGraphicsQuality(this.value)" class="bg-gray-800 border border-gray-600 rounded-xl px-3 py-2 text-sm">
+            <option value="auto">Auto</option><option value="low">Battery saver</option><option value="high">High detail</option>
+          </select>
+        </label>
+        <p class="text-xs text-gray-300">Drag the world to look around. Use WASD / arrows or the joystick to move. Escape closes a panel or ends training.</p>
         <hr class="border-gray-700 my-1">
         <div class="flex items-center justify-between gap-2">
-          <button onclick="activateTeacherGodMode(); closeModal('settingsModal')" class="rblx-btn bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs px-3 py-2 rounded-xl flex-1">
-            👨‍🏫 God-Mode Demo
+          <button data-demo-label onclick="activateTeacherGodMode()" class="rblx-btn bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs px-3 py-2 rounded-xl flex-1">
+            👨‍🏫 Try Demo
           </button>
           <button onclick="resetPlayerProgress()" class="rblx-btn bg-gray-700 hover:bg-gray-600 text-rose-300 font-extrabold text-xs px-3 py-2 rounded-xl">
             Reset Data
@@ -404,11 +413,11 @@ HTML_UI = """
   </div>
 
   <!-- FOOD SHOP MODAL -->
-  <div id="shopModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="shopModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="rblx-modal-header px-4 py-2.5 flex items-center justify-between">
         <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Food Shop</span>
-        <button onclick="closeModal('shopModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('shopModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div class="p-3 sm:p-4 overflow-y-auto flex-1 flex flex-col gap-3">
         <div id="foodShopGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3"></div>
@@ -433,11 +442,11 @@ HTML_UI = """
   </div>
 
   <!-- SELL STALL MODAL -->
-  <div id="sellModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="sellModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="bg-gradient-to-r from-red-600 to-rose-700 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
         <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Sell Stall</span>
-        <button onclick="closeModal('sellModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('sellModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div class="p-3 sm:p-4 flex-1 overflow-y-auto flex flex-col gap-2.5">
         <div class="flex items-center justify-between bg-gray-800/80 p-2.5 rounded-2xl border border-gray-700">
@@ -452,14 +461,14 @@ HTML_UI = """
   </div>
 
   <!-- "MY ANIMALS" MODAL (MATCHING SCREENSHOT 80) -->
-  <div id="animalsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="animalsModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="rblx-modal-header px-4 py-2.5 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">My Animals</span>
           <span id="animalsPlotBadge" class="bg-lime-400 text-black font-extrabold text-xs px-2 py-0.5 rounded-full border border-black">0/5</span>
         </div>
-        <button onclick="closeModal('animalsModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('animalsModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div class="p-3 overflow-y-auto flex-1 flex flex-col gap-2" id="myAnimalsList"></div>
       <div class="p-3 bg-gray-950 border-t border-gray-800 flex justify-center">
@@ -471,28 +480,28 @@ HTML_UI = """
   </div>
 
   <!-- ANIMAL INDEX MODAL (MATCHING SCREENSHOT 73) -->
-  <div id="indexModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="indexModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="rblx-modal-header px-4 py-2.5 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Animal Index</span>
           <span id="indexModalCount" class="text-yellow-300 text-xs font-bold">Unlocked: 0/18</span>
         </div>
-        <button onclick="closeModal('indexModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('indexModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div id="indexBiomeContainer" class="p-3 sm:p-4 overflow-y-auto flex-1 flex flex-col gap-3"></div>
     </div>
   </div>
 
   <!-- PLAYER'S LUCKIEST CATCHES (PERSONAL RECORDS MODAL) -->
-  <div id="leaderboardModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="leaderboardModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="bg-gradient-to-r from-amber-500 to-yellow-600 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
         <div>
           <span class="text-black font-extrabold text-base sm:text-lg rblx-stroke-sm">🏆 Your Luckiest Catches</span>
           <div class="text-[10px] text-gray-900 font-bold">Personal Hall of Fame & Best Records</div>
         </div>
-        <button onclick="closeModal('leaderboardModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('leaderboardModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div class="p-4 overflow-y-auto flex-1 flex flex-col gap-2.5">
         <div class="text-xs text-gray-300 bg-gray-800 p-2.5 rounded-xl border border-gray-700">
@@ -504,14 +513,14 @@ HTML_UI = """
   </div>
 
   <!-- MATH 101 DIFFERENTIAL CALCULUS PRESENTATION & WORKED EXAMPLE MODAL -->
-  <div id="calcLabModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-5">
+  <div id="calcLabModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-5">
     <div class="bg-gray-950 border-4 border-indigo-600 rounded-3xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl text-white">
       <div class="bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 px-5 py-3 border-b-3 border-black flex items-center justify-between">
         <div>
           <div class="font-extrabold text-base sm:text-lg rblx-stroke-sm">MATH 101 • Differential Calculus Project</div>
           <div class="text-[11px] text-pink-200">Prepared for: Engr. Hilarion S. Aquino III & Engr. James Marvin C. Gatdula</div>
         </div>
-        <button onclick="closeModal('calcLabModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('calcLabModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       
       <div class="p-4 sm:p-5 overflow-y-auto flex-1 flex flex-col gap-4 text-xs sm:text-sm">

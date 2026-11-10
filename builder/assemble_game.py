@@ -15,7 +15,11 @@ from animal_models import JS_ANIMAL_MODELS
 from js_three import JS_THREE
 from js_gameplay import JS_GAMEPLAY
 
-full_html = HTML_HEAD + HTML_UI + "\n  <script>\n" + JS_DATA + JS_AUDIO + JS_CALCULUS + JS_MODEL_FRAMEWORK + JS_ANIMAL_MODELS + JS_THREE + JS_GAMEPLAY
+with open(os.path.join(os.path.dirname(__file__), 'mobile.css'), encoding='utf-8') as f:
+    responsive_css = f.read()
+
+head = HTML_HEAD.replace('</style>', responsive_css + '\n  </style>')
+full_html = head + HTML_UI + "\n  <script>\n" + JS_DATA + JS_AUDIO + JS_CALCULUS + JS_MODEL_FRAMEWORK + JS_ANIMAL_MODELS + JS_THREE + JS_GAMEPLAY
 
 workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 file1 = os.path.join(workspace_dir, "throw_food_for_animals_3d_calculus_edition.html")

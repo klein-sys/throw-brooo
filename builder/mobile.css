@@ -1,0 +1,103 @@
+/* Shared interaction surfaces and safe viewport boundaries. */
+:root { --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px); }
+body { height: 100dvh; }
+button, input, select { font: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+  outline: 3px solid #67e8f9; outline-offset: 4px;
+}
+button:disabled { opacity: .55; cursor: default; }
+#webglContainer, #joystickZone { touch-action: none; }
+#topNav { top: calc(8px + var(--safe-top)); max-width: 1280px; }
+#zoneBanner { top: calc(72px + var(--safe-top)); }
+#stationNav button { min-height: 44px; }
+#stationNav button[aria-pressed="true"] { outline: 2px solid white; outline-offset: -5px; }
+#gameStats button, .game-modal button { min-width: 44px; min-height: 44px; }
+.game-modal { padding-top: max(12px, var(--safe-top)); padding-bottom: max(12px, var(--safe-bottom)); }
+.game-modal > div { max-height: calc(100dvh - 32px - var(--safe-top) - var(--safe-bottom)); }
+.game-modal > div > :first-child { flex-shrink: 0; }
+.game-modal .overflow-y-auto { min-height: 0; overscroll-behavior: contain; touch-action: pan-y; }
+.game-modal input[type="range"] { min-width: 0; min-height: 32px; }
+#settingsContent { overflow-y: auto; min-height: 0; }
+#calcExpandedPanel { width: min(42vw, 576px); }
+#calcMinimizedBar button { min-height: 44px; }
+#calcExpandedPanel button { min-height: 32px; }
+#rampSlider { min-height: 28px; }
+#catchAnimalName { max-width: 94vw; overflow-wrap: anywhere; line-height: 1.2; }
+#catchTapPrompt { min-height: 44px; padding: 12px 24px; border-radius: 16px; background: #0f172acc; border: 1px solid #ffffff66; }
+#throwActionBtn { text-shadow: none; }
+#badgeCritStatus span, #badgeSurgeStatus span { color: inherit; }
+#catchRevealModal, #flightOverlay { padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(20px + var(--safe-bottom)); }
+.training-meter { height: 12px; background: #334155; border-radius: 12px; overflow: hidden; }
+.training-meter > div { height: 100%; width: 0; background: #38bdf8; }
+#trainingCue { font-size: 12px; color: #bae6fd; min-height: 18px; text-align: center; }
+#pullUpZoneHUD { pointer-events: none; }
+#pullUpZoneHUD > * { pointer-events: auto; }
+body[data-activity="pullup"] #calcExpandedPanel,
+body[data-activity="pullup"] #calcMinimizedBar,
+body[data-activity="pullup"] #joystickZone,
+body[data-activity="throwing"] #labelsContainer,
+body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: none; }
+@media (hover: hover) and (pointer: fine) { #joystickZone { display: none; } }
+@media (max-width: 1024px) {
+  #topNav { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; width: calc(100% - 20px); }
+  #gameTitle { padding: 6px; min-width: 0; }
+  #gameTitle > span:last-child { display: none; }
+  #stationNav { grid-row: 2; grid-column: 1 / -1; overflow-x: auto; padding: 5px; scrollbar-width: none; }
+  #stationNav button { flex: 1 1 0; min-width: 0; font-size: 10px; padding: 6px 4px; }
+  #demoModeBtn { min-height: 36px; font-size: 10px; }
+  #baitPill { min-height: 36px; max-width: 105px; }
+  #hudFoodFunc { display: none; }
+  #hudFoodName { font-size: 10px; }
+  #zoneBanner { top: calc(106px + var(--safe-top)); max-width: 90vw; width: max-content; }
+  #zoneBannerText { font-size: 10px; }
+  #sidebar { top: calc(151px + var(--safe-top)); left: 12px; right: 12px; transform: none; flex-direction: row; gap: 10px; }
+  #sidebar > button { width: 48px; height: 48px; border-radius: 14px; }
+  #sidebar > button > span:first-child { font-size: 20px; }
+  #sidebar > button > span:nth-child(2) { font-size: 9px; }
+  #gameStats { top: calc(213px + var(--safe-top)); bottom: auto; left: 12px; flex-direction: row; gap: 6px; pointer-events: none; }
+  #gameStats > div { padding: 5px 8px; gap: 5px; }
+  #gameStats > div > span { font-size: 20px; }
+  #gameStats button { pointer-events: auto; min-width: 32px; min-height: 32px; }
+  #strengthDisplay, #cashDisplay { font-size: 18px; }
+  #joystickZone { width: 96px; height: 96px; left: max(16px, env(safe-area-inset-left)); bottom: calc(20px + var(--safe-bottom)); }
+  #joystickKnob { width: 40px; height: 40px; }
+  #throwZoneHUD { right: max(12px, env(safe-area-inset-right)); bottom: calc(18px + var(--safe-bottom)); gap: 6px; }
+  #throwPowerMeter { display: none; }
+  #throwZoneHUD > div:first-child { display: none; }
+  #throwActionBtn { min-height: 58px; font-size: 18px; padding: 12px 16px; }
+  #throwActionBtn > span:last-child { display: none; }
+  #throwZoneHUD label { min-height: 36px; padding: 4px 6px; }
+  #throwZoneHUD label span { font-size: 9px; }
+  #throwZoneHUD > div:last-child { gap: 5px; }
+  #calcMinimizedBar { bottom: calc(184px + var(--safe-bottom)); width: calc(100% - 24px); max-width: 460px; }
+  #calcMinimizedBar button { width: 100%; justify-content: center; padding: 8px; gap: 6px; }
+  #calcMinimizedBar button > span { font-size: 10px; }
+  #calcMinimizedBar button > span:nth-last-child(-n+2) { display: none; }
+  #calcExpandedPanel { bottom: calc(184px + var(--safe-bottom)); width: calc(100% - 24px); max-height: 46dvh; overflow-y: auto; }
+  #pullUpZoneHUD { bottom: calc(20px + var(--safe-bottom)); gap: 8px; }
+  #pullUpZoneHUD button { min-height: 44px; }
+  #catchAnimalName { font-size: clamp(20px, 6vw, 40px); letter-spacing: 0; }
+  #cutsceneStarburst { width: min(90vw, 480px); height: min(90vw, 480px); }
+}
+@media (max-height: 540px) and (max-width: 1024px) and (orientation: landscape) {
+  #topNav { display: flex; top: var(--safe-top); }
+  #gameTitle, #baitPill, #demoModeBtn, #zoneBanner { display: none; }
+  #stationNav { width: 100%; }
+  #sidebar { top: 66px; right: auto; gap: 6px; }
+  #sidebar > button { width: 44px; height: 44px; }
+  #gameStats { top: 65px; left: auto; right: 12px; }
+  #calcMinimizedBar { bottom: calc(18px + var(--safe-bottom)); width: 34%; }
+  #calcMinimizedBar button > span:not(:first-child) { display: none; }
+  #calcExpandedPanel { bottom: 68px; width: 50%; max-height: calc(100dvh - 130px); }
+  #pullUpZoneHUD { left: auto; right: 12px; width: min(50%, 400px); gap: 6px; }
+  #pullUpZoneHUD > button { align-self: flex-end; padding: 4px 18px; }
+  #pullUpZoneHUD > div { width: 100%; padding: 8px; }
+  #catchRarityHeader { font-size: 24px; }
+  #catchOddsNumber { font-size: 30px; }
+  #catchAnimalName { font-size: 22px; }
+  #catchIncomeRate { font-size: 20px; }
+  #catchRevealModal { padding: 10px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

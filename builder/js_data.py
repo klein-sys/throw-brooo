@@ -143,7 +143,8 @@ JS_DATA = """
         musicVol: 70,
         sfxVol: 85,
         viewOthersPets: true,
-        viewYourPets: true
+        viewYourPets: true,
+        graphics: 'auto'
       }
     };
 """

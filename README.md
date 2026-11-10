@@ -95,7 +95,27 @@ Timing reps near peak velocity ($|h'| \ge 0.8\omega$) grants **2x XP/rep** with 
 
 ## 🚀 Running the Project
 
-Open `index.html` or `throw_food_for_animals_3d_calculus_edition.html` directly in any modern web browser. No build step, Node server, or external downloads required!
+Open `index.html` or `throw_food_for_animals_3d_calculus_edition.html` in a modern WebGL browser, or serve the folder with `python3 -m http.server 8000`. Internet access is required for the Three.js, Tailwind and font CDNs. The committed HTML needs no build step or Node runtime.
+
+### Controls and mobile layouts
+
+- Walk with WASD / arrow keys or the touch joystick. Drag the world to look around; mobile supports both gestures at once.
+- Use the five station shortcuts to switch activities. Space throws or performs a training rep; Escape closes a dialog or ends training.
+- On phones the calculus graph starts collapsed. Expand it to adjust the ramp or inspect the derivatives.
+- Training displays a live velocity meter: tap during the gold window for 2× XP.
+- Settings includes Auto, Battery saver and High detail graphics. System reduced-motion preferences disable decorative CSS animations.
+- Demo previews all 18 species. Use **Exit Demo** to return to your progress; demo actions do not overwrite your normal save.
+
+### Development checks
+
+```bash
+python3 builder/assemble_game.py
+npm ci
+npx playwright install chromium
+npm test
+```
+
+The browser suite starts its own local server and saves screenshots under `test-results/`. Use `CHROMIUM_PATH=/path/to/chromium npm test` to use an existing browser. See [Architecture and activity improvements](docs/ARCHITECTURE.md) for the module map, changes and next recommendations.
 
 ## 🎨 Polished 3D Animal Models
 

@@ -19,10 +19,30 @@ JS_THREE = """
     renderer.toneMappingExposure = 1.05;
     container.appendChild(renderer.domElement);
 
+    function applyGraphicsQuality() {
+      const quality = state.settings.graphics || 'auto';
+      const low = quality === 'low' || (quality === 'auto' && matchMedia('(pointer: coarse)').matches);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 2));
+      const shadowsChanged = renderer.shadowMap.enabled === low;
+      renderer.shadowMap.enabled = !low;
+      if (shadowsChanged) scene.traverse(obj => {
+        if (obj.material) (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach(mat => { mat.needsUpdate = true; });
+      });
+      document.getElementById('graphicsSelect').value = quality;
+    }
+
+    function setGraphicsQuality(quality) {
+      if (!['auto', 'low', 'high'].includes(quality)) return;
+      state.settings.graphics = quality;
+      applyGraphicsQuality();
+      saveGame();
+    }
+
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      applyGraphicsQuality();
       resizeOscilloscope();
     });
 
@@ -165,7 +185,7 @@ JS_THREE = """
     scene.add(trajectoryLineMesh);
 
     function update3DTrajectoryArc() {
-      if (state.activeZone !== 'throw') {
+      if (state.activeZone !== 'throw' || state.activeThrow) {
         trajectoryLineMesh.visible = false;
         return;
       }
@@ -586,7 +606,7 @@ JS_THREE = """
 
     const targetLabels = [
       { pos: new THREE.Vector3(0, 12.8, -110), text: "🎯 CRITICAL POINT RING: P'(t) ≈ 0 (5x-25x Mutation!)", color: '#facc15' },
-      { pos: new THREE.Vector3(0, 17.5, -240), text: "⚡ MAX VELOCITY GATE: |P'(t)| = MAX (+35% Range!)", color: '#38bdf8' }
+      { pos: new THREE.Vector3(0, 17.5, -240), text: "⚡ MAX VELOCITY GATE: |P'(t)| = MAX (+30% Range!)", color: '#38bdf8' }
     ];
     targetLabels.forEach(tl => {
       const el = document.createElement('div');

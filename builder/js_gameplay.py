@@ -7,116 +7,130 @@ JS_GAMEPLAY = """
     const keys = {};
     let camYaw = 0;
     let camPitch = 0.32;
-    let isDraggingCam = false;
+    let currentModal = null;
+    let modalReturnFocus = null;
+    let cameraPointer = null;
+    let joystickPointer = null;
     let lastMouseX = 0;
     let lastMouseY = 0;
-
-    window.addEventListener('keydown', e => {
-      keys[e.key.toLowerCase()] = true;
-      if (e.code === 'Space') {
-        if (state.activeThrow && state.activeThrow.phase === 'reveal') {
-          e.preventDefault();
-          skipThrowAnimation();
-        } else if (state.activeZone === 'throw') {
-          e.preventDefault();
-          executeCalculusThrow();
-        } else if (state.activeZone === 'pullup') {
-          e.preventDefault();
-          doCalculusPullUpRep();
-        }
-      }
-    });
-    window.addEventListener('keyup', e => {
-      keys[e.key.toLowerCase()] = false;
-    });
-
-    // Mouse Drag Camera Orbit
-    window.addEventListener('mousedown', e => {
-      if (e.target.closest('button, input, select, #joystickZone, .pointer-events-auto')) return;
-      isDraggingCam = true;
-      lastMouseX = e.clientX;
-      lastMouseY = e.clientY;
-    });
-    window.addEventListener('mousemove', e => {
-      if (!isDraggingCam) return;
-      const dx = e.clientX - lastMouseX;
-      const dy = e.clientY - lastMouseY;
-      lastMouseX = e.clientX;
-      lastMouseY = e.clientY;
-      camYaw -= dx * 0.005;
-      camPitch = Math.max(0.08, Math.min(1.2, camPitch + dy * 0.005));
-    });
-    window.addEventListener('mouseup', () => { isDraggingCam = false; });
-
-    // Touch Drag Camera Orbit
-    let touchStartCamX = 0;
-    let touchStartCamY = 0;
-    window.addEventListener('touchstart', e => {
-      if (e.target.closest('button, input, #joystickZone, .pointer-events-auto')) return;
-      if (e.touches.length === 1) {
-        touchStartCamX = e.touches[0].clientX;
-        touchStartCamY = e.touches[0].clientY;
-      }
-    }, { passive: true });
-    window.addEventListener('touchmove', e => {
-      if (e.target.closest('button, input, #joystickZone, .pointer-events-auto')) return;
-      if (e.touches.length === 1) {
-        const dx = e.touches[0].clientX - touchStartCamX;
-        const dy = e.touches[0].clientY - touchStartCamY;
-        touchStartCamX = e.touches[0].clientX;
-        touchStartCamY = e.touches[0].clientY;
-        camYaw -= dx * 0.006;
-        camPitch = Math.max(0.08, Math.min(1.2, camPitch + dy * 0.006));
-      }
-    }, { passive: true });
-
-    // Virtual Touch Joystick
     let joystickActive = false;
     let joystickDir = { x: 0, y: 0 };
     const joyZone = document.getElementById('joystickZone');
     const joyKnob = document.getElementById('joystickKnob');
 
-    function handleJoystickMove(clientX, clientY) {
-      const rect = joyZone.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = clientX - cx;
-      const dy = clientY - cy;
-      const dist = Math.hypot(dx, dy);
-      const maxR = rect.width / 2;
-      const clampedDist = Math.min(dist, maxR);
-      const angle = Math.atan2(dy, dx);
-      const nx = Math.cos(angle) * (clampedDist / maxR);
-      const ny = Math.sin(angle) * (clampedDist / maxR);
-      joystickDir = { x: nx, y: ny };
-      joyKnob.style.transform = `translate(${nx * maxR}px, ${ny * maxR}px)`;
-    }
-
     function resetJoystick() {
+      if (joystickPointer !== null && joyZone.hasPointerCapture(joystickPointer)) joyZone.releasePointerCapture(joystickPointer);
+      joystickPointer = null;
       joystickActive = false;
       joystickDir = { x: 0, y: 0 };
-      joyKnob.style.transform = `translate(0px, 0px)`;
+      joyKnob.style.transform = 'translate(0px, 0px)';
     }
 
-    joyZone.addEventListener('touchstart', e => {
+    function resetInput() {
+      Object.keys(keys).forEach(key => delete keys[key]);
+      if (cameraPointer !== null && container.hasPointerCapture(cameraPointer)) container.releasePointerCapture(cameraPointer);
+      cameraPointer = null;
+      resetJoystick();
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Escape') {
+        if (currentModal) closeModal(currentModal);
+        else if (state.isPullingUp) exitPullUpStation();
+        return;
+      }
+      if (currentModal) {
+        if (e.code === 'Tab') {
+          const modal = document.getElementById(currentModal);
+          const items = Array.from(modal.querySelectorAll('button:not(:disabled), input, select, [tabindex="0"]')).filter(el => el.getClientRects().length);
+          const first = items[0], last = items[items.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === modal)) { e.preventDefault(); last?.focus(); }
+          else if (!e.shiftKey && (document.activeElement === last || document.activeElement === modal)) { e.preventDefault(); first?.focus(); }
+        }
+        return;
+      }
+      if (e.code === 'Space' && e.repeat) { e.preventDefault(); return; }
+      if (e.target.closest('input, select, textarea, button, [contenteditable="true"]')) return;
+      keys[e.key.toLowerCase()] = true;
+      if (e.key.startsWith('Arrow')) e.preventDefault();
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (state.activeThrow?.phase === 'reveal') skipThrowAnimation();
+        else if (state.isPullingUp) doCalculusPullUpRep();
+        else if (state.activeZone === 'throw') executeCalculusThrow();
+      }
+    });
+    window.addEventListener('keyup', e => { delete keys[e.key.toLowerCase()]; });
+    window.addEventListener('blur', resetInput);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) resetInput(); });
+
+    // Each pointer owns its gesture: looking and walking can happen together.
+    container.addEventListener('pointerdown', e => {
+      if (currentModal || state.activeThrow || isThrowWindup || cameraPointer !== null || e.button !== 0) return;
+      cameraPointer = e.pointerId;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      container.setPointerCapture(e.pointerId);
+    });
+    container.addEventListener('pointermove', e => {
+      if (e.pointerId !== cameraPointer) return;
+      camYaw -= (e.clientX - lastMouseX) * 0.005;
+      camPitch = Math.max(0.08, Math.min(1.2, camPitch + (e.clientY - lastMouseY) * 0.005));
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => container.addEventListener(type, e => {
+      if (e.pointerId === cameraPointer) cameraPointer = null;
+    }));
+
+    function handleJoystickMove(clientX, clientY) {
+      const rect = joyZone.getBoundingClientRect();
+      const dx = clientX - rect.left - rect.width / 2;
+      const dy = clientY - rect.top - rect.height / 2;
+      const maxR = (rect.width - joyKnob.offsetWidth) / 2;
+      const distance = Math.hypot(dx, dy);
+      const scale = Math.min(1, distance / maxR);
+      joystickDir = distance < 4 ? { x: 0, y: 0 } : { x: dx / distance * scale, y: dy / distance * scale };
+      joyKnob.style.transform = `translate(${joystickDir.x * maxR}px, ${joystickDir.y * maxR}px)`;
+    }
+    joyZone.addEventListener('pointerdown', e => {
+      if (currentModal || state.activeThrow || state.isPullingUp || isThrowWindup || joystickPointer !== null) return;
+      joystickPointer = e.pointerId;
       joystickActive = true;
-      handleJoystickMove(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: true });
-    joyZone.addEventListener('touchmove', e => {
-      if (!joystickActive) return;
-      handleJoystickMove(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: true });
-    joyZone.addEventListener('touchend', resetJoystick, { passive: true });
-    joyZone.addEventListener('touchcancel', resetJoystick, { passive: true });
+      joyZone.setPointerCapture(e.pointerId);
+      handleJoystickMove(e.clientX, e.clientY);
+    });
+    joyZone.addEventListener('pointermove', e => {
+      if (e.pointerId === joystickPointer) handleJoystickMove(e.clientX, e.clientY);
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => joyZone.addEventListener(type, e => {
+      if (e.pointerId === joystickPointer) resetJoystick();
+    }));
+
+    function syncActivityUI() {
+      const busy = !!state.activeThrow || isThrowWindup;
+      rampArrow.visible = !busy;
+      document.body.dataset.activity = busy ? 'throwing' : state.isPullingUp ? 'pullup' : state.activeZone || 'explore';
+      document.querySelectorAll('#stationNav button').forEach((btn, index) => {
+        btn.setAttribute('aria-pressed', String(Object.keys(STATIONS)[index] === state.activeZone));
+        btn.disabled = busy;
+      });
+    }
 
     function walkToStation(stationKey) {
+      if (state.activeThrow || isThrowWindup) return;
+      if (currentModal) closeModal(currentModal);
+      if (state.isPullingUp) exitPullUpStation();
+      resetInput();
       audio.playClickSound();
       const st = STATIONS[stationKey];
       if (!st) return;
       state.playerPos.x = st.x;
       state.playerPos.z = st.z;
       playerGroup.position.set(st.x, 0, st.z);
+      state.activeZone = null;
       checkZoneTrigger();
+      if (!currentModal) document.activeElement?.blur();
     }
 
     /*************************************************************************
@@ -124,7 +138,7 @@ JS_GAMEPLAY = """
      *************************************************************************/
     let walkCycle = 0;
     function updatePlayerMovement(dt) {
-      if (state.activeThrow || state.isPullingUp) return;
+      if (currentModal || state.activeThrow || isThrowWindup || state.isPullingUp) return;
 
       let mx = 0;
       let mz = 0;
@@ -196,6 +210,7 @@ JS_GAMEPLAY = """
     }
 
     function onZoneChanged(zone) {
+      syncActivityUI();
       const banner = document.getElementById('zoneBanner');
       const icon = document.getElementById('zoneBannerIcon');
       const text = document.getElementById('zoneBannerText');
@@ -207,33 +222,33 @@ JS_GAMEPLAY = """
       if (zone === 'throw') {
         icon.textContent = '🎯';
         text.textContent = 'Orange Checkered Launch Line! (Press SPACE or Click TAP TO THROW)';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none pulse-glow';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none pulse-glow';
         throwHUD.classList.remove('hidden');
         throwHUD.classList.add('flex');
         update3DTrajectoryArc();
       } else if (zone === 'pullup') {
         icon.textContent = '🏋️';
         text.textContent = 'Pull-Up Bar Station! Chain Rule Training Mode Active.';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
         enterPullUpStation();
       } else if (zone === 'shop') {
         icon.textContent = '🛒';
         text.textContent = 'Food Shop Stall! Buy bait & expand lawn capacity.';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
         openModal('shopModal');
       } else if (zone === 'sell') {
         icon.textContent = '💰';
         text.textContent = 'Sell Stall! Liquidate duplicate or unequipped pets.';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
         openModal('sellModal');
       } else if (zone === 'plot') {
         icon.textContent = '🏡';
         text.textContent = `My Plot! ${state.inventory.filter(i => i.equipped).length}/${state.plotCapacity} pets roaming.`;
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
       } else {
         icon.textContent = '🏃';
         text.textContent = 'Walk to the Orange Checkered Launch Line to Throw Food!';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none opacity-85';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none opacity-85';
       }
     }
 
@@ -241,8 +256,12 @@ JS_GAMEPLAY = """
      * 8. PULL-UP BAR CHAIN RULE WORKOUT (MATCHING SCREENSHOT 78)
      *************************************************************************/
     let pullUpRepTime = 0;
+    let lastPullUpRep = -Infinity;
     function enterPullUpStation() {
+      resetInput();
       state.isPullingUp = true;
+      lastPullUpRep = -Infinity;
+      syncActivityUI();
       state.playerPos.x = STATIONS.pullup.x;
       state.playerPos.z = STATIONS.pullup.z;
       playerGroup.position.set(STATIONS.pullup.x, 2.0, STATIONS.pullup.z);
@@ -258,6 +277,7 @@ JS_GAMEPLAY = """
 
     function exitPullUpStation() {
       state.isPullingUp = false;
+      syncActivityUI();
       leftArm.rotation.x = 0;
       rightArm.rotation.x = 0;
       playerGroup.position.y = 0;
@@ -266,10 +286,12 @@ JS_GAMEPLAY = """
       state.playerPos.z += 5.5;
       playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
       checkZoneTrigger();
+      document.activeElement?.blur();
     }
 
     function doCalculusPullUpRep() {
-      if (!state.isPullingUp) return;
+      if (!state.isPullingUp || currentModal || performance.now() - lastPullUpRep < 300) return;
+      lastPullUpRep = performance.now();
       const calc = evaluatePullUpCalculus(pullUpRepTime);
       const isPerfect = calc.isNearPeak;
       const xpGain = isPerfect ? 2 : 1;
@@ -280,7 +302,7 @@ JS_GAMEPLAY = """
       showFloatingPopup(playerGroup.position, isPerfect ? '+2 XP (PERFECT VELOCITY!)' : '+1 XP', isPerfect ? '#facc15' : '#38bdf8');
 
       if (state.pullUpXp >= state.pullUpMaxXp) {
-        state.pullUpXp = 0;
+        state.pullUpXp -= state.pullUpMaxXp;
         state.pullUpLevel++;
         state.pullUpMaxXp = Math.round(state.pullUpMaxXp * 1.5);
         state.baseStrength += 5;
@@ -307,6 +329,7 @@ JS_GAMEPLAY = """
     let isThrowWindup = false;
 
     function executeCalculusThrow() {
+      if (currentModal || state.isPullingUp) return;
       if (state.activeThrow || state.activeZone !== 'throw' || isThrowWindup) {
         if (state.activeZone !== 'throw') {
           showToast('🎯 Walk onto the Orange Checkered Launch Line to Throw!', 'bg-amber-400 text-black');
@@ -389,6 +412,8 @@ JS_GAMEPLAY = """
 
       // START DYNAMIC CHARACTER THROW ANIMATION (Anticipation -> Release)
       isThrowWindup = true;
+      resetInput();
+      syncActivityUI();
       rightArm.rotation.x = -Math.PI * 0.7;
       rightArm.rotation.z = 0.35;
       torsoMesh.rotation.x = -0.22;
@@ -447,6 +472,8 @@ JS_GAMEPLAY = """
           projectileGroup.visible = false;
           state.activeThrow = null;
           isThrowWindup = false;
+          syncActivityUI();
+          checkNewFoodUnlock();
           rightArm.rotation.set(0, 0, 0);
           torsoMesh.rotation.set(0, 0, 0);
           heldFoodMesh.visible = true;
@@ -460,6 +487,8 @@ JS_GAMEPLAY = """
 
         setTimeout(() => {
           isThrowWindup = false;
+          syncActivityUI();
+          checkNewFoodUnlock();
           rightArm.rotation.set(0, 0, 0);
           torsoMesh.rotation.set(0, 0, 0);
           heldFoodMesh.visible = true;
@@ -500,6 +529,9 @@ JS_GAMEPLAY = """
       document.getElementById('catchRevealModal').classList.add('hidden');
       document.getElementById('catchRevealModal').classList.remove('flex');
       state.activeThrow = null;
+      syncActivityUI();
+      document.activeElement?.blur();
+      checkNewFoodUnlock();
       showToast(`🐾 Caught ${th.chosenSize.name} ${th.chosenMutation.name} ${th.chosenAnimal.name} (+$${formatNum(th.finalIncome)}/s)!`, 'bg-lime-400 text-black');
     }
 
@@ -588,6 +620,7 @@ JS_GAMEPLAY = """
 
       document.getElementById('catchRevealModal').classList.remove('hidden');
       document.getElementById('catchRevealModal').classList.add('flex');
+      document.getElementById('catchTapPrompt').focus();
 
       audio.playExplosionSound();
     }
@@ -647,22 +680,44 @@ JS_GAMEPLAY = """
      * 10. MODAL MANAGERS: FOOD SHOP, SELL, ANIMALS, INDEX & RECORDS
      *************************************************************************/
     function openModal(id) {
+      if (state.activeThrow || isThrowWindup) return;
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      if (currentModal === id) return;
+      if (currentModal) closeModal(currentModal);
+      modalReturnFocus = document.activeElement;
+      currentModal = id;
+      resetInput();
       audio.playClickSound();
-      document.getElementById(id).classList.remove('hidden');
-      document.getElementById(id).classList.add('flex');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.querySelectorAll('.game-hud').forEach(el => { el.inert = true; });
       if (id === 'shopModal') renderFoodShop();
       if (id === 'sellModal') renderSellStall();
       if (id === 'animalsModal') renderMyAnimals();
       if (id === 'indexModal') renderAnimalIndex();
       if (id === 'leaderboardModal') renderLeaderboardModal();
       if (id === 'calcLabModal') renderWorkedExampleModal();
+      modal.querySelector('button')?.focus();
     }
 
     function closeModal(id) {
       audio.playClickSound();
       document.getElementById(id).classList.add('hidden');
       document.getElementById(id).classList.remove('flex');
+      if (currentModal === id) {
+        currentModal = null;
+        document.querySelectorAll('.game-hud').forEach(el => { el.inert = false; });
+        if (modalReturnFocus?.isConnected) modalReturnFocus.focus();
+        modalReturnFocus = null;
+        resetInput();
+      }
     }
+
+    document.querySelectorAll('.game-modal').forEach(modal => {
+      modal.setAttribute('aria-label', modal.querySelector('button[aria-label="Close panel"]')?.parentElement.textContent.trim().replace('✕', '') || 'Game panel');
+      modal.addEventListener('click', e => { if (e.target === modal) closeModal(modal.id); });
+    });
 
     function renderFoodShop() {
       const grid = document.getElementById('foodShopGrid');
@@ -994,6 +1049,7 @@ JS_GAMEPLAY = """
 
     let lastNotifiedFoodIndex = 0;
     function checkNewFoodUnlock() {
+      if (state.activeThrow || isThrowWindup || currentModal) return;
       FOODS.forEach((food, idx) => {
         if (idx === 0) return;
         if (!state.unlockedFoods.includes(food.id) && idx > lastNotifiedFoodIndex) {
@@ -1044,7 +1100,34 @@ JS_GAMEPLAY = """
     /*************************************************************************
      * 12. TEACHER GOD-MODE DEMO BUTTON & AUTO-SAVE ENGINE
      *************************************************************************/
+    let demoProgress = null;
     function activateTeacherGodMode() {
+      if (state.activeThrow || isThrowWindup) return;
+      if (currentModal) closeModal(currentModal);
+      if (state.isPullingUp) exitPullUpStation();
+      resetInput();
+      if (demoProgress) {
+        state = demoProgress;
+        demoProgress = null;
+        document.getElementById('demoModeBtn').textContent = '👨‍🏫 DEMO MODE';
+        document.querySelectorAll('[data-demo-label]').forEach(el => { el.textContent = '👨‍🏫 Try Demo'; });
+        playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
+        state.activeZone = null;
+        checkZoneTrigger();
+        sync3DPlotPets();
+        update3DLuckiestBoardTexture();
+        updateHUD();
+        updateRampSlider(state.rampX0);
+        applyGraphicsQuality();
+        syncSettingsUI();
+        renderWorkedExampleModal();
+        showToast('Back to your saved adventure.', 'bg-sky-400 text-black');
+        return;
+      }
+      saveGame();
+      demoProgress = structuredClone(state);
+      document.getElementById('demoModeBtn').textContent = '↩ EXIT DEMO';
+      document.querySelectorAll('[data-demo-label]').forEach(el => { el.textContent = '↩ Exit Demo'; });
       audio.playLevelUpSound();
       state.cash = 10000000;
       state.baseStrength = 5000;
@@ -1058,8 +1141,8 @@ JS_GAMEPLAY = """
       state.playerBestCatches = [];
 
       for (let i = 0; i < 20; i++) {
-        const anim = ANIMALS[ANIMALS.length - 1 - (i % 6)];
-        const sz = SIZES[Math.min(SIZES.length - 1, 3 + (i % 3))]; // Giant, Titanic, Colossal
+        const anim = ANIMALS[i % ANIMALS.length];
+        const sz = SIZES[i % SIZES.length];
         const mut = MUTATIONS[2 + (i % 3)]; // Golden, Rainbow, Cosmic
         const income = Math.round(anim.baseIncome * sz.mult * mut.mult);
         const odds = anim.baseOdds * sz.chanceNum * mut.chanceNum;
@@ -1091,11 +1174,12 @@ JS_GAMEPLAY = """
       update3DLuckiestBoardTexture();
       sync3DPlotPets();
       updateHUD();
-      showToast('👨‍🏫 TEACHER DEMO ACTIVATED! $10M Cash, 20 Mutated Pets & All Trig Tiers Unlocked!', 'bg-yellow-400 text-black');
+      showToast('👨‍🏫 DEMO: All 18 species unlocked! Exit Demo returns to your progress.', 'bg-yellow-400 text-black');
       saveGame();
     }
 
     function resetPlayerProgress() {
+      if (demoProgress) { activateTeacherGodMode(); return; }
       if (confirm('Reset all game data back to student start?')) {
         localStorage.removeItem(SAVE_KEY);
         location.reload();
@@ -1103,6 +1187,7 @@ JS_GAMEPLAY = """
     }
 
     function saveGame() {
+      if (demoProgress) return;
       try {
         const data = {
           cash: state.cash,
@@ -1146,19 +1231,31 @@ JS_GAMEPLAY = """
         if (d.autoSkipRepeats !== undefined) state.autoSkipRepeats = d.autoSkipRepeats;
         if (d.settings) state.settings = { ...state.settings, ...d.settings };
 
-        const musicSlider = document.getElementById('musicSlider');
-        if (musicSlider) musicSlider.value = state.settings.musicVol;
-        const musicLabel = document.getElementById('musicVolLabel');
-        if (musicLabel) musicLabel.textContent = `${state.settings.musicVol}%`;
-        const sfxSlider = document.getElementById('sfxSlider');
-        if (sfxSlider) sfxSlider.value = state.settings.sfxVol;
-        const sfxLabel = document.getElementById('sfxVolLabel');
-        if (sfxLabel) sfxLabel.textContent = `${state.settings.sfxVol}%`;
-        const autoSkipBox = document.getElementById('autoSkipCheckbox');
-        if (autoSkipBox) autoSkipBox.checked = state.autoSkipRepeats;
+        syncSettingsUI();
       } catch (e) {
         console.warn('LocalStorage load failed:', e);
       }
+    }
+
+    function syncSettingsUI() {
+      const musicSlider = document.getElementById('musicSlider');
+      if (musicSlider) musicSlider.value = state.settings.musicVol;
+      const musicLabel = document.getElementById('musicVolLabel');
+      if (musicLabel) musicLabel.textContent = `${state.settings.musicVol}%`;
+      const sfxSlider = document.getElementById('sfxSlider');
+      if (sfxSlider) sfxSlider.value = state.settings.sfxVol;
+      const sfxLabel = document.getElementById('sfxVolLabel');
+      if (sfxLabel) sfxLabel.textContent = `${state.settings.sfxVol}%`;
+      const autoSkipBox = document.getElementById('autoSkipCheckbox');
+      if (autoSkipBox) autoSkipBox.checked = state.autoSkipRepeats;
+      [['viewOthersToggle', 'viewOthersLabel', 'viewOthersPets'], ['viewYoursToggle', 'viewYoursLabel', 'viewYourPets']].forEach(([input, label, setting]) => {
+        const enabled = state.settings[setting];
+        document.getElementById(input).checked = enabled;
+        document.getElementById(label).textContent = enabled ? 'ON' : 'OFF';
+        document.getElementById(label).className = enabled ? 'text-xs text-lime-400' : 'text-xs text-gray-500';
+      });
+      audio.setMusicVol(state.settings.musicVol);
+      audio.setSfxVol(state.settings.sfxVol);
     }
 
     function formatNum(n) {
@@ -1237,6 +1334,7 @@ JS_GAMEPLAY = """
       } else {
         minBar.classList.add('hidden');
         expPanel.classList.remove('hidden');
+        resizeOscilloscope();
       }
     }
 
@@ -1298,6 +1396,7 @@ JS_GAMEPLAY = """
         regimeBadge.textContent = 'MAX SURGE';
         regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-400 text-black shadow';
       } else if (isCriticalPoint) {
+        badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
         regimeBadge.textContent = 'CRITICAL POINT';
         regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-yellow-400 text-black shadow';
       } else {
@@ -1305,6 +1404,8 @@ JS_GAMEPLAY = """
         regimeBadge.textContent = 'STEADY';
         regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gray-600 text-white shadow';
       }
+
+      if (document.getElementById('calcExpandedPanel').classList.contains('hidden') || state.isPullingUp || state.activeThrow) return;
 
       // Draw Oscilloscope Canvas
       const W = oscCanvas.width;
@@ -1388,9 +1489,15 @@ JS_GAMEPLAY = """
       const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
       lastFrameTime = now;
 
-      if (!state.wavePaused) {
-        state.t += dt;
+      if (!state.wavePaused) state.t += dt;
+      if (state.isPullingUp && !currentModal) {
         pullUpRepTime += dt;
+        const training = evaluatePullUpCalculus(pullUpRepTime);
+        playerGroup.position.y = 2 + training.h * 0.55;
+        const meter = document.getElementById('trainingVelocityFill');
+        meter.style.width = `${Math.abs(training.v) / training.omega * 100}%`;
+        meter.style.background = training.isNearPeak ? '#facc15' : '#38bdf8';
+        document.getElementById('trainingCue').textContent = training.isNearPeak ? 'PERFECT WINDOW · Tap now for 2× XP!' : 'Build your rhythm · Gold = 2× XP';
       }
 
       updatePlayerMovement(dt);
@@ -1401,7 +1508,10 @@ JS_GAMEPLAY = """
       critRingMesh.rotation.z += dt * 1.5;
       critRingMesh.rotation.x += dt * 0.8;
       critRingGroup.position.y = 7.5 + Math.sin(state.t * 2.5) * 1.6;
-      targetLabels.forEach(tl => project3DToScreen(tl.pos, tl.el));
+      targetLabels.forEach(tl => {
+        if (camera.position.distanceTo(tl.pos) > 160) tl.el.style.display = 'none';
+        else project3DToScreen(tl.pos, tl.el);
+      });
 
       // Living Animations for Plot Pets Inside Fenced Lawn Plot
       if (state.settings.viewYourPets) {
@@ -1436,7 +1546,10 @@ JS_GAMEPLAY = """
       }
 
       // Project Station World Labels
-      stationLabels.forEach(st => project3DToScreen(st.pos, st.el));
+      stationLabels.forEach(st => {
+        if (st.key === state.activeZone) st.el.style.display = 'none';
+        else project3DToScreen(st.pos, st.el);
+      });
 
       // Active Projectile Flight or 3D Cutscene Camera
       if (state.activeThrow) {
@@ -1565,6 +1678,8 @@ JS_GAMEPLAY = """
      *************************************************************************/
     window.onload = function () {
       loadGame();
+      applyGraphicsQuality();
+      toggleMinimizeCalcHUD(window.innerWidth <= 1024);
       initStationLabels();
       sync3DPlotPets();
       update3DLuckiestBoardTexture();

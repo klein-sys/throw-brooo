@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Throw Food For Animals 3D: Calculus Edition (MATH 101)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -190,6 +190,110 @@
     .toggle-checkbox:checked + .toggle-label {
       background-color: #22c55e;
     }
+  /* Shared interaction surfaces and safe viewport boundaries. */
+:root { --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px); }
+body { height: 100dvh; }
+button, input, select { font: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+  outline: 3px solid #67e8f9; outline-offset: 4px;
+}
+button:disabled { opacity: .55; cursor: default; }
+#webglContainer, #joystickZone { touch-action: none; }
+#topNav { top: calc(8px + var(--safe-top)); max-width: 1280px; }
+#zoneBanner { top: calc(72px + var(--safe-top)); }
+#stationNav button { min-height: 44px; }
+#stationNav button[aria-pressed="true"] { outline: 2px solid white; outline-offset: -5px; }
+#gameStats button, .game-modal button { min-width: 44px; min-height: 44px; }
+.game-modal { padding-top: max(12px, var(--safe-top)); padding-bottom: max(12px, var(--safe-bottom)); }
+.game-modal > div { max-height: calc(100dvh - 32px - var(--safe-top) - var(--safe-bottom)); }
+.game-modal > div > :first-child { flex-shrink: 0; }
+.game-modal .overflow-y-auto { min-height: 0; overscroll-behavior: contain; touch-action: pan-y; }
+.game-modal input[type="range"] { min-width: 0; min-height: 32px; }
+#settingsContent { overflow-y: auto; min-height: 0; }
+#calcExpandedPanel { width: min(42vw, 576px); }
+#calcMinimizedBar button { min-height: 44px; }
+#calcExpandedPanel button { min-height: 32px; }
+#rampSlider { min-height: 28px; }
+#catchAnimalName { max-width: 94vw; overflow-wrap: anywhere; line-height: 1.2; }
+#catchTapPrompt { min-height: 44px; padding: 12px 24px; border-radius: 16px; background: #0f172acc; border: 1px solid #ffffff66; }
+#throwActionBtn { text-shadow: none; }
+#badgeCritStatus span, #badgeSurgeStatus span { color: inherit; }
+#catchRevealModal, #flightOverlay { padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(20px + var(--safe-bottom)); }
+.training-meter { height: 12px; background: #334155; border-radius: 12px; overflow: hidden; }
+.training-meter > div { height: 100%; width: 0; background: #38bdf8; }
+#trainingCue { font-size: 12px; color: #bae6fd; min-height: 18px; text-align: center; }
+#pullUpZoneHUD { pointer-events: none; }
+#pullUpZoneHUD > * { pointer-events: auto; }
+body[data-activity="pullup"] #calcExpandedPanel,
+body[data-activity="pullup"] #calcMinimizedBar,
+body[data-activity="pullup"] #joystickZone,
+body[data-activity="throwing"] #labelsContainer,
+body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: none; }
+@media (hover: hover) and (pointer: fine) { #joystickZone { display: none; } }
+@media (max-width: 1024px) {
+  #topNav { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; width: calc(100% - 20px); }
+  #gameTitle { padding: 6px; min-width: 0; }
+  #gameTitle > span:last-child { display: none; }
+  #stationNav { grid-row: 2; grid-column: 1 / -1; overflow-x: auto; padding: 5px; scrollbar-width: none; }
+  #stationNav button { flex: 1 1 0; min-width: 0; font-size: 10px; padding: 6px 4px; }
+  #demoModeBtn { min-height: 36px; font-size: 10px; }
+  #baitPill { min-height: 36px; max-width: 105px; }
+  #hudFoodFunc { display: none; }
+  #hudFoodName { font-size: 10px; }
+  #zoneBanner { top: calc(106px + var(--safe-top)); max-width: 90vw; width: max-content; }
+  #zoneBannerText { font-size: 10px; }
+  #sidebar { top: calc(151px + var(--safe-top)); left: 12px; right: 12px; transform: none; flex-direction: row; gap: 10px; }
+  #sidebar > button { width: 48px; height: 48px; border-radius: 14px; }
+  #sidebar > button > span:first-child { font-size: 20px; }
+  #sidebar > button > span:nth-child(2) { font-size: 9px; }
+  #gameStats { top: calc(213px + var(--safe-top)); bottom: auto; left: 12px; flex-direction: row; gap: 6px; pointer-events: none; }
+  #gameStats > div { padding: 5px 8px; gap: 5px; }
+  #gameStats > div > span { font-size: 20px; }
+  #gameStats button { pointer-events: auto; min-width: 32px; min-height: 32px; }
+  #strengthDisplay, #cashDisplay { font-size: 18px; }
+  #joystickZone { width: 96px; height: 96px; left: max(16px, env(safe-area-inset-left)); bottom: calc(20px + var(--safe-bottom)); }
+  #joystickKnob { width: 40px; height: 40px; }
+  #throwZoneHUD { right: max(12px, env(safe-area-inset-right)); bottom: calc(18px + var(--safe-bottom)); gap: 6px; }
+  #throwPowerMeter { display: none; }
+  #throwZoneHUD > div:first-child { display: none; }
+  #throwActionBtn { min-height: 58px; font-size: 18px; padding: 12px 16px; }
+  #throwActionBtn > span:last-child { display: none; }
+  #throwZoneHUD label { min-height: 36px; padding: 4px 6px; }
+  #throwZoneHUD label span { font-size: 9px; }
+  #throwZoneHUD > div:last-child { gap: 5px; }
+  #calcMinimizedBar { bottom: calc(184px + var(--safe-bottom)); width: calc(100% - 24px); max-width: 460px; }
+  #calcMinimizedBar button { width: 100%; justify-content: center; padding: 8px; gap: 6px; }
+  #calcMinimizedBar button > span { font-size: 10px; }
+  #calcMinimizedBar button > span:nth-last-child(-n+2) { display: none; }
+  #calcExpandedPanel { bottom: calc(184px + var(--safe-bottom)); width: calc(100% - 24px); max-height: 46dvh; overflow-y: auto; }
+  #pullUpZoneHUD { bottom: calc(20px + var(--safe-bottom)); gap: 8px; }
+  #pullUpZoneHUD button { min-height: 44px; }
+  #catchAnimalName { font-size: clamp(20px, 6vw, 40px); letter-spacing: 0; }
+  #cutsceneStarburst { width: min(90vw, 480px); height: min(90vw, 480px); }
+}
+@media (max-height: 540px) and (max-width: 1024px) and (orientation: landscape) {
+  #topNav { display: flex; top: var(--safe-top); }
+  #gameTitle, #baitPill, #demoModeBtn, #zoneBanner { display: none; }
+  #stationNav { width: 100%; }
+  #sidebar { top: 66px; right: auto; gap: 6px; }
+  #sidebar > button { width: 44px; height: 44px; }
+  #gameStats { top: 65px; left: auto; right: 12px; }
+  #calcMinimizedBar { bottom: calc(18px + var(--safe-bottom)); width: 34%; }
+  #calcMinimizedBar button > span:not(:first-child) { display: none; }
+  #calcExpandedPanel { bottom: 68px; width: 50%; max-height: calc(100dvh - 130px); }
+  #pullUpZoneHUD { left: auto; right: 12px; width: min(50%, 400px); gap: 6px; }
+  #pullUpZoneHUD > button { align-self: flex-end; padding: 4px 18px; }
+  #pullUpZoneHUD > div { width: 100%; padding: 8px; }
+  #catchRarityHeader { font-size: 24px; }
+  #catchOddsNumber { font-size: 30px; }
+  #catchAnimalName { font-size: 22px; }
+  #catchIncomeRate { font-size: 20px; }
+  #catchRevealModal { padding: 10px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
   </style>
 </head>
 <body class="relative w-screen h-screen overflow-hidden select-none bg-slate-900 text-white">
@@ -201,10 +305,10 @@
   <div id="labelsContainer" class="absolute inset-0 pointer-events-none z-10 overflow-hidden"></div>
 
   <!-- TOP NAVIGATION BAR: TITLE, QUICK-WALK TELEPORTS & SHORTCUTS -->
-  <div class="fixed top-2 left-1/2 -translate-x-1/2 z-20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-[98%] max-w-5xl pointer-events-none">
+  <div id="topNav" class="game-hud fixed top-2 left-1/2 -translate-x-1/2 z-20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-[98%] max-w-5xl pointer-events-none">
     
     <!-- Title & Math Pill -->
-    <div class="bg-gray-900/95 border-2 border-black rounded-2xl px-3 py-1 flex items-center gap-2 shadow-xl pointer-events-auto">
+    <div id="gameTitle" class="bg-gray-900/95 border-2 border-black rounded-2xl px-3 py-1 flex items-center gap-2 shadow-xl pointer-events-auto">
       <span class="text-yellow-400 font-extrabold text-xs sm:text-base rblx-stroke-sm">🥕 THROW FOOD 3D</span>
       <span class="hidden sm:inline-block bg-cyan-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-black shadow">
         MATH 101 CALCULUS
@@ -212,7 +316,7 @@
     </div>
 
     <!-- Quick-Walk Station Teleport Bar -->
-    <div class="bg-gray-900/95 border-2 border-black rounded-2xl p-1 flex items-center gap-1 shadow-xl pointer-events-auto">
+    <div id="stationNav" role="navigation" aria-label="Activity stations" class="bg-gray-900/95 border-2 border-black rounded-2xl p-1 flex items-center gap-1 shadow-xl pointer-events-auto">
       <button onclick="walkToStation('throw')" class="rblx-btn bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-xl">
         🎯 Throw Line
       </button>
@@ -231,22 +335,22 @@
     </div>
 
     <!-- Teacher God-Mode Demo Pill (For live presentations) -->
-    <button onclick="activateTeacherGodMode()" title="Instant End-Game Preview for Professors Aquino & Gatdula" class="rblx-btn bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-black font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl pointer-events-auto flex items-center gap-1">
+    <button id="demoModeBtn" onclick="activateTeacherGodMode()" title="Instant End-Game Preview for Professors Aquino & Gatdula" class="rblx-btn bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-black font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl pointer-events-auto flex items-center gap-1">
       <span>👨‍🏫 DEMO MODE</span>
     </button>
 
     <!-- Equipped Bait Pill -->
-    <div onclick="openModal('shopModal')" title="Click to change bait in Food Shop" class="cursor-pointer bg-purple-700/95 hover:bg-purple-600 border-2 border-black rounded-2xl px-2.5 py-1 flex items-center gap-1.5 shadow-xl pointer-events-auto">
+    <button id="baitPill" onclick="openModal('shopModal')" title="Click to change bait in Food Shop" class="cursor-pointer bg-purple-700/95 hover:bg-purple-600 border-2 border-black rounded-2xl px-2.5 py-1 flex items-center gap-1.5 shadow-xl pointer-events-auto">
       <span id="hudFoodIcon" class="text-base sm:text-lg">🥕</span>
       <div class="leading-tight">
         <div id="hudFoodName" class="text-white font-extrabold text-[11px] sm:text-xs rblx-stroke-sm">Carrot</div>
         <div id="hudFoodFunc" class="text-[9px] sm:text-[10px] text-yellow-300 mono-math font-bold">P(t)=2sin(1.2t)</div>
       </div>
-    </div>
+    </button>
   </div>
 
   <!-- CURRENT ZONE BANNER NOTIFIER -->
-  <div id="zoneBanner" class="fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-all duration-200">
+  <div id="zoneBanner" class="game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-all duration-200">
     <div class="bg-black/75 backdrop-blur-md border-2 border-white/30 text-white px-4 py-1 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 shadow-2xl">
       <span id="zoneBannerIcon">🏃</span>
       <span id="zoneBannerText">Walk to the Orange Checkered Launch Line to Throw Food!</span>
@@ -254,7 +358,7 @@
   </div>
 
   <!-- LEFT HUD: SIDEBAR ICONS (INDEX, SHOP, ANIMALS, CALC LAB) & STATS -->
-  <div class="fixed left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5">
+  <div id="sidebar" class="game-hud fixed left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5">
     
     <!-- Index Button (Matching Screenshot 75) -->
     <button onclick="openModal('indexModal')" class="rblx-btn bg-gradient-to-b from-blue-500 to-blue-700 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex flex-col items-center justify-center relative group">
@@ -291,7 +395,7 @@
   </div>
 
   <!-- BOTTOM-LEFT STATS: MUSCLE STRENGTH & CASH DISPLAY -->
-  <div class="fixed bottom-3 left-3 z-20 flex flex-col gap-1.5 pointer-events-auto">
+  <div id="gameStats" class="game-hud fixed bottom-3 left-3 z-20 flex flex-col gap-1.5 pointer-events-auto">
     <!-- Strength Pill with Muscle Icon, Number, Bonus & Settings Gear ⚙️ -->
     <div class="flex items-center gap-2 bg-black/75 backdrop-blur-sm border-2 border-black rounded-2xl px-3 py-1 shadow-2xl">
       <span class="text-2xl sm:text-3xl filter drop-shadow">💪</span>
@@ -317,13 +421,13 @@
   </div>
 
   <!-- VIRTUAL ON-SCREEN JOYSTICK FOR MOBILE / TABLET NAVIGATION -->
-  <div id="joystickZone" class="fixed bottom-4 left-36 sm:left-44 z-20 w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-black/40 border-3 border-white/30 backdrop-blur-sm flex items-center justify-center touch-none">
+  <div id="joystickZone" role="group" aria-label="Movement joystick; drag to walk" class="game-hud fixed bottom-4 left-36 sm:left-44 z-20 w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-black/40 border-3 border-white/30 backdrop-blur-sm flex items-center justify-center touch-none">
     <div id="joystickKnob" class="w-12 h-12 rounded-full bg-white/85 border-3 border-black shadow-xl pointer-events-none transition-transform duration-75"></div>
   </div>
 
   <!-- MINIMIZABLE LIVE TRIGONOMETRIC DERIVATIVE HUD (BOTTOM CENTER) -->
   <!-- 1) Minimized Pill Bar -->
-  <div id="calcMinimizedBar" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-20 hidden pointer-events-auto">
+  <div id="calcMinimizedBar" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 hidden pointer-events-auto">
     <button onclick="toggleMinimizeCalcHUD(false)" class="rblx-btn bg-gray-900/95 border-2 border-black text-white px-4 py-1.5 rounded-full flex items-center gap-2 shadow-2xl">
       <span class="text-cyan-400 font-extrabold text-xs">📈 Expand Calculus HUD</span>
       <span class="text-gray-400 text-xs">|</span>
@@ -334,7 +438,7 @@
   </div>
 
   <!-- 2) Expanded Calculus Oscilloscope Panel -->
-  <div id="calcExpandedPanel" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-xl bg-gray-900/95 border-3 border-black rounded-2xl p-2.5 sm:p-3 shadow-2xl pointer-events-auto transition-all">
+  <div id="calcExpandedPanel" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-xl bg-gray-900/95 border-3 border-black rounded-2xl p-2.5 sm:p-3 shadow-2xl pointer-events-auto transition-all">
     <!-- Panel Header: Title, Minimizer, Pause & Status Badges -->
     <div class="flex items-center justify-between gap-1 pb-1.5 border-b border-gray-700">
       <div class="flex items-center gap-2">
@@ -383,10 +487,10 @@
   </div>
 
   <!-- THROW HUD (ACTIVE ONLY ON LAUNCH LINE) -->
-  <div id="throwZoneHUD" class="fixed right-3 bottom-3 z-20 hidden items-end gap-2.5 pointer-events-auto">
+  <div id="throwZoneHUD" class="game-hud fixed right-3 bottom-3 z-20 hidden items-end gap-2.5 pointer-events-auto">
     <!-- Vertical Harmonic Derivative Throw Meter -->
     <div class="flex flex-col items-center">
-      <div class="relative w-10 sm:w-12 h-56 sm:h-64 rounded-full border-4 border-black p-1 shadow-2xl flex flex-col justify-between overflow-hidden"
+      <div id="throwPowerMeter" class="relative w-10 sm:w-12 h-56 sm:h-64 rounded-full border-4 border-black p-1 shadow-2xl flex flex-col justify-between overflow-hidden"
            style="background: linear-gradient(to top, #ef4444 0%, #f97316 25%, #eab308 50%, #84cc16 75%, #22c55e 100%);">
         <div class="w-full h-[3px] bg-black/60 my-auto"></div>
         <div class="w-full h-[3px] bg-black/60 my-auto"></div>
@@ -408,7 +512,7 @@
         </div>
         <div id="badgeSurgeStatus" class="bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow flex items-center justify-between">
           <span>⚡ MAX SURGE (|P'|=Max):</span>
-          <span class="text-cyan-400 font-bold">+35% DISTANCE</span>
+          <span class="text-cyan-400 font-bold">+30% DISTANCE</span>
         </div>
       </div>
 
@@ -427,7 +531,7 @@
   </div>
 
   <!-- PULL-UP BAR HUD (MATCHING SCREENSHOT 78) -->
-  <div id="pullUpZoneHUD" class="fixed inset-x-0 bottom-4 z-20 hidden flex-col items-center gap-2 pointer-events-auto">
+  <div id="pullUpZoneHUD" class="game-hud fixed inset-x-0 bottom-4 z-20 hidden flex-col items-center gap-2 pointer-events-auto">
     <button onclick="exitPullUpStation()" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-extrabold text-base sm:text-xl px-8 py-2 rounded-2xl rblx-stroke-sm shadow-2xl">
       STOP
     </button>
@@ -440,8 +544,10 @@
       <div class="w-full h-4 bg-gray-950 rounded-full border-2 border-black overflow-hidden relative">
         <div id="pullUpProgressBar" class="h-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-100" style="width: 80%;"></div>
       </div>
-      <button onclick="doCalculusPullUpRep()" class="rblx-btn bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-black font-black text-xs sm:text-sm py-1.5 rounded-xl mt-1">
-        🏋️ PULL UP! (Tap Near Peak Velocity h'(t) for 2x XP)
+      <div id="trainingCue">Tap when the meter turns gold for 2× XP</div>
+      <div class="training-meter" aria-hidden="true"><div id="trainingVelocityFill"></div></div>
+      <button id="pullUpActionBtn" onclick="doCalculusPullUpRep()" class="rblx-btn bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-black font-black text-xs sm:text-sm py-1.5 rounded-xl mt-1">
+        🏋️ PULL UP! • Tap or press Space
       </button>
     </div>
   </div>
@@ -497,7 +603,7 @@
     <div class="flex-1 w-full flex items-center justify-center"></div>
 
     <!-- Bottom Center Mystery Hangman Name Reveal & Badges (Matching Video) -->
-    <div class="flex flex-col items-center gap-1 text-center pointer-events-auto" onclick="event.stopPropagation()">
+    <div class="flex flex-col items-center gap-1 text-center pointer-events-auto">
       
       <!-- Mutation Tag (Above Animal Name, e.g. GOLD, RAINBOW, COSMIC) -->
       <div id="catchMutationTag" class="text-yellow-400 font-black text-sm sm:text-lg rblx-stroke-sm tracking-wider uppercase">
@@ -520,18 +626,18 @@
       </div>
 
       <!-- Prompt: tap to continue -->
-      <div id="catchTapPrompt" class="text-white/80 font-bold text-xs sm:text-sm tracking-wide mt-1 animate-pulse">
-        tap to continue
-      </div>
+      <button id="catchTapPrompt" type="button" class="text-white/80 font-bold text-xs sm:text-sm tracking-wide mt-1 animate-pulse">
+        Collect animal · Space
+      </button>
     </div>
   </div>
 
   <!-- "NEW FOOD UNLOCKED!" POPUP MODAL (SCREENSHOT 81) -->
-  <div id="newFoodModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div id="newFoodModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-gray-950 border-4 border-black rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col">
       <div class="rblx-modal-header px-4 py-2 flex items-center justify-between">
         <span class="text-white font-extrabold text-sm sm:text-base rblx-stroke-sm">NEW FOOD UNLOCKED!</span>
-        <button onclick="closeModal('newFoodModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2 py-0.5 rounded-lg">✕</button>
+        <button onclick="closeModal('newFoodModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2 py-0.5 rounded-lg">✕</button>
       </div>
       <div class="p-6 flex items-center gap-4 bg-gray-900">
         <div id="newFoodIconBox" class="w-20 h-20 bg-gray-800 rounded-2xl border-3 border-black flex items-center justify-center text-4xl shadow-inner">
@@ -544,7 +650,7 @@
         </div>
       </div>
       <div class="p-4 bg-gray-950 flex justify-end border-t border-gray-800">
-        <button onclick="closeModal('newFoodModal'); openModal('shopModal')" class="rblx-btn bg-lime-400 hover:bg-lime-300 text-black font-extrabold text-base px-6 py-2 rounded-2xl">
+        <button onclick="closeModal('newFoodModal'); openModal('shopModal')" aria-label="Close panel" class="rblx-btn bg-lime-400 hover:bg-lime-300 text-black font-extrabold text-base px-6 py-2 rounded-2xl">
           SHOP
         </button>
       </div>
@@ -552,13 +658,13 @@
   </div>
 
   <!-- SETTINGS MODAL (SCREENSHOT 82) -->
-  <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div id="settingsModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
       <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
         <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Settings</span>
-        <button onclick="closeModal('settingsModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('settingsModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
-      <div class="p-5 flex flex-col gap-4 text-white text-sm sm:text-base font-bold">
+      <div id="settingsContent" class="p-5 flex flex-col gap-4 text-white text-sm sm:text-base font-bold">
         <div class="flex items-center justify-between gap-3">
           <span class="w-20">Music</span>
           <input id="musicSlider" type="range" min="0" max="100" value="70" oninput="setMusicVolume(this.value)" class="flex-1 h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
@@ -583,10 +689,17 @@
             <input type="checkbox" id="viewYoursToggle" checked onchange="toggleViewYourPets(this.checked)" class="w-6 h-6 accent-lime-400 cursor-pointer">
           </div>
         </div>
+        <label class="flex items-center justify-between gap-3" for="graphicsSelect">
+          <span>Graphics</span>
+          <select id="graphicsSelect" onchange="setGraphicsQuality(this.value)" class="bg-gray-800 border border-gray-600 rounded-xl px-3 py-2 text-sm">
+            <option value="auto">Auto</option><option value="low">Battery saver</option><option value="high">High detail</option>
+          </select>
+        </label>
+        <p class="text-xs text-gray-300">Drag the world to look around. Use WASD / arrows or the joystick to move. Escape closes a panel or ends training.</p>
         <hr class="border-gray-700 my-1">
         <div class="flex items-center justify-between gap-2">
-          <button onclick="activateTeacherGodMode(); closeModal('settingsModal')" class="rblx-btn bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs px-3 py-2 rounded-xl flex-1">
-            👨‍🏫 God-Mode Demo
+          <button data-demo-label onclick="activateTeacherGodMode()" class="rblx-btn bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs px-3 py-2 rounded-xl flex-1">
+            👨‍🏫 Try Demo
           </button>
           <button onclick="resetPlayerProgress()" class="rblx-btn bg-gray-700 hover:bg-gray-600 text-rose-300 font-extrabold text-xs px-3 py-2 rounded-xl">
             Reset Data
@@ -597,11 +710,11 @@
   </div>
 
   <!-- FOOD SHOP MODAL -->
-  <div id="shopModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="shopModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="rblx-modal-header px-4 py-2.5 flex items-center justify-between">
         <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Food Shop</span>
-        <button onclick="closeModal('shopModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('shopModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div class="p-3 sm:p-4 overflow-y-auto flex-1 flex flex-col gap-3">
         <div id="foodShopGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3"></div>
@@ -626,11 +739,11 @@
   </div>
 
   <!-- SELL STALL MODAL -->
-  <div id="sellModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="sellModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="bg-gradient-to-r from-red-600 to-rose-700 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
         <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Sell Stall</span>
-        <button onclick="closeModal('sellModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('sellModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div class="p-3 sm:p-4 flex-1 overflow-y-auto flex flex-col gap-2.5">
         <div class="flex items-center justify-between bg-gray-800/80 p-2.5 rounded-2xl border border-gray-700">
@@ -645,14 +758,14 @@
   </div>
 
   <!-- "MY ANIMALS" MODAL (MATCHING SCREENSHOT 80) -->
-  <div id="animalsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="animalsModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="rblx-modal-header px-4 py-2.5 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">My Animals</span>
           <span id="animalsPlotBadge" class="bg-lime-400 text-black font-extrabold text-xs px-2 py-0.5 rounded-full border border-black">0/5</span>
         </div>
-        <button onclick="closeModal('animalsModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('animalsModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div class="p-3 overflow-y-auto flex-1 flex flex-col gap-2" id="myAnimalsList"></div>
       <div class="p-3 bg-gray-950 border-t border-gray-800 flex justify-center">
@@ -664,28 +777,28 @@
   </div>
 
   <!-- ANIMAL INDEX MODAL (MATCHING SCREENSHOT 73) -->
-  <div id="indexModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="indexModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="rblx-modal-header px-4 py-2.5 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-white font-extrabold text-base sm:text-lg rblx-stroke-sm">Animal Index</span>
           <span id="indexModalCount" class="text-yellow-300 text-xs font-bold">Unlocked: 0/18</span>
         </div>
-        <button onclick="closeModal('indexModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('indexModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div id="indexBiomeContainer" class="p-3 sm:p-4 overflow-y-auto flex-1 flex flex-col gap-3"></div>
     </div>
   </div>
 
   <!-- PLAYER'S LUCKIEST CATCHES (PERSONAL RECORDS MODAL) -->
-  <div id="leaderboardModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+  <div id="leaderboardModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="bg-gradient-to-r from-amber-500 to-yellow-600 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
         <div>
           <span class="text-black font-extrabold text-base sm:text-lg rblx-stroke-sm">🏆 Your Luckiest Catches</span>
           <div class="text-[10px] text-gray-900 font-bold">Personal Hall of Fame & Best Records</div>
         </div>
-        <button onclick="closeModal('leaderboardModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('leaderboardModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       <div class="p-4 overflow-y-auto flex-1 flex flex-col gap-2.5">
         <div class="text-xs text-gray-300 bg-gray-800 p-2.5 rounded-xl border border-gray-700">
@@ -697,14 +810,14 @@
   </div>
 
   <!-- MATH 101 DIFFERENTIAL CALCULUS PRESENTATION & WORKED EXAMPLE MODAL -->
-  <div id="calcLabModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-5">
+  <div id="calcLabModal" role="dialog" aria-modal="true" tabindex="-1" class="game-modal fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-5">
     <div class="bg-gray-950 border-4 border-indigo-600 rounded-3xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl text-white">
       <div class="bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 px-5 py-3 border-b-3 border-black flex items-center justify-between">
         <div>
           <div class="font-extrabold text-base sm:text-lg rblx-stroke-sm">MATH 101 • Differential Calculus Project</div>
           <div class="text-[11px] text-pink-200">Prepared for: Engr. Hilarion S. Aquino III & Engr. James Marvin C. Gatdula</div>
         </div>
-        <button onclick="closeModal('calcLabModal')" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
+        <button onclick="closeModal('calcLabModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
       </div>
       
       <div class="p-4 sm:p-5 overflow-y-auto flex-1 flex flex-col gap-4 text-xs sm:text-sm">
@@ -921,7 +1034,8 @@
         musicVol: 70,
         sfxVol: 85,
         viewOthersPets: true,
-        viewYourPets: true
+        viewYourPets: true,
+        graphics: 'auto'
       }
     };
 
@@ -950,11 +1064,11 @@
           this.masterGain.connect(this.ctx.destination);
 
           this.musicGain = this.ctx.createGain();
-          this.musicGain.gain.value = (state.settings.musicVol || 70) / 100;
+          this.musicGain.gain.value = (state.settings.musicVol ?? 70) / 100;
           this.musicGain.connect(this.masterGain);
 
           this.sfxGain = this.ctx.createGain();
-          this.sfxGain.gain.value = (state.settings.sfxVol || 85) / 100;
+          this.sfxGain.gain.value = (state.settings.sfxVol ?? 85) / 100;
           this.sfxGain.connect(this.masterGain);
 
           this.startBgmLoop();
@@ -1399,7 +1513,6 @@
       `;
     }
 
-
 /* Throw Brooo / Polished Model Framework v1.0
  * Three.js r128, classic <script> compatible. Loaded before animal_models.py.
  * Zero external 3D assets; gameplay IDs, sizes, odds and income remain untouched.
@@ -1696,6 +1809,7 @@ function disposePolishedAnimal(group) {
   });
   if (group.parent) group.parent.remove(group);
 }
+
     /*************************************************************************
      * DEDICATED 3D VOXEL MODELS FOR ALL 18 ANIMALS ACROSS 6 BIOMES
      * Each model crafted with rich anatomy, distinct textures, and living joints
@@ -2315,10 +2429,30 @@ function disposePolishedAnimal(group) {
     renderer.toneMappingExposure = 1.05;
     container.appendChild(renderer.domElement);
 
+    function applyGraphicsQuality() {
+      const quality = state.settings.graphics || 'auto';
+      const low = quality === 'low' || (quality === 'auto' && matchMedia('(pointer: coarse)').matches);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 2));
+      const shadowsChanged = renderer.shadowMap.enabled === low;
+      renderer.shadowMap.enabled = !low;
+      if (shadowsChanged) scene.traverse(obj => {
+        if (obj.material) (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach(mat => { mat.needsUpdate = true; });
+      });
+      document.getElementById('graphicsSelect').value = quality;
+    }
+
+    function setGraphicsQuality(quality) {
+      if (!['auto', 'low', 'high'].includes(quality)) return;
+      state.settings.graphics = quality;
+      applyGraphicsQuality();
+      saveGame();
+    }
+
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      applyGraphicsQuality();
       resizeOscilloscope();
     });
 
@@ -2461,7 +2595,7 @@ function disposePolishedAnimal(group) {
     scene.add(trajectoryLineMesh);
 
     function update3DTrajectoryArc() {
-      if (state.activeZone !== 'throw') {
+      if (state.activeZone !== 'throw' || state.activeThrow) {
         trajectoryLineMesh.visible = false;
         return;
       }
@@ -2882,7 +3016,7 @@ function disposePolishedAnimal(group) {
 
     const targetLabels = [
       { pos: new THREE.Vector3(0, 12.8, -110), text: "🎯 CRITICAL POINT RING: P'(t) ≈ 0 (5x-25x Mutation!)", color: '#facc15' },
-      { pos: new THREE.Vector3(0, 17.5, -240), text: "⚡ MAX VELOCITY GATE: |P'(t)| = MAX (+35% Range!)", color: '#38bdf8' }
+      { pos: new THREE.Vector3(0, 17.5, -240), text: "⚡ MAX VELOCITY GATE: |P'(t)| = MAX (+30% Range!)", color: '#38bdf8' }
     ];
     targetLabels.forEach(tl => {
       const el = document.createElement('div');
@@ -3087,116 +3221,130 @@ function disposePolishedAnimal(group) {
     const keys = {};
     let camYaw = 0;
     let camPitch = 0.32;
-    let isDraggingCam = false;
+    let currentModal = null;
+    let modalReturnFocus = null;
+    let cameraPointer = null;
+    let joystickPointer = null;
     let lastMouseX = 0;
     let lastMouseY = 0;
-
-    window.addEventListener('keydown', e => {
-      keys[e.key.toLowerCase()] = true;
-      if (e.code === 'Space') {
-        if (state.activeThrow && state.activeThrow.phase === 'reveal') {
-          e.preventDefault();
-          skipThrowAnimation();
-        } else if (state.activeZone === 'throw') {
-          e.preventDefault();
-          executeCalculusThrow();
-        } else if (state.activeZone === 'pullup') {
-          e.preventDefault();
-          doCalculusPullUpRep();
-        }
-      }
-    });
-    window.addEventListener('keyup', e => {
-      keys[e.key.toLowerCase()] = false;
-    });
-
-    // Mouse Drag Camera Orbit
-    window.addEventListener('mousedown', e => {
-      if (e.target.closest('button, input, select, #joystickZone, .pointer-events-auto')) return;
-      isDraggingCam = true;
-      lastMouseX = e.clientX;
-      lastMouseY = e.clientY;
-    });
-    window.addEventListener('mousemove', e => {
-      if (!isDraggingCam) return;
-      const dx = e.clientX - lastMouseX;
-      const dy = e.clientY - lastMouseY;
-      lastMouseX = e.clientX;
-      lastMouseY = e.clientY;
-      camYaw -= dx * 0.005;
-      camPitch = Math.max(0.08, Math.min(1.2, camPitch + dy * 0.005));
-    });
-    window.addEventListener('mouseup', () => { isDraggingCam = false; });
-
-    // Touch Drag Camera Orbit
-    let touchStartCamX = 0;
-    let touchStartCamY = 0;
-    window.addEventListener('touchstart', e => {
-      if (e.target.closest('button, input, #joystickZone, .pointer-events-auto')) return;
-      if (e.touches.length === 1) {
-        touchStartCamX = e.touches[0].clientX;
-        touchStartCamY = e.touches[0].clientY;
-      }
-    }, { passive: true });
-    window.addEventListener('touchmove', e => {
-      if (e.target.closest('button, input, #joystickZone, .pointer-events-auto')) return;
-      if (e.touches.length === 1) {
-        const dx = e.touches[0].clientX - touchStartCamX;
-        const dy = e.touches[0].clientY - touchStartCamY;
-        touchStartCamX = e.touches[0].clientX;
-        touchStartCamY = e.touches[0].clientY;
-        camYaw -= dx * 0.006;
-        camPitch = Math.max(0.08, Math.min(1.2, camPitch + dy * 0.006));
-      }
-    }, { passive: true });
-
-    // Virtual Touch Joystick
     let joystickActive = false;
     let joystickDir = { x: 0, y: 0 };
     const joyZone = document.getElementById('joystickZone');
     const joyKnob = document.getElementById('joystickKnob');
 
-    function handleJoystickMove(clientX, clientY) {
-      const rect = joyZone.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = clientX - cx;
-      const dy = clientY - cy;
-      const dist = Math.hypot(dx, dy);
-      const maxR = rect.width / 2;
-      const clampedDist = Math.min(dist, maxR);
-      const angle = Math.atan2(dy, dx);
-      const nx = Math.cos(angle) * (clampedDist / maxR);
-      const ny = Math.sin(angle) * (clampedDist / maxR);
-      joystickDir = { x: nx, y: ny };
-      joyKnob.style.transform = `translate(${nx * maxR}px, ${ny * maxR}px)`;
-    }
-
     function resetJoystick() {
+      if (joystickPointer !== null && joyZone.hasPointerCapture(joystickPointer)) joyZone.releasePointerCapture(joystickPointer);
+      joystickPointer = null;
       joystickActive = false;
       joystickDir = { x: 0, y: 0 };
-      joyKnob.style.transform = `translate(0px, 0px)`;
+      joyKnob.style.transform = 'translate(0px, 0px)';
     }
 
-    joyZone.addEventListener('touchstart', e => {
+    function resetInput() {
+      Object.keys(keys).forEach(key => delete keys[key]);
+      if (cameraPointer !== null && container.hasPointerCapture(cameraPointer)) container.releasePointerCapture(cameraPointer);
+      cameraPointer = null;
+      resetJoystick();
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Escape') {
+        if (currentModal) closeModal(currentModal);
+        else if (state.isPullingUp) exitPullUpStation();
+        return;
+      }
+      if (currentModal) {
+        if (e.code === 'Tab') {
+          const modal = document.getElementById(currentModal);
+          const items = Array.from(modal.querySelectorAll('button:not(:disabled), input, select, [tabindex="0"]')).filter(el => el.getClientRects().length);
+          const first = items[0], last = items[items.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === modal)) { e.preventDefault(); last?.focus(); }
+          else if (!e.shiftKey && (document.activeElement === last || document.activeElement === modal)) { e.preventDefault(); first?.focus(); }
+        }
+        return;
+      }
+      if (e.code === 'Space' && e.repeat) { e.preventDefault(); return; }
+      if (e.target.closest('input, select, textarea, button, [contenteditable="true"]')) return;
+      keys[e.key.toLowerCase()] = true;
+      if (e.key.startsWith('Arrow')) e.preventDefault();
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (state.activeThrow?.phase === 'reveal') skipThrowAnimation();
+        else if (state.isPullingUp) doCalculusPullUpRep();
+        else if (state.activeZone === 'throw') executeCalculusThrow();
+      }
+    });
+    window.addEventListener('keyup', e => { delete keys[e.key.toLowerCase()]; });
+    window.addEventListener('blur', resetInput);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) resetInput(); });
+
+    // Each pointer owns its gesture: looking and walking can happen together.
+    container.addEventListener('pointerdown', e => {
+      if (currentModal || state.activeThrow || isThrowWindup || cameraPointer !== null || e.button !== 0) return;
+      cameraPointer = e.pointerId;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      container.setPointerCapture(e.pointerId);
+    });
+    container.addEventListener('pointermove', e => {
+      if (e.pointerId !== cameraPointer) return;
+      camYaw -= (e.clientX - lastMouseX) * 0.005;
+      camPitch = Math.max(0.08, Math.min(1.2, camPitch + (e.clientY - lastMouseY) * 0.005));
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => container.addEventListener(type, e => {
+      if (e.pointerId === cameraPointer) cameraPointer = null;
+    }));
+
+    function handleJoystickMove(clientX, clientY) {
+      const rect = joyZone.getBoundingClientRect();
+      const dx = clientX - rect.left - rect.width / 2;
+      const dy = clientY - rect.top - rect.height / 2;
+      const maxR = (rect.width - joyKnob.offsetWidth) / 2;
+      const distance = Math.hypot(dx, dy);
+      const scale = Math.min(1, distance / maxR);
+      joystickDir = distance < 4 ? { x: 0, y: 0 } : { x: dx / distance * scale, y: dy / distance * scale };
+      joyKnob.style.transform = `translate(${joystickDir.x * maxR}px, ${joystickDir.y * maxR}px)`;
+    }
+    joyZone.addEventListener('pointerdown', e => {
+      if (currentModal || state.activeThrow || state.isPullingUp || isThrowWindup || joystickPointer !== null) return;
+      joystickPointer = e.pointerId;
       joystickActive = true;
-      handleJoystickMove(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: true });
-    joyZone.addEventListener('touchmove', e => {
-      if (!joystickActive) return;
-      handleJoystickMove(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: true });
-    joyZone.addEventListener('touchend', resetJoystick, { passive: true });
-    joyZone.addEventListener('touchcancel', resetJoystick, { passive: true });
+      joyZone.setPointerCapture(e.pointerId);
+      handleJoystickMove(e.clientX, e.clientY);
+    });
+    joyZone.addEventListener('pointermove', e => {
+      if (e.pointerId === joystickPointer) handleJoystickMove(e.clientX, e.clientY);
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => joyZone.addEventListener(type, e => {
+      if (e.pointerId === joystickPointer) resetJoystick();
+    }));
+
+    function syncActivityUI() {
+      const busy = !!state.activeThrow || isThrowWindup;
+      rampArrow.visible = !busy;
+      document.body.dataset.activity = busy ? 'throwing' : state.isPullingUp ? 'pullup' : state.activeZone || 'explore';
+      document.querySelectorAll('#stationNav button').forEach((btn, index) => {
+        btn.setAttribute('aria-pressed', String(Object.keys(STATIONS)[index] === state.activeZone));
+        btn.disabled = busy;
+      });
+    }
 
     function walkToStation(stationKey) {
+      if (state.activeThrow || isThrowWindup) return;
+      if (currentModal) closeModal(currentModal);
+      if (state.isPullingUp) exitPullUpStation();
+      resetInput();
       audio.playClickSound();
       const st = STATIONS[stationKey];
       if (!st) return;
       state.playerPos.x = st.x;
       state.playerPos.z = st.z;
       playerGroup.position.set(st.x, 0, st.z);
+      state.activeZone = null;
       checkZoneTrigger();
+      if (!currentModal) document.activeElement?.blur();
     }
 
     /*************************************************************************
@@ -3204,7 +3352,7 @@ function disposePolishedAnimal(group) {
      *************************************************************************/
     let walkCycle = 0;
     function updatePlayerMovement(dt) {
-      if (state.activeThrow || state.isPullingUp) return;
+      if (currentModal || state.activeThrow || isThrowWindup || state.isPullingUp) return;
 
       let mx = 0;
       let mz = 0;
@@ -3276,6 +3424,7 @@ function disposePolishedAnimal(group) {
     }
 
     function onZoneChanged(zone) {
+      syncActivityUI();
       const banner = document.getElementById('zoneBanner');
       const icon = document.getElementById('zoneBannerIcon');
       const text = document.getElementById('zoneBannerText');
@@ -3287,33 +3436,33 @@ function disposePolishedAnimal(group) {
       if (zone === 'throw') {
         icon.textContent = '🎯';
         text.textContent = 'Orange Checkered Launch Line! (Press SPACE or Click TAP TO THROW)';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none pulse-glow';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none pulse-glow';
         throwHUD.classList.remove('hidden');
         throwHUD.classList.add('flex');
         update3DTrajectoryArc();
       } else if (zone === 'pullup') {
         icon.textContent = '🏋️';
         text.textContent = 'Pull-Up Bar Station! Chain Rule Training Mode Active.';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
         enterPullUpStation();
       } else if (zone === 'shop') {
         icon.textContent = '🛒';
         text.textContent = 'Food Shop Stall! Buy bait & expand lawn capacity.';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
         openModal('shopModal');
       } else if (zone === 'sell') {
         icon.textContent = '💰';
         text.textContent = 'Sell Stall! Liquidate duplicate or unequipped pets.';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
         openModal('sellModal');
       } else if (zone === 'plot') {
         icon.textContent = '🏡';
         text.textContent = `My Plot! ${state.inventory.filter(i => i.equipped).length}/${state.plotCapacity} pets roaming.`;
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none';
       } else {
         icon.textContent = '🏃';
         text.textContent = 'Walk to the Orange Checkered Launch Line to Throw Food!';
-        banner.className = 'fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none opacity-85';
+        banner.className = 'game-hud fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 transition-all duration-200 pointer-events-none opacity-85';
       }
     }
 
@@ -3321,8 +3470,12 @@ function disposePolishedAnimal(group) {
      * 8. PULL-UP BAR CHAIN RULE WORKOUT (MATCHING SCREENSHOT 78)
      *************************************************************************/
     let pullUpRepTime = 0;
+    let lastPullUpRep = -Infinity;
     function enterPullUpStation() {
+      resetInput();
       state.isPullingUp = true;
+      lastPullUpRep = -Infinity;
+      syncActivityUI();
       state.playerPos.x = STATIONS.pullup.x;
       state.playerPos.z = STATIONS.pullup.z;
       playerGroup.position.set(STATIONS.pullup.x, 2.0, STATIONS.pullup.z);
@@ -3338,6 +3491,7 @@ function disposePolishedAnimal(group) {
 
     function exitPullUpStation() {
       state.isPullingUp = false;
+      syncActivityUI();
       leftArm.rotation.x = 0;
       rightArm.rotation.x = 0;
       playerGroup.position.y = 0;
@@ -3346,10 +3500,12 @@ function disposePolishedAnimal(group) {
       state.playerPos.z += 5.5;
       playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
       checkZoneTrigger();
+      document.activeElement?.blur();
     }
 
     function doCalculusPullUpRep() {
-      if (!state.isPullingUp) return;
+      if (!state.isPullingUp || currentModal || performance.now() - lastPullUpRep < 300) return;
+      lastPullUpRep = performance.now();
       const calc = evaluatePullUpCalculus(pullUpRepTime);
       const isPerfect = calc.isNearPeak;
       const xpGain = isPerfect ? 2 : 1;
@@ -3360,7 +3516,7 @@ function disposePolishedAnimal(group) {
       showFloatingPopup(playerGroup.position, isPerfect ? '+2 XP (PERFECT VELOCITY!)' : '+1 XP', isPerfect ? '#facc15' : '#38bdf8');
 
       if (state.pullUpXp >= state.pullUpMaxXp) {
-        state.pullUpXp = 0;
+        state.pullUpXp -= state.pullUpMaxXp;
         state.pullUpLevel++;
         state.pullUpMaxXp = Math.round(state.pullUpMaxXp * 1.5);
         state.baseStrength += 5;
@@ -3387,6 +3543,7 @@ function disposePolishedAnimal(group) {
     let isThrowWindup = false;
 
     function executeCalculusThrow() {
+      if (currentModal || state.isPullingUp) return;
       if (state.activeThrow || state.activeZone !== 'throw' || isThrowWindup) {
         if (state.activeZone !== 'throw') {
           showToast('🎯 Walk onto the Orange Checkered Launch Line to Throw!', 'bg-amber-400 text-black');
@@ -3469,6 +3626,8 @@ function disposePolishedAnimal(group) {
 
       // START DYNAMIC CHARACTER THROW ANIMATION (Anticipation -> Release)
       isThrowWindup = true;
+      resetInput();
+      syncActivityUI();
       rightArm.rotation.x = -Math.PI * 0.7;
       rightArm.rotation.z = 0.35;
       torsoMesh.rotation.x = -0.22;
@@ -3527,6 +3686,8 @@ function disposePolishedAnimal(group) {
           projectileGroup.visible = false;
           state.activeThrow = null;
           isThrowWindup = false;
+          syncActivityUI();
+          checkNewFoodUnlock();
           rightArm.rotation.set(0, 0, 0);
           torsoMesh.rotation.set(0, 0, 0);
           heldFoodMesh.visible = true;
@@ -3540,6 +3701,8 @@ function disposePolishedAnimal(group) {
 
         setTimeout(() => {
           isThrowWindup = false;
+          syncActivityUI();
+          checkNewFoodUnlock();
           rightArm.rotation.set(0, 0, 0);
           torsoMesh.rotation.set(0, 0, 0);
           heldFoodMesh.visible = true;
@@ -3580,6 +3743,9 @@ function disposePolishedAnimal(group) {
       document.getElementById('catchRevealModal').classList.add('hidden');
       document.getElementById('catchRevealModal').classList.remove('flex');
       state.activeThrow = null;
+      syncActivityUI();
+      document.activeElement?.blur();
+      checkNewFoodUnlock();
       showToast(`🐾 Caught ${th.chosenSize.name} ${th.chosenMutation.name} ${th.chosenAnimal.name} (+$${formatNum(th.finalIncome)}/s)!`, 'bg-lime-400 text-black');
     }
 
@@ -3668,6 +3834,7 @@ function disposePolishedAnimal(group) {
 
       document.getElementById('catchRevealModal').classList.remove('hidden');
       document.getElementById('catchRevealModal').classList.add('flex');
+      document.getElementById('catchTapPrompt').focus();
 
       audio.playExplosionSound();
     }
@@ -3727,22 +3894,44 @@ function disposePolishedAnimal(group) {
      * 10. MODAL MANAGERS: FOOD SHOP, SELL, ANIMALS, INDEX & RECORDS
      *************************************************************************/
     function openModal(id) {
+      if (state.activeThrow || isThrowWindup) return;
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      if (currentModal === id) return;
+      if (currentModal) closeModal(currentModal);
+      modalReturnFocus = document.activeElement;
+      currentModal = id;
+      resetInput();
       audio.playClickSound();
-      document.getElementById(id).classList.remove('hidden');
-      document.getElementById(id).classList.add('flex');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.querySelectorAll('.game-hud').forEach(el => { el.inert = true; });
       if (id === 'shopModal') renderFoodShop();
       if (id === 'sellModal') renderSellStall();
       if (id === 'animalsModal') renderMyAnimals();
       if (id === 'indexModal') renderAnimalIndex();
       if (id === 'leaderboardModal') renderLeaderboardModal();
       if (id === 'calcLabModal') renderWorkedExampleModal();
+      modal.querySelector('button')?.focus();
     }
 
     function closeModal(id) {
       audio.playClickSound();
       document.getElementById(id).classList.add('hidden');
       document.getElementById(id).classList.remove('flex');
+      if (currentModal === id) {
+        currentModal = null;
+        document.querySelectorAll('.game-hud').forEach(el => { el.inert = false; });
+        if (modalReturnFocus?.isConnected) modalReturnFocus.focus();
+        modalReturnFocus = null;
+        resetInput();
+      }
     }
+
+    document.querySelectorAll('.game-modal').forEach(modal => {
+      modal.setAttribute('aria-label', modal.querySelector('button[aria-label="Close panel"]')?.parentElement.textContent.trim().replace('✕', '') || 'Game panel');
+      modal.addEventListener('click', e => { if (e.target === modal) closeModal(modal.id); });
+    });
 
     function renderFoodShop() {
       const grid = document.getElementById('foodShopGrid');
@@ -4074,6 +4263,7 @@ function disposePolishedAnimal(group) {
 
     let lastNotifiedFoodIndex = 0;
     function checkNewFoodUnlock() {
+      if (state.activeThrow || isThrowWindup || currentModal) return;
       FOODS.forEach((food, idx) => {
         if (idx === 0) return;
         if (!state.unlockedFoods.includes(food.id) && idx > lastNotifiedFoodIndex) {
@@ -4124,7 +4314,34 @@ function disposePolishedAnimal(group) {
     /*************************************************************************
      * 12. TEACHER GOD-MODE DEMO BUTTON & AUTO-SAVE ENGINE
      *************************************************************************/
+    let demoProgress = null;
     function activateTeacherGodMode() {
+      if (state.activeThrow || isThrowWindup) return;
+      if (currentModal) closeModal(currentModal);
+      if (state.isPullingUp) exitPullUpStation();
+      resetInput();
+      if (demoProgress) {
+        state = demoProgress;
+        demoProgress = null;
+        document.getElementById('demoModeBtn').textContent = '👨‍🏫 DEMO MODE';
+        document.querySelectorAll('[data-demo-label]').forEach(el => { el.textContent = '👨‍🏫 Try Demo'; });
+        playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
+        state.activeZone = null;
+        checkZoneTrigger();
+        sync3DPlotPets();
+        update3DLuckiestBoardTexture();
+        updateHUD();
+        updateRampSlider(state.rampX0);
+        applyGraphicsQuality();
+        syncSettingsUI();
+        renderWorkedExampleModal();
+        showToast('Back to your saved adventure.', 'bg-sky-400 text-black');
+        return;
+      }
+      saveGame();
+      demoProgress = structuredClone(state);
+      document.getElementById('demoModeBtn').textContent = '↩ EXIT DEMO';
+      document.querySelectorAll('[data-demo-label]').forEach(el => { el.textContent = '↩ Exit Demo'; });
       audio.playLevelUpSound();
       state.cash = 10000000;
       state.baseStrength = 5000;
@@ -4138,8 +4355,8 @@ function disposePolishedAnimal(group) {
       state.playerBestCatches = [];
 
       for (let i = 0; i < 20; i++) {
-        const anim = ANIMALS[ANIMALS.length - 1 - (i % 6)];
-        const sz = SIZES[Math.min(SIZES.length - 1, 3 + (i % 3))]; // Giant, Titanic, Colossal
+        const anim = ANIMALS[i % ANIMALS.length];
+        const sz = SIZES[i % SIZES.length];
         const mut = MUTATIONS[2 + (i % 3)]; // Golden, Rainbow, Cosmic
         const income = Math.round(anim.baseIncome * sz.mult * mut.mult);
         const odds = anim.baseOdds * sz.chanceNum * mut.chanceNum;
@@ -4171,11 +4388,12 @@ function disposePolishedAnimal(group) {
       update3DLuckiestBoardTexture();
       sync3DPlotPets();
       updateHUD();
-      showToast('👨‍🏫 TEACHER DEMO ACTIVATED! $10M Cash, 20 Mutated Pets & All Trig Tiers Unlocked!', 'bg-yellow-400 text-black');
+      showToast('👨‍🏫 DEMO: All 18 species unlocked! Exit Demo returns to your progress.', 'bg-yellow-400 text-black');
       saveGame();
     }
 
     function resetPlayerProgress() {
+      if (demoProgress) { activateTeacherGodMode(); return; }
       if (confirm('Reset all game data back to student start?')) {
         localStorage.removeItem(SAVE_KEY);
         location.reload();
@@ -4183,6 +4401,7 @@ function disposePolishedAnimal(group) {
     }
 
     function saveGame() {
+      if (demoProgress) return;
       try {
         const data = {
           cash: state.cash,
@@ -4226,19 +4445,31 @@ function disposePolishedAnimal(group) {
         if (d.autoSkipRepeats !== undefined) state.autoSkipRepeats = d.autoSkipRepeats;
         if (d.settings) state.settings = { ...state.settings, ...d.settings };
 
-        const musicSlider = document.getElementById('musicSlider');
-        if (musicSlider) musicSlider.value = state.settings.musicVol;
-        const musicLabel = document.getElementById('musicVolLabel');
-        if (musicLabel) musicLabel.textContent = `${state.settings.musicVol}%`;
-        const sfxSlider = document.getElementById('sfxSlider');
-        if (sfxSlider) sfxSlider.value = state.settings.sfxVol;
-        const sfxLabel = document.getElementById('sfxVolLabel');
-        if (sfxLabel) sfxLabel.textContent = `${state.settings.sfxVol}%`;
-        const autoSkipBox = document.getElementById('autoSkipCheckbox');
-        if (autoSkipBox) autoSkipBox.checked = state.autoSkipRepeats;
+        syncSettingsUI();
       } catch (e) {
         console.warn('LocalStorage load failed:', e);
       }
+    }
+
+    function syncSettingsUI() {
+      const musicSlider = document.getElementById('musicSlider');
+      if (musicSlider) musicSlider.value = state.settings.musicVol;
+      const musicLabel = document.getElementById('musicVolLabel');
+      if (musicLabel) musicLabel.textContent = `${state.settings.musicVol}%`;
+      const sfxSlider = document.getElementById('sfxSlider');
+      if (sfxSlider) sfxSlider.value = state.settings.sfxVol;
+      const sfxLabel = document.getElementById('sfxVolLabel');
+      if (sfxLabel) sfxLabel.textContent = `${state.settings.sfxVol}%`;
+      const autoSkipBox = document.getElementById('autoSkipCheckbox');
+      if (autoSkipBox) autoSkipBox.checked = state.autoSkipRepeats;
+      [['viewOthersToggle', 'viewOthersLabel', 'viewOthersPets'], ['viewYoursToggle', 'viewYoursLabel', 'viewYourPets']].forEach(([input, label, setting]) => {
+        const enabled = state.settings[setting];
+        document.getElementById(input).checked = enabled;
+        document.getElementById(label).textContent = enabled ? 'ON' : 'OFF';
+        document.getElementById(label).className = enabled ? 'text-xs text-lime-400' : 'text-xs text-gray-500';
+      });
+      audio.setMusicVol(state.settings.musicVol);
+      audio.setSfxVol(state.settings.sfxVol);
     }
 
     function formatNum(n) {
@@ -4317,6 +4548,7 @@ function disposePolishedAnimal(group) {
       } else {
         minBar.classList.add('hidden');
         expPanel.classList.remove('hidden');
+        resizeOscilloscope();
       }
     }
 
@@ -4378,6 +4610,7 @@ function disposePolishedAnimal(group) {
         regimeBadge.textContent = 'MAX SURGE';
         regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-400 text-black shadow';
       } else if (isCriticalPoint) {
+        badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
         regimeBadge.textContent = 'CRITICAL POINT';
         regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-yellow-400 text-black shadow';
       } else {
@@ -4385,6 +4618,8 @@ function disposePolishedAnimal(group) {
         regimeBadge.textContent = 'STEADY';
         regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gray-600 text-white shadow';
       }
+
+      if (document.getElementById('calcExpandedPanel').classList.contains('hidden') || state.isPullingUp || state.activeThrow) return;
 
       // Draw Oscilloscope Canvas
       const W = oscCanvas.width;
@@ -4468,9 +4703,15 @@ function disposePolishedAnimal(group) {
       const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
       lastFrameTime = now;
 
-      if (!state.wavePaused) {
-        state.t += dt;
+      if (!state.wavePaused) state.t += dt;
+      if (state.isPullingUp && !currentModal) {
         pullUpRepTime += dt;
+        const training = evaluatePullUpCalculus(pullUpRepTime);
+        playerGroup.position.y = 2 + training.h * 0.55;
+        const meter = document.getElementById('trainingVelocityFill');
+        meter.style.width = `${Math.abs(training.v) / training.omega * 100}%`;
+        meter.style.background = training.isNearPeak ? '#facc15' : '#38bdf8';
+        document.getElementById('trainingCue').textContent = training.isNearPeak ? 'PERFECT WINDOW · Tap now for 2× XP!' : 'Build your rhythm · Gold = 2× XP';
       }
 
       updatePlayerMovement(dt);
@@ -4481,7 +4722,10 @@ function disposePolishedAnimal(group) {
       critRingMesh.rotation.z += dt * 1.5;
       critRingMesh.rotation.x += dt * 0.8;
       critRingGroup.position.y = 7.5 + Math.sin(state.t * 2.5) * 1.6;
-      targetLabels.forEach(tl => project3DToScreen(tl.pos, tl.el));
+      targetLabels.forEach(tl => {
+        if (camera.position.distanceTo(tl.pos) > 160) tl.el.style.display = 'none';
+        else project3DToScreen(tl.pos, tl.el);
+      });
 
       // Living Animations for Plot Pets Inside Fenced Lawn Plot
       if (state.settings.viewYourPets) {
@@ -4516,7 +4760,10 @@ function disposePolishedAnimal(group) {
       }
 
       // Project Station World Labels
-      stationLabels.forEach(st => project3DToScreen(st.pos, st.el));
+      stationLabels.forEach(st => {
+        if (st.key === state.activeZone) st.el.style.display = 'none';
+        else project3DToScreen(st.pos, st.el);
+      });
 
       // Active Projectile Flight or 3D Cutscene Camera
       if (state.activeThrow) {
@@ -4645,6 +4892,8 @@ function disposePolishedAnimal(group) {
      *************************************************************************/
     window.onload = function () {
       loadGame();
+      applyGraphicsQuality();
+      toggleMinimizeCalcHUD(window.innerWidth <= 1024);
       initStationLabels();
       sync3DPlotPets();
       update3DLuckiestBoardTexture();

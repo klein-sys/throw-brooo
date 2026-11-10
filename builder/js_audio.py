@@ -26,11 +26,11 @@ JS_AUDIO = """
           this.masterGain.connect(this.ctx.destination);
 
           this.musicGain = this.ctx.createGain();
-          this.musicGain.gain.value = (state.settings.musicVol || 70) / 100;
+          this.musicGain.gain.value = (state.settings.musicVol ?? 70) / 100;
           this.musicGain.connect(this.masterGain);
 
           this.sfxGain = this.ctx.createGain();
-          this.sfxGain.gain.value = (state.settings.sfxVol || 85) / 100;
+          this.sfxGain.gain.value = (state.settings.sfxVol ?? 85) / 100;
           this.sfxGain.connect(this.masterGain);
 
           this.startBgmLoop();

@@ -1,0 +1,9 @@
+{
+  "name": "throw-food-calculus",
+  "private": true,
+  "scripts": {
+    "build": "python3 builder/assemble_game.py",
+    "test": "node tests/browser.cjs"
+  },
+  "devDependencies": { "playwright": "1.65.0" }
+}
