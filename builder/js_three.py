@@ -658,7 +658,7 @@ JS_THREE = """
 
     function sync3DPlotPets() {
       while (plotPetsGroup.children.length > 0) {
-        plotPetsGroup.remove(plotPetsGroup.children[0]);
+        disposePolishedAnimal(plotPetsGroup.children[0]);
       }
       activePlotPetEntities.forEach(ent => ent.labelEl && ent.labelEl.remove());
       activePlotPetEntities = [];

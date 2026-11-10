@@ -599,6 +599,6 @@ JS_ANIMAL_MODELS = """
         g.add(aura);
       }
 
-      return g;
+      return enhanceAnimalModel(g, animalId, s, animal, mutation);
     }
 """

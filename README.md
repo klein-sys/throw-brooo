@@ -96,3 +96,7 @@ Timing reps near peak velocity ($|h'| \ge 0.8\omega$) grants **2x XP/rep** with 
 ## 🚀 Running the Project
 
 Open `index.html` or `throw_food_for_animals_3d_calculus_edition.html` directly in any modern web browser. No build step, Node server, or external downloads required!
+
+## 🎨 Polished 3D Animal Models
+
+All 18 species now receive reusable polished details, mutation finishes and biome-appropriate idle motions, while retaining the original Three.js game mechanics. See [Polished Model Framework](docs/POLISHED_MODELS.md) for source structure, customization and rebuilding instructions.

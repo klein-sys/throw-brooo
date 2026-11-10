@@ -511,7 +511,9 @@ JS_GAMEPLAY = """
 
       // Clear previous cutscene showcase models
       while (cutsceneGroup.children.length > 2) {
-        cutsceneGroup.remove(cutsceneGroup.children[2]);
+        const oldModel = cutsceneGroup.children[2];
+        if (oldModel.userData && oldModel.userData.polishedModel) disposePolishedAnimal(oldModel);
+        else cutsceneGroup.remove(oldModel);
       }
 
       // Spawn Animal Mesh in front of thrown food
@@ -1409,7 +1411,7 @@ JS_GAMEPLAY = """
           ent.mesh.position.z += ent.vz * dt;
           if (ent.mesh.position.x < -19 || ent.mesh.position.x > 19) ent.vx *= -1;
           if (ent.mesh.position.z < 0 || ent.mesh.position.z > 30) ent.vz *= -1;
-          ent.mesh.position.y = Math.abs(Math.sin(ent.hopPhase)) * 0.55;
+          ent.mesh.position.y = polishedIdleBob(ent.mesh, ent.hopPhase);
           ent.mesh.rotation.y = Math.atan2(ent.vx, -ent.vz);
 
           // Living Micro-Animations: tail, wings, head
@@ -1427,6 +1429,7 @@ JS_GAMEPLAY = """
             }
           }
 
+          animatePolishedAnimal(ent.mesh, ent.hopPhase);
           const tagPos = ent.mesh.position.clone().add(new THREE.Vector3(0, 3.2, 0));
           project3DToScreen(tagPos, ent.labelEl);
         });
