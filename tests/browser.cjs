@@ -111,6 +111,34 @@ async function desktopFlow() {
   await check(page, () => state.isPullingUp, false);
   await page.evaluate(() => { keys.w = true; window.dispatchEvent(new Event('blur')); });
   await check(page, () => Object.keys(keys).length, 0);
+
+  await page.locator('#stationNav button').nth(0).click();
+  await check(page, () => state.activeZone, 'throw');
+
+  // Right-click handling: prevent context menu, allow right-click camera orbit, and prevent stuck walking
+  const canvas = page.locator('#webglContainer');
+  const contextMenuPrevented = await canvas.evaluate(el => {
+    const ev = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 });
+    return !el.dispatchEvent(ev);
+  });
+  assert.equal(contextMenuPrevented, true, 'Right click context menu must be prevented');
+
+  const initialYaw = await page.evaluate(() => camYaw);
+  const box = await canvas.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(box.x + box.width / 2 + 50, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.up({ button: 'right' });
+  const newYaw = await page.evaluate(() => camYaw);
+  assert.notEqual(newYaw, initialYaw, 'Right-drag must orbit the camera');
+
+  await canvas.click({ position: { x: 50, y: 50 } });
+  await page.keyboard.down('w');
+  assert.equal(await page.evaluate(() => !!keys['w']), true, 'Key W is active');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { button: 'right' });
+  await page.keyboard.up('w');
+  assert.equal(await page.evaluate(() => !!keys['w']), false, 'Key W released after right-click without sticking');
+
   await page.close();
   console.log('PASS desktop activities, modal focus, catch, demo isolation, settings and keyboard');
 }
@@ -171,12 +199,40 @@ async function mobileFlow(width, height) {
 (async () => {
   await fs.mkdir(path.join(root,'test-results'), {recursive:true});
   if (!process.env.TEST_URL) {
-    server=spawn('python3',['-m','http.server','8765','--bind','127.0.0.1'],{cwd:root,stdio:'ignore'});
-    for(let n=0;n<40;n++) { try { await fetch(url); break; } catch { await new Promise(r=>setTimeout(r,100)); } }
+    const http = require('node:http');
+    const mimeTypes = {
+      '.html': 'text/html; charset=utf-8',
+      '.js': 'application/javascript; charset=utf-8',
+      '.cjs': 'application/javascript; charset=utf-8',
+      '.css': 'text/css; charset=utf-8',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.json': 'application/json',
+      '.woff2': 'font/woff2'
+    };
+    server = http.createServer(async (req, res) => {
+      try {
+        const reqPath = decodeURI(req.url.split('?')[0]);
+        const rel = reqPath === '/' ? 'index.html' : reqPath.replace(/^\/+/, '');
+        const filePath = path.join(root, rel);
+        if (!filePath.startsWith(root)) { res.writeHead(403); return res.end(); }
+        const data = await fs.readFile(filePath);
+        const ext = path.extname(filePath).toLowerCase();
+        res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
+        res.end(data);
+      } catch (e) {
+        res.writeHead(404);
+        res.end();
+      }
+    });
+    await new Promise((resolve, reject) => {
+      server.listen(8765, '127.0.0.1', () => resolve());
+      server.on('error', reject);
+    });
   }
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH || undefined,headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader']});
   if (process.env.TEST_SCOPE !== 'mobile') await desktopFlow();
   for(const [w,h] of [[390,844],[360,640],[844,390],[768,1024]]) await mobileFlow(w,h);
   assert.deepEqual(failures, [], 'No browser runtime or dependency errors');
   console.log('All browser checks passed. Screenshots in test-results/.');
-})().catch(error => { console.error(error); process.exitCode=1; }).finally(async()=>{ await browser?.close(); server?.kill(); });
+})().catch(error => { console.error(error); process.exitCode=1; }).finally(async()=>{ await browser?.close(); if (server?.close) await new Promise(r => server.close(r)); else server?.kill?.(); });
