@@ -43,6 +43,49 @@ async function desktopFlow() {
   const page = await browser.newPage({viewport:{width:1440,height:900}});
   await prepare(page);
   await inView(page, '#throwActionBtn');
+  await inView(page, '#badgeInflectionStatus');
+
+  // Verify MATH 101 second derivative calculus & inflection point detection
+  const calcCheck = await page.evaluate(() => {
+    const calc = evaluateFoodCalculus(FOODS[0], 0);
+    const hasDeriv2 = typeof calc.deriv2 === 'number' && typeof calc.maxDeriv2 === 'number';
+    const isInflect = typeof isInflectionPoint === 'function' && typeof isInflectionPoint(calc) === 'boolean';
+    return { hasDeriv2, isInflect };
+  });
+  assert.equal(calcCheck.hasDeriv2, true, 'evaluateFoodCalculus returns second derivative deriv2 and maxDeriv2');
+  assert.equal(calcCheck.isInflect, true, 'isInflectionPoint function operates correctly');
+
+  // Verify procedural biome props across the canyon world
+  const sceneryStats = await page.evaluate(() => {
+    let cacti = 0, palms = 0, corals = 0, crystals = 0;
+    scene.traverse(obj => {
+      if (obj.userData?.isDesertCactus) cacti++;
+      if (obj.userData?.isJunglePalm) palms++;
+      if (obj.userData?.isOceanCoral) corals++;
+      if (obj.userData?.isMythicalCrystal) crystals++;
+    });
+    return { cacti, palms, corals, crystals };
+  });
+  assert.ok(sceneryStats.cacti > 0, 'Desert cacti generated in world');
+  assert.ok(sceneryStats.palms > 0, 'Jungle palms generated in world');
+  assert.ok(sceneryStats.corals > 0, 'Ocean corals generated in world');
+  assert.ok(sceneryStats.crystals > 0, 'Mythical crystals generated in world');
+
+  // Verify dynamic 3D tangent line & contact point on launch ramp
+  const rampVisuals = await page.evaluate(() => ({
+    hasTangentLine: typeof rampTangentLine !== 'undefined' && !!rampTangentLine,
+    hasContactPoint: typeof rampContactPoint !== 'undefined' && !!rampContactPoint
+  }));
+  assert.equal(rampVisuals.hasTangentLine, true, '3D tangent line exists on launch ramp');
+  assert.equal(rampVisuals.hasContactPoint, true, '3D contact point exists on launch ramp');
+
+  // Verify floating text popup DOM creation
+  await page.evaluate(() => {
+    showFloatingPopup(new THREE.Vector3(0, 0, 0), 'TEST POPUP', '#ffffff');
+  });
+  const popupCount = await page.evaluate(() => document.querySelectorAll('#labelsContainer .floating-cash-anim').length);
+  assert.ok(popupCount >= 1, 'Floating popup created in labelsContainer');
+
   await screenshot(page, 'desktop-throw');
   await page.locator('#stationNav button').nth(1).click();
   await check(page, () => [state.isPullingUp, state.activeZone], [true, 'pullup']);

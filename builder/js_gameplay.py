@@ -138,6 +138,7 @@ JS_GAMEPLAY = """
       state.playerPos.x = st.x;
       state.playerPos.z = st.z;
       playerGroup.position.set(st.x, 0, st.z);
+      if (stationKey === 'throw') playerGroup.rotation.y = Math.PI;
       state.activeZone = null;
       checkZoneTrigger();
       if (!currentModal) document.activeElement?.blur();
@@ -147,6 +148,7 @@ JS_GAMEPLAY = """
      * 7. PLAYER MOVEMENT & ZONE INTERACTION ENGINE
      *************************************************************************/
     let walkCycle = 0;
+    let walkBlend = 0;
     function updatePlayerMovement(dt) {
       if (currentModal || state.activeThrow || isThrowWindup || state.isPullingUp) return;
 
@@ -186,17 +188,17 @@ JS_GAMEPLAY = """
         playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
         playerGroup.rotation.y = Math.atan2(vx, vz);
 
-        walkCycle += dt * 14;
-        leftLeg.rotation.x = Math.sin(walkCycle) * 0.7;
-        rightLeg.rotation.x = -Math.sin(walkCycle) * 0.7;
-        leftArm.rotation.x = -Math.sin(walkCycle) * 0.55;
-        rightArm.rotation.x = Math.sin(walkCycle) * 0.55;
-      } else {
-        leftLeg.rotation.x = 0;
-        rightLeg.rotation.x = 0;
-        leftArm.rotation.x = 0;
-        rightArm.rotation.x = 0;
       }
+      walkCycle += dt * 14;
+      const targetBlend = len > 0.05 ? Math.min(len, 1) : 0;
+      walkBlend = THREE.MathUtils.lerp(walkBlend, targetBlend, 1 - Math.exp(-13 * dt));
+      const swing = Math.sin(walkCycle) * walkBlend;
+      leftLeg.rotation.x = swing * 0.69;
+      rightLeg.rotation.x = -swing * 0.69;
+      leftArm.rotation.x = -swing * 0.55;
+      rightArm.rotation.x = swing * 0.46;
+      torsoMesh.rotation.z = swing * 0.045;
+      playerRig.position.y = reducedMotion.matches ? 0 : Math.abs(swing) * 0.10;
 
       checkZoneTrigger();
     }
@@ -277,8 +279,10 @@ JS_GAMEPLAY = """
       playerGroup.position.set(STATIONS.pullup.x, 2.0, STATIONS.pullup.z);
       playerGroup.rotation.y = 0;
 
+      resetPlayerPose();
       leftArm.rotation.x = Math.PI;
       rightArm.rotation.x = Math.PI;
+      heldFoodMesh.visible = false;
 
       document.getElementById('pullUpZoneHUD').classList.remove('hidden');
       document.getElementById('pullUpZoneHUD').classList.add('flex');
@@ -290,6 +294,7 @@ JS_GAMEPLAY = """
       syncActivityUI();
       leftArm.rotation.x = 0;
       rightArm.rotation.x = 0;
+      heldFoodMesh.visible = true;
       playerGroup.position.y = 0;
       document.getElementById('pullUpZoneHUD').classList.add('hidden');
       document.getElementById('pullUpZoneHUD').classList.remove('flex');
@@ -337,6 +342,43 @@ JS_GAMEPLAY = """
      * 9. HARMONIC THROW EXECUTION, REBALANCED DISTANCE & ODDS ENGINE
      *************************************************************************/
     let isThrowWindup = false;
+    const THROW_WINDUP_MS = 160;
+    const THROW_RECOVERY_MS = 250;
+    let throwPoseStart = 0;
+    let throwPoseReleased = false;
+
+    function resetPlayerPose() {
+      walkBlend = 0;
+      playerRig.position.y = 0;
+      torsoMesh.rotation.set(0, 0, 0);
+      leftArm.rotation.set(0, 0, 0);
+      rightArm.rotation.set(0, 0, 0);
+      leftLeg.rotation.x = 0;
+      rightLeg.rotation.x = 0;
+    }
+
+    function updateThrowPose(now) {
+      const duration = throwPoseReleased ? THROW_RECOVERY_MS : THROW_WINDUP_MS;
+      const p = THREE.MathUtils.clamp((now - throwPoseStart) / duration, 0, 1);
+      if (throwPoseReleased) {
+        const recovery = (1 - p) ** 2;
+        rightArm.rotation.x = -1.65 * recovery;
+        rightArm.rotation.z = -0.32 * recovery;
+        leftArm.rotation.x = 0.55 * recovery;
+        torsoMesh.rotation.x = 0.28 * recovery;
+        torsoMesh.rotation.y = -0.35 * recovery;
+        playerRig.position.y = -0.15 * recovery;
+        return;
+      }
+      const windup = THREE.MathUtils.smoothstep(p, 0, 0.66);
+      const swing = THREE.MathUtils.smoothstep(p, 0.66, 1);
+      rightArm.rotation.x = 2.25 * windup - 3.85 * swing;
+      rightArm.rotation.z = 0.32 * windup - 0.55 * swing;
+      leftArm.rotation.x = -0.55 * (windup - swing);
+      torsoMesh.rotation.x = -0.22 * windup + 0.42 * swing;
+      torsoMesh.rotation.y = 0.38 * windup - 0.62 * swing;
+      playerRig.position.y = -0.12 * windup + 0.05 * swing;
+    }
 
     function executeCalculusThrow() {
       if (currentModal || state.isPullingUp) return;
@@ -359,6 +401,9 @@ JS_GAMEPLAY = """
       const isCriticalPoint = food.type !== 'tan' && derivRatio <= 0.18;
       const isMaxDerivSurge = derivRatio >= 0.82;
       const surgeBonus = isMaxDerivSurge ? 1.30 : 1.0;
+      const isInflection = isInflectionPoint(calc);
+      const isMasterstroke = isCriticalPoint && isInflection;
+      const harmonicBonus = isInflection ? 1.5 : 1.0;
 
       // REBALANCED PROGRESSION FORMULA:
       // Distance strictly controlled by strength power 0.72 and food.distMult!
@@ -413,8 +458,18 @@ JS_GAMEPLAY = """
       const totalOdds = Math.round(chosenAnimal.baseOdds * chosenSize.chanceNum * chosenMutation.chanceNum);
       const oddsDisplayStr = `1 in ${formatNum(totalOdds)}`;
 
-      const finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult);
+      let finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult * harmonicBonus);
       const isNewDiscovery = !state.unlockedIndex.has(chosenAnimal.id);
+
+      // Award bonus pullUpXp if inflection point hit (Harmonic Resonance)
+      if (isInflection) {
+        state.pullUpXp += 1;
+        if (state.pullUpXp >= state.pullUpMaxXp) {
+          state.pullUpXp -= state.pullUpMaxXp;
+          state.pullUpLevel++;
+          state.baseStrength += 5;
+        }
+      }
 
       // Distance mapping to expanded 3D Z coordinate (-14 to -900)
       const normDist = Math.min(1, Math.pow(distance / 5500, 0.48));
@@ -424,33 +479,50 @@ JS_GAMEPLAY = """
       isThrowWindup = true;
       resetInput();
       syncActivityUI();
-      rightArm.rotation.x = -Math.PI * 0.7;
-      rightArm.rotation.z = 0.35;
-      torsoMesh.rotation.x = -0.22;
+      resetPlayerPose();
+      playerGroup.rotation.y = Math.PI;
+      throwPoseStart = performance.now();
+      throwPoseReleased = false;
 
       // Floating readout on throw
-      const readoutText = isMaxDerivSurge ? '⚡ MAX SURGE! +19 POWER' : isCriticalPoint ? '🎯 CRITICAL POINT!' : 'PERFECT!';
-      const readoutColor = isMaxDerivSurge ? '#38bdf8' : isCriticalPoint ? '#facc15' : '#4ade80';
-      showFloatingPopup(playerGroup.position, readoutText, readoutColor);
+      if (isMasterstroke) {
+        showFloatingPopup(playerGroup.position, '🌟 DUAL CALCULUS MASTERSTROKE! (Crit + Inflection)', '#fde047');
+      } else if (isInflection) {
+        showFloatingPopup(playerGroup.position, '⚡ HARMONIC RESONANCE! (+50% Bonus)', '#e879f9');
+      } else if (isMaxDerivSurge) {
+        showFloatingPopup(playerGroup.position, '🚀 VELOCITY SURGE! (+30% Distance)', '#38bdf8');
+      } else if (isCriticalPoint) {
+        showFloatingPopup(playerGroup.position, '🎯 CRITICAL POINT! (Guaranteed Mutation)', '#facc15');
+      } else {
+        showFloatingPopup(playerGroup.position, 'PERFECT THROW!', '#4ade80');
+      }
 
       setTimeout(() => {
-        // Violently whip right arm forward & release food
-        rightArm.rotation.x = Math.PI * 0.85;
-        rightArm.rotation.z = -0.2;
-        torsoMesh.rotation.x = 0.25;
+        updateThrowPose(throwPoseStart + THROW_WINDUP_MS);
+        const releasePosition = heldFoodMesh.getWorldPosition(new THREE.Vector3());
+        throwPoseStart = performance.now();
+        throwPoseReleased = true;
+        leftArm.rotation.x = 0;
         heldFoodMesh.visible = false;
 
         state.throwCount++;
-        projectileMesh.material.color.setHex(food.color);
-        projectileGroup.position.set(playerGroup.position.x, 2.4, -14);
+        setFoodModel(projectileGroup, food);
+        projectileGroup.rotation.set(0, 0, 0);
+        projectileGroup.position.copy(releasePosition);
         projectileGroup.visible = true;
 
         audio.playThrowSound(isMaxDerivSurge, isCriticalPoint);
-        if (isMaxDerivSurge) triggerScreenShake();
+        if (isMaxDerivSurge) {
+          triggerScreenShake();
+          if (typeof addCameraTrauma === 'function') addCameraTrauma(0.85);
+        } else if (typeof addCameraTrauma === 'function') {
+          addCameraTrauma(0.35);
+        }
 
         state.activeThrow = {
           phase: 'flying',
           progress: 0,
+          releasePosition,
           distance,
           targetZ,
           landingBiome,
@@ -463,6 +535,8 @@ JS_GAMEPLAY = """
           isNewDiscovery,
           isCriticalPoint,
           isMaxDerivSurge,
+          isInflectionPoint: isInflection,
+          isMasterstroke,
           t0,
           calc,
           ramp,
@@ -484,8 +558,7 @@ JS_GAMEPLAY = """
           isThrowWindup = false;
           syncActivityUI();
           checkNewFoodUnlock();
-          rightArm.rotation.set(0, 0, 0);
-          torsoMesh.rotation.set(0, 0, 0);
+          resetPlayerPose();
           heldFoodMesh.visible = true;
           showToast(`⚡ Auto-Skipped: Caught ${chosenSize.name} ${chosenMutation.name} ${chosenAnimal.name} ($${formatNum(finalIncome)}/s) [${oddsDisplayStr}] at ${distance.toFixed(1)}m!`, 'bg-lime-400 text-black');
           return;
@@ -499,12 +572,11 @@ JS_GAMEPLAY = """
           isThrowWindup = false;
           syncActivityUI();
           checkNewFoodUnlock();
-          rightArm.rotation.set(0, 0, 0);
-          torsoMesh.rotation.set(0, 0, 0);
+          resetPlayerPose();
           heldFoodMesh.visible = true;
-        }, 250);
+        }, THROW_RECOVERY_MS);
 
-      }, 160);
+      }, THROW_WINDUP_MS);
     }
 
     function recordPersonalBestCatch(th) {
@@ -558,26 +630,37 @@ JS_GAMEPLAY = """
         else cutsceneGroup.remove(oldModel);
       }
 
-      // Spawn Animal Mesh in front of thrown food
       const animalMesh = createBlockyAnimalMesh(th.chosenAnimal, th.chosenSize, th.chosenMutation);
-      animalMesh.position.set(0, 0, th.targetZ);
+      animalMesh.rotation.y = 0.42;
+      const bounds = new THREE.Box3().setFromObject(animalMesh);
+      const size = bounds.getSize(new THREE.Vector3());
+      const focus = bounds.getCenter(new THREE.Vector3());
+      animalMesh.position.set(0.24, -bounds.min.y + 0.03, th.targetZ);
       th.chosenAnimalMesh = animalMesh;
+      th.revealRestY = animalMesh.position.y;
+      th.revealFocus = new THREE.Vector3(focus.x + animalMesh.position.x, size.y * 0.48, th.targetZ + focus.z);
+      th.revealSize = size;
 
-      // Spawn Thrown Food Bait on the ground right in front of the animal
-      const bait = projectileMesh.clone();
-      bait.position.set(0, 0.45, th.targetZ - 1.8);
-      bait.scale.set(0.7, 0.7, 0.7);
+      const bait = getFoodModel(th.food).clone();
+      bait.position.set(-0.38, 0.05, th.targetZ + Math.min(-1.55, bounds.min.z - 0.42));
+      bait.rotation.y = -0.48;
+      bait.scale.setScalar(0.85);
+      th.revealBait = bait;
 
-      // Aura Beacon Cylinder positioned at target
+      const special = th.chosenMutation.id !== 'normal' || !['Common', 'Uncommon'].includes(th.chosenAnimal.rarity);
+      cutsceneBeacon.visible = special && !reducedMotion.matches;
+      cutsceneBeacon.material.opacity = 0.16;
       cutsceneBeacon.position.set(0, 12, th.targetZ);
-      cutsceneBeacon.material.color.setHex(th.chosenMutation.hex || 0xfacc15);
-
-      // Reset Confetti flakes around animal
-      confettiMeshes.forEach(cm => {
+      cutsceneBeacon.scale.set(Math.max(1, size.x / 4), 1, Math.max(1, size.x / 4));
+      cutsceneBeacon.material.color.setHex(th.chosenMutation.id === 'normal' ? 0xfacc15 : th.chosenMutation.hex);
+      confettiGroup.visible = !reducedMotion.matches;
+      const particleCount = special ? CONFETTI_COUNT : 10;
+      confettiMeshes.forEach((cm, idx) => {
+        cm.visible = idx < particleCount;
         cm.position.set(
-          (Math.random() - 0.5) * 14,
-          8 + Math.random() * 12,
-          th.targetZ + (Math.random() - 0.5) * 14
+          (Math.random() - 0.5) * 3,
+          size.y + Math.random() * 3,
+          th.targetZ + (Math.random() - 0.5) * 3
         );
       });
 
@@ -670,6 +753,7 @@ JS_GAMEPLAY = """
     }
 
     function triggerScreenShake() {
+      if (reducedMotion.matches) return;
       document.body.classList.remove('shake-active');
       void document.body.offsetWidth;
       document.body.classList.add('shake-active');
@@ -858,6 +942,7 @@ JS_GAMEPLAY = """
       state.cash += sellValue;
       state.inventory.splice(idx, 1);
       audio.playCoinSound();
+      showFloatingPopup(new THREE.Vector3(STATIONS.sell.x, 2.5, STATIONS.sell.z), `+$${formatNum(sellValue)} Coins 💰`, '#facc15');
       renderSellStall();
       updateHUD();
       saveGame();
@@ -871,6 +956,7 @@ JS_GAMEPLAY = """
       state.cash += total;
       state.inventory = state.inventory.filter(i => i.equipped);
       audio.playCoinSound();
+      showFloatingPopup(new THREE.Vector3(STATIONS.sell.x, 2.5, STATIONS.sell.z), `+$${formatNum(total)} Coins 💰`, '#facc15');
       showToast(`💰 Sold ${unequipped.length} unequipped pets for +$${formatNum(total)}!`, 'bg-lime-400 text-black');
       renderSellStall();
       updateHUD();
@@ -1314,7 +1400,7 @@ JS_GAMEPLAY = """
       document.getElementById('hudFoodName').textContent = food.name;
       document.getElementById('hudFoodFunc').textContent = food.formulaStr;
 
-      heldFoodMesh.material.color.setHex(food.color);
+      setFoodModel(heldFoodMesh, food);
     }
 
     function showToast(msg, colorClass) {
@@ -1390,8 +1476,11 @@ JS_GAMEPLAY = """
 
       const badgeCrit = document.getElementById('badgeCritStatus');
       const badgeSurge = document.getElementById('badgeSurgeStatus');
+      const badgeInflect = document.getElementById('badgeInflectionStatus');
       const indCrit = document.getElementById('critPointIndicator');
       const regimeBadge = document.getElementById('calcRegimeBadge');
+
+      const isInflection = isInflectionPoint(calc);
 
       if (isCriticalPoint) {
         badgeCrit.className = 'bg-yellow-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
@@ -1401,10 +1490,26 @@ JS_GAMEPLAY = """
         indCrit.classList.add('hidden');
       }
 
+      if (badgeInflect) {
+        if (isInflection) {
+          badgeInflect.className = 'bg-fuchsia-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
+        } else {
+          badgeInflect.className = 'bg-black/80 border-2 border-fuchsia-400 rounded-xl px-2.5 py-0.5 text-[10px] text-fuchsia-300 font-extrabold shadow';
+        }
+      }
+
       if (isMaxDerivSurge) {
         badgeSurge.className = 'bg-cyan-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
         regimeBadge.textContent = 'MAX SURGE';
         regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-400 text-black shadow';
+      } else if (isCriticalPoint && isInflection) {
+        badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
+        regimeBadge.textContent = 'MASTERSTROKE';
+        regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-black shadow animate-pulse';
+      } else if (isInflection) {
+        badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
+        regimeBadge.textContent = 'INFLECTION';
+        regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-fuchsia-400 text-black shadow pulse-glow';
       } else if (isCriticalPoint) {
         badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
         regimeBadge.textContent = 'CRITICAL POINT';
@@ -1511,6 +1616,7 @@ JS_GAMEPLAY = """
       }
 
       updatePlayerMovement(dt);
+      if (isThrowWindup) updateThrowPose(now);
       updateCalculusUIAndOscilloscope();
       update3DTrajectoryArc();
 
@@ -1532,7 +1638,9 @@ JS_GAMEPLAY = """
           if (ent.mesh.position.x < -19 || ent.mesh.position.x > 19) ent.vx *= -1;
           if (ent.mesh.position.z < 0 || ent.mesh.position.z > 30) ent.vz *= -1;
           ent.mesh.position.y = polishedIdleBob(ent.mesh, ent.hopPhase);
-          ent.mesh.rotation.y = Math.atan2(ent.vx, -ent.vz);
+          const heading = Math.atan2(-ent.vx, -ent.vz);
+          const delta = heading - ent.mesh.rotation.y;
+          ent.mesh.rotation.y += Math.atan2(Math.sin(delta), Math.cos(delta)) * (1 - Math.exp(-8 * dt));
 
           // Living Micro-Animations: tail, wings, head
           if (ent.mesh.userData) {
@@ -1569,13 +1677,22 @@ JS_GAMEPLAY = """
           const p = Math.min(1, th.progress);
           const curZ = -14 + p * (th.targetZ - (-14));
           const waveArcY = 2.4 + Math.sin(p * Math.PI) * (14 + th.ramp.slope * 5.2) + Math.sin(p * Math.PI * 6) * 1.2;
-          projectileGroup.position.set(playerGroup.position.x, waveArcY, curZ);
-          projectileGroup.rotation.x += dt * 8;
-          projectileGroup.rotation.y += dt * 6;
+          const release = 1 - THREE.MathUtils.smoothstep(p, 0, 0.11);
+          projectileGroup.position.set(playerGroup.position.x, waveArcY, curZ).lerp(th.releasePosition, release);
+          if (!reducedMotion.matches) {
+            projectileGroup.rotation.x += dt * 6.6;
+            projectileGroup.rotation.y += dt * 4.1;
+            // Projectile squash-and-stretch on launch
+            const osc = Math.exp(-p * 7) * Math.cos(p * 20);
+            const stretch = 1.0 + 0.50 * osc;
+            const squash = 1.0 - 0.25 * osc;
+            projectileGroup.scale.set(squash, squash, stretch);
+          }
 
-          // Camera follows behind and slightly above the spinning projectile (matching video)
-          camera.position.set(playerGroup.position.x + 8.5, waveArcY + 6.0, curZ + 16);
-          camera.lookAt(playerGroup.position.x, waveArcY, curZ - 12);
+          const camLift = reducedMotion.matches ? 4.8 : 2.6 + (1 - p) * 2.4;
+          const camSide = reducedMotion.matches ? 0 : 2.8 * (1 - p);
+          camera.position.set(playerGroup.position.x + camSide, waveArcY + camLift, curZ + 11.5);
+          camera.lookAt(playerGroup.position.x, waveArcY * 0.92, curZ - 13);
 
           const curDist = th.distance * p;
           document.getElementById('flightDistReadout').textContent = `${curDist.toFixed(1)}m`;
@@ -1593,45 +1710,66 @@ JS_GAMEPLAY = """
           document.getElementById('flightLuckMult').textContent = `${liveLuck}X`;
 
           if (th.progress >= 1.0) {
+            projectileGroup.scale.set(1, 1, 1);
             transitionTo3DCatchCutscene(th);
           }
         } else if (th.phase === 'reveal') {
           th.revealTimer += dt;
 
-          // Animate Eating: Animal bends down, jaws open and close repeatedly eating food!
           const animalMesh = th.chosenAnimalMesh;
-          if (animalMesh) {
-            // Eating bobs
-            animalMesh.position.y = Math.abs(Math.sin(th.revealTimer * 7)) * 0.25;
-            if (animalMesh.userData && animalMesh.userData.jaw) {
-              animalMesh.userData.jaw.rotation.x = Math.max(0, Math.sin(th.revealTimer * 12) * 0.45);
-            }
-            if (animalMesh.userData && animalMesh.userData.head) {
-              animalMesh.userData.head.rotation.x = 0.25 + Math.sin(th.revealTimer * 7) * 0.15;
-            }
-            if (animalMesh.userData && animalMesh.userData.tail) {
-              animalMesh.userData.tail.rotation.y = Math.sin(th.revealTimer * 8) * 0.4;
-            }
+          const t = th.revealTimer;
+          const dipIn = THREE.MathUtils.smoothstep(t, 0.1, 0.42);
+          const dipOut = THREE.MathUtils.smoothstep(t, 0.83, 1.18);
+          const bite = dipIn * (1 - dipOut);
+          const chew = Math.max(0, Math.sin(t * 20)) * bite;
+          const motion = reducedMotion.matches ? 0 : 1;
+          const joints = animalMesh.userData;
+          // Catch celebration hop after eating food
+          const hopT = Math.max(0, t - 1.18);
+          const hopBounce = (hopT > 0 && hopT < 0.75) ? Math.sin(hopT * Math.PI / 0.75) * 1.25 * motion : 0;
+          animalMesh.position.y = th.revealRestY + hopBounce;
+          animalMesh.scale.set(1 + chew * 0.035 * motion, 1 - chew * 0.055 * motion + (hopBounce > 0 ? 0.08 * motion : 0), 1 + chew * 0.035 * motion);
+          if (joints.head) joints.head.rotation.x = -(bite * 0.27 + chew * 0.06) * motion;
+          if (joints.jaw) joints.jaw.rotation.x = chew * 0.43 * motion;
+          if (joints.tail) joints.tail.rotation.y = Math.sin(t * 7) * 0.27 * motion;
+          if (joints.ears) joints.ears.rotation.x = (bite * 0.20 + (hopBounce > 0 ? 0.25 : 0)) * motion;
+          th.revealBait.scale.setScalar(0.85 * (1 - THREE.MathUtils.smoothstep(t, 0.35, 0.93)));
+          th.revealBait.visible = t < 0.93;
+
+          if (!th.celebratedHop && t >= 1.2) {
+            th.celebratedHop = true;
+            if (typeof addCameraTrauma === 'function') addCameraTrauma(0.4);
+            const celebrateText = th.isNewDiscovery ? '🌟 NEW DISCOVERY! 💖' : '🐾 CAUGHT! ✨';
+            const celebrateColor = th.isNewDiscovery ? '#facc15' : '#f472b6';
+            showFloatingPopup(new THREE.Vector3(animalMesh.position.x, th.revealRestY + 2.8, th.targetZ), celebrateText, celebrateColor);
           }
 
-          // Animate Confetti falling down around animal
-          confettiMeshes.forEach(cm => {
-            cm.position.y += cm.userData.vy * dt;
-            cm.position.x += cm.userData.vx * dt;
-            cm.position.z += cm.userData.vz * dt;
-            cm.rotation.x += cm.userData.rotSpeed * dt;
-            cm.rotation.y += cm.userData.rotSpeed * dt;
-            if (cm.position.y < 0.2) {
-              cm.position.y = 14 + Math.random() * 4;
-            }
-          });
+          if (reducedMotion.matches || t >= 2.6) confettiGroup.visible = false;
+          if (confettiGroup.visible) {
+            confettiMeshes.forEach(cm => {
+              if (!cm.visible) return;
+              cm.position.y += cm.userData.vy * dt;
+              cm.position.x += cm.userData.vx * dt;
+              cm.position.z += cm.userData.vz * dt;
+              cm.rotation.x += dt * cm.userData.rotSpeed;
+              cm.rotation.y += dt * cm.userData.rotSpeed;
+              if (cm.position.y < 0.1) cm.visible = false;
+            });
+          }
+          if (reducedMotion.matches || t >= 1.45) cutsceneBeacon.visible = false;
+          if (cutsceneBeacon.visible) cutsceneBeacon.material.opacity = 0.16 * (1 - THREE.MathUtils.smoothstep(t, 0.35, 1.45));
 
-          // Aura Beacon gentle spin & pulsation
-          cutsceneBeacon.rotation.y += dt * 1.5;
-
-          // Camera swoops down low in front of the food pellet framing the eating animal
-          camera.position.set(0, 3.4, th.targetZ - 6.5);
-          camera.lookAt(0, 1.8, th.targetZ);
+          // Frame each pet by its world-space bounds, including colossal sizes and portrait mode.
+          const focus = th.revealFocus;
+          const size = th.revealSize;
+          const halfFov = THREE.MathUtils.degToRad(camera.fov * 0.5);
+          const halfWidth = size.x * 0.5 + size.z * 0.22;
+          const fit = Math.max(size.y * 0.88, halfWidth / Math.min(1, camera.aspect) * 1.3) / Math.tan(halfFov);
+          const distance = Math.max(5.4, fit + size.z * 0.38);
+          const intro = (1 - THREE.MathUtils.smoothstep(t, 0, 0.66)) * motion;
+          camera.position.set(focus.x - distance * (0.25 + intro * 0.10),
+            focus.y + distance * (0.17 + intro * 0.11), focus.z - distance * (1 + intro * 0.15));
+          camera.lookAt(focus);
 
           // 1) Suspense Odds Slot Machine Roll (Exact match to Recording 003051)
           if (th.revealTimer < 1.1) {
@@ -1679,6 +1817,27 @@ JS_GAMEPLAY = """
         camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2.2, playerGroup.position.z - 2);
       }
 
+      // Trauma-Based Camera Shake decay and non-linear offset
+      if (typeof cameraTrauma !== 'undefined' && cameraTrauma > 0) {
+        const shake = cameraTrauma * cameraTrauma;
+        const maxTrans = 0.52;
+        camera.position.x += (Math.random() * 2 - 1) * maxTrans * shake;
+        camera.position.y += (Math.random() * 2 - 1) * maxTrans * shake;
+        camera.position.z += (Math.random() * 2 - 1) * maxTrans * shake;
+        cameraTrauma = Math.max(0, cameraTrauma - dt * 2.5);
+      }
+
+      if (typeof updateAmbientParticles === 'function') {
+        updateAmbientParticles(dt, state.t);
+      }
+
+      sky.position.copy(camera.position);
+      if (renderer.shadowMap.enabled) {
+        const activeThrow = state.activeThrow;
+        const focus = activeThrow?.phase === 'reveal' ? activeThrow.revealFocus :
+          activeThrow?.phase === 'flying' ? projectileGroup.position : playerGroup.position;
+        updateWorldLighting(focus.x, focus.z);
+      }
       renderer.render(scene, camera);
       requestAnimationFrame(animateLoop);
     }

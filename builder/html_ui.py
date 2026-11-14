@@ -217,6 +217,10 @@ HTML_UI = """
           <span>⚡ MAX SURGE (|P'|=Max):</span>
           <span class="text-cyan-400 font-bold">+30% DISTANCE</span>
         </div>
+        <div id="badgeInflectionStatus" class="bg-black/80 border-2 border-fuchsia-400 rounded-xl px-2.5 py-0.5 text-[10px] text-fuchsia-300 font-extrabold shadow flex items-center justify-between">
+          <span>⚡ INFLECTION (P''≈0):</span>
+          <span class="text-fuchsia-400 font-bold">+50% XP & COINS</span>
+        </div>
       </div>
 
       <!-- Main "TAP TO THROW!" Button -->
