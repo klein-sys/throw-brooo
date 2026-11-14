@@ -11,9 +11,11 @@ const pyCommands = ['python3', 'python', 'py'];
 let built = false;
 for (const cmd of pyCommands) {
   try {
-    cp.execFileSync(cmd, [assembleScript], { cwd: root, stdio: 'inherit' });
-    built = true;
-    break;
+    const res = cp.spawnSync(cmd, [assembleScript], { cwd: root, stdio: ['ignore', 'inherit', 'pipe'] });
+    if (res.status === 0) {
+      built = true;
+      break;
+    }
   } catch {}
 }
 

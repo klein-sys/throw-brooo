@@ -60,10 +60,19 @@ JS_GAMEPLAY = """
         else if (state.activeZone === 'throw') executeCalculusThrow();
       }
     });
-    window.addEventListener('keyup', e => { delete keys[e.key.toLowerCase()]; });
+    window.addEventListener('keyup', e => { if (e.key) delete keys[e.key.toLowerCase()]; });
     window.addEventListener('blur', resetInput);
-    window.addEventListener('contextmenu', e => { e.preventDefault(); });
+    window.addEventListener('focus', resetInput);
+    window.addEventListener('contextmenu', e => { e.preventDefault(); }, true);
     document.addEventListener('visibilitychange', () => { if (document.hidden) resetInput(); });
+    window.addEventListener('pointerup', e => {
+      if (e.pointerId === joystickPointer) resetJoystick();
+      if (e.pointerId === cameraPointer) cameraPointer = null;
+    });
+    window.addEventListener('pointercancel', e => {
+      if (e.pointerId === joystickPointer) resetJoystick();
+      if (e.pointerId === cameraPointer) cameraPointer = null;
+    });
 
     // Each pointer owns its gesture: looking and walking can happen together.
     container.addEventListener('pointerdown', e => {
@@ -95,7 +104,7 @@ JS_GAMEPLAY = """
       joyKnob.style.transform = `translate(${joystickDir.x * maxR}px, ${joystickDir.y * maxR}px)`;
     }
     joyZone.addEventListener('pointerdown', e => {
-      if (currentModal || state.activeThrow || state.isPullingUp || isThrowWindup || joystickPointer !== null) return;
+      if (currentModal || state.activeThrow || state.isPullingUp || isThrowWindup || joystickPointer !== null || e.button !== 0) return;
       joystickPointer = e.pointerId;
       joystickActive = true;
       joyZone.setPointerCapture(e.pointerId);
