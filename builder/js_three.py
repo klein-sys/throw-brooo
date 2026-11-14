@@ -200,10 +200,41 @@ JS_THREE = """
     );
     rampGroup.add(rampArrow);
 
+    // Dynamic 3D Tangent Slope Line on Launch Ramp
+    const tangentLinePositions = new Float32Array(6);
+    const tangentLineGeo = new THREE.BufferGeometry();
+    tangentLineGeo.setAttribute('position', new THREE.BufferAttribute(tangentLinePositions, 3));
+    const tangentLineMat = new THREE.LineBasicMaterial({
+      color: 0x38bdf8,
+      linewidth: 3,
+      transparent: true,
+      opacity: 0.95
+    });
+    const rampTangentLine = new THREE.Line(tangentLineGeo, tangentLineMat);
+    rampGroup.add(rampTangentLine);
+
+    const rampContactPoint = new THREE.Mesh(
+      new THREE.SphereGeometry(0.36, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    rampGroup.add(rampContactPoint);
+
     function update3DRampVisuals() {
       const ramp = evaluateRampCalculus(state.rampX0);
       const dir = new THREE.Vector3(0, Math.sin(ramp.angleRad), -Math.cos(ramp.angleRad)).normalize();
       rampArrow.setDirection(dir);
+
+      // Contact point on ramp curve
+      const cy = ramp.y0 * 0.75 + 1.4;
+      rampContactPoint.position.set(0, cy, 0);
+
+      // Tangent line extending along tangent direction
+      const p1 = new THREE.Vector3(0, cy, 0).addScaledVector(dir, -4.2);
+      const p2 = new THREE.Vector3(0, cy, 0).addScaledVector(dir, 5.2);
+      const pos = tangentLineGeo.attributes.position;
+      pos.setXYZ(0, p1.x, p1.y, p1.z);
+      pos.setXYZ(1, p2.x, p2.y, p2.z);
+      pos.needsUpdate = true;
     }
     update3DRampVisuals();
 
@@ -396,12 +427,102 @@ JS_THREE = """
       tree.position.set(x, y, z);
       tree.rotation.y = variant * 0.83;
       tree.scale.setScalar(scale);
+      tree.userData = { isForestTree: true };
       scenicBlock(tree, bark, 0, 2.7, 0, 1.45, 5.4, 1.6, true);
       scenicBlock(tree, bark, 0.83, 4.1, -0.04, 0.7, 2.6, 0.7).rotation.z = -0.57;
       scenicBlock(tree, leaves[0], 0, 5.65, 0.1, 5.0, 1.9, 4.4, true);
       scenicBlock(tree, leaves[1], -0.7, 6.9, -0.4, 3.5, 2.0, 3.8, true);
       scenicBlock(tree, leaves[2], 0.87, 7.8, 0.3, 2.65, 1.65, 2.7, true);
       scene.add(tree);
+      return tree;
+    }
+
+    // Bespoke Thematic Biome Scenery Props Materials
+    const cactusGreen = new THREE.MeshLambertMaterial({ color: 0x15803d });
+    const cactusBud = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
+    const sandstoneMat = new THREE.MeshLambertMaterial({ color: 0xd97706 });
+    const palmTrunkMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+    const palmLeafMat = new THREE.MeshLambertMaterial({ color: 0x16a34a });
+    const coconutMat = new THREE.MeshLambertMaterial({ color: 0x451a03 });
+    const coralPink = new THREE.MeshLambertMaterial({ color: 0xf43f5e });
+    const coralCyan = new THREE.MeshLambertMaterial({ color: 0x06b6d4 });
+    const coralGold = new THREE.MeshLambertMaterial({ color: 0xf59e0b });
+    const anemoneMat = new THREE.MeshLambertMaterial({ color: 0x38bdf8, emissive: 0x0369a1 });
+    const crystalMat = new THREE.MeshLambertMaterial({ color: 0xc084fc, emissive: 0x581c87, transparent: true, opacity: 0.92 });
+    const crystalRuneMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
+
+    function buildDesertCactus(x, y, z, scale = 1) {
+      const cactus = new THREE.Group();
+      cactus.position.set(x, y, z);
+      cactus.scale.setScalar(scale);
+      cactus.userData = { isDesertCactus: true };
+      scenicBlock(cactus, cactusGreen, 0, 3.2, 0, 1.3, 6.4, 1.3, true);
+      scenicBlock(cactus, cactusBud, 0, 6.6, 0, 0.6, 0.5, 0.6);
+      scenicBlock(cactus, cactusGreen, -1.2, 2.8, 0, 1.4, 1.1, 1.1, true);
+      scenicBlock(cactus, cactusGreen, -1.8, 4.2, 0, 1.1, 2.6, 1.1, true);
+      scenicBlock(cactus, cactusBud, -1.8, 5.6, 0, 0.5, 0.4, 0.5);
+      scenicBlock(cactus, cactusGreen, 1.2, 3.6, 0, 1.4, 1.1, 1.1, true);
+      scenicBlock(cactus, cactusGreen, 1.8, 4.8, 0, 1.1, 2.2, 1.1, true);
+      scenicBlock(cactus, cactusBud, 1.8, 6.0, 0, 0.5, 0.4, 0.5);
+      scenicBlock(cactus, sandstoneMat, 0, 0.3, 0, 2.2, 0.6, 2.2);
+      scene.add(cactus);
+      return cactus;
+    }
+
+    function buildJunglePalm(x, y, z, scale = 1) {
+      const palm = new THREE.Group();
+      palm.position.set(x, y, z);
+      palm.scale.setScalar(scale);
+      palm.userData = { isJunglePalm: true };
+      for (let i = 0; i < 5; i++) {
+        const tx = Math.sin(i * 0.28) * 0.9;
+        const ty = 1.1 + i * 2.0;
+        scenicBlock(palm, palmTrunkMat, tx, ty, 0, 1.4 - i * 0.1, 2.1, 1.4 - i * 0.1, true);
+      }
+      const topX = Math.sin(4 * 0.28) * 0.9;
+      const topY = 1.1 + 4 * 2.0 + 1.2;
+      scenicBlock(palm, coconutMat, topX - 0.45, topY - 0.4, 0.35, 0.6, 0.6, 0.6);
+      scenicBlock(palm, coconutMat, topX + 0.45, topY - 0.4, -0.35, 0.6, 0.6, 0.6);
+      [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((angle, idx) => {
+        const lx = topX + Math.cos(angle) * 3.2;
+        const lz = Math.sin(angle) * 3.2;
+        const leaf = scenicBlock(palm, palmLeafMat, lx, topY - 0.3, lz, 3.6, 0.45, 1.8, true);
+        leaf.rotation.y = angle;
+        leaf.rotation.z = (idx % 2 === 0 ? 0.25 : -0.25);
+      });
+      scene.add(palm);
+      return palm;
+    }
+
+    function buildOceanCoral(x, y, z, scale = 1) {
+      const coral = new THREE.Group();
+      coral.position.set(x, y, z);
+      coral.scale.setScalar(scale);
+      coral.userData = { isOceanCoral: true };
+      scenicBlock(coral, coralPink, 0, 3.5, 0, 2.0, 7.0, 2.0, true);
+      scenicBlock(coral, coralCyan, -1.8, 2.4, 0.6, 1.5, 4.8, 1.5, true);
+      scenicBlock(coral, coralGold, 1.6, 2.8, -0.6, 1.6, 5.5, 1.6, true);
+      scenicBlock(coral, anemoneMat, 0, 7.2, 0, 1.2, 0.8, 1.2);
+      scenicBlock(coral, anemoneMat, -1.8, 5.0, 0.6, 0.9, 0.6, 0.9);
+      scenicBlock(coral, anemoneMat, 1.6, 5.8, -0.6, 0.9, 0.6, 0.9);
+      scenicBlock(coral, stone, 0, 0.4, 0, 4.8, 0.8, 4.8);
+      scene.add(coral);
+      return coral;
+    }
+
+    function buildMythicalCrystal(x, y, z, scale = 1) {
+      const crystal = new THREE.Group();
+      crystal.position.set(x, y, z);
+      crystal.scale.setScalar(scale);
+      crystal.userData = { isMythicalCrystal: true };
+      scenicBlock(crystal, crystalMat, 0, 5.2, 0, 2.4, 10.4, 2.4, true);
+      scenicBlock(crystal, crystalMat, -2.0, 3.4, 1.2, 1.4, 6.8, 1.4, true);
+      scenicBlock(crystal, crystalMat, 1.8, 3.8, -1.2, 1.5, 7.6, 1.5, true);
+      scenicBlock(crystal, crystalRuneMat, 0, 10.8, 0, 1.0, 1.2, 1.0);
+      const floatRock = scenicBlock(crystal, crystalMat, 0, 13.0, 0, 1.2, 1.2, 1.2);
+      floatRock.userData = { isFloatingRune: true };
+      scene.add(crystal);
+      return crystal;
     }
 
     // Broad cloud silhouettes above the cliffs keep a clear horizon for throwing.
@@ -482,6 +603,9 @@ JS_THREE = """
           const mound = new THREE.Mesh(new THREE.ConeGeometry(1.8, 4.5, 6), new THREE.MeshLambertMaterial({ color: 0xb45309 }));
           mound.position.set((z % 2 === 0 ? -20 : 20), 2.25, z + 8);
           scene.add(mound);
+          // Savanna Saguaro Cacti & Sandstone boulders along border
+          buildDesertCactus((z % 2 === 0 ? -32 : 32), 0, z + 12, 0.82);
+          scenicBlock(scene, sandstoneMat, (z % 2 === 0 ? 25 : -25), 0.6, z + 4, 2.5, 1.2, 2.5);
         }
       }
 
@@ -513,18 +637,28 @@ JS_THREE = """
         rim.position.y = 0.15;
         oasisG.add(rim, water);
         scene.add(oasisG);
+
+        // Saguaro Cacti & Sandstone Formations lining both canyon walls
+        for (let z = b.zStart - 12; z > b.zEnd + 12; z -= 28) {
+          [-30, 30].forEach((xSide, i) => {
+            buildDesertCactus(xSide, 0, z + (i === 0 ? 0 : 7), 0.95);
+            scenicBlock(scene, sandstoneMat, xSide - Math.sign(xSide) * 3, 0.8, z + 12, 3.2, 1.6, 2.8);
+          });
+        }
       }
 
       // Jungle: Segmented Bamboo Groves & Mossy Aztec Pillars
       if (b.id === 'jungle') {
         for (let z = b.zStart - 12; z > b.zEnd + 12; z -= 26) {
-          [-28, 28].forEach(xSide => {
+          [-28, 28].forEach((xSide, i) => {
             // Bamboo cluster
             for (let bIdx = -2; bIdx <= 2; bIdx++) {
               const bamboo = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 12, 8), new THREE.MeshLambertMaterial({ color: 0x16a34a }));
               bamboo.position.set(xSide + bIdx * 1.1, 6, z + (bIdx % 2) * 1.1);
               scene.add(bamboo);
             }
+            // Lush Canopy Palms lining the jungle canyon border
+            buildJunglePalm(xSide + (i === 0 ? -4 : 4), 0, z + 12, 1.05);
           });
         }
       }
@@ -536,6 +670,8 @@ JS_THREE = """
             const coral = new THREE.Mesh(new THREE.BoxGeometry(4.5, 7.5, 4.5), new THREE.MeshLambertMaterial({ color: i % 2 === 0 ? 0xec4899 : 0x06b6d4 }));
             coral.position.set(xSide, 3.75, z);
             scene.add(coral);
+            // Multi-branch coral spires & glowing sea fans
+            buildOceanCoral(xSide + (i === 0 ? -3 : 3), 0, z + 14, 0.92);
           });
         }
       }
@@ -543,14 +679,100 @@ JS_THREE = """
       // Mythical: Glowing Crystalline Monoliths Pulsating with Calculus Runes
       if (b.id === 'mythical') {
         for (let z = b.zStart - 16; z > b.zEnd + 16; z -= 32) {
-          [-28, 28].forEach(xSide => {
+          [-28, 28].forEach((xSide, i) => {
             const mono = new THREE.Mesh(new THREE.OctahedronGeometry(4.2, 0), new THREE.MeshLambertMaterial({ color: 0xc084fc, emissive: 0x4a044e }));
             mono.position.set(xSide, 8, z);
             scene.add(mono);
+            // Glowing translucent crystal monoliths with floating runes
+            buildMythicalCrystal(xSide + (i === 0 ? -3 : 3), 0, z + 16, 1.0);
           });
         }
       }
     });
+
+    // 7b) AMBIENT BIOME ATMOSPHERIC PARTICLE AMBIANCE
+    const AMBIENT_PARTICLE_COUNT = 240;
+    const ambientParticleGeo = new THREE.BufferGeometry();
+    const ambPos = new Float32Array(AMBIENT_PARTICLE_COUNT * 3);
+    const ambCol = new Float32Array(AMBIENT_PARTICLE_COUNT * 3);
+    const ambVel = [];
+
+    function getBiomeColorForZ(z) {
+      if (z > -140) return [0.35, 0.85, 0.25]; // Forest: green leaf motes
+      if (z > -300) return [0.92, 0.75, 0.27]; // Savanna: golden dust
+      if (z > -480) return [0.95, 0.62, 0.22]; // Desert: warm sand
+      if (z > -680) return [0.18, 0.78, 0.38]; // Jungle: spore green
+      if (z > -840) return [0.22, 0.72, 0.95]; // Ocean: blue water bubbles
+      return [0.75, 0.45, 0.98];              // Mythical: cosmic stardust
+    }
+
+    for (let i = 0; i < AMBIENT_PARTICLE_COUNT; i++) {
+      const z = -20 - Math.random() * 950;
+      const x = (Math.random() - 0.5) * 68;
+      const y = 1.0 + Math.random() * 22;
+      ambPos[i * 3] = x;
+      ambPos[i * 3 + 1] = y;
+      ambPos[i * 3 + 2] = z;
+      const [r, g, b] = getBiomeColorForZ(z);
+      ambCol[i * 3] = r;
+      ambCol[i * 3 + 1] = g;
+      ambCol[i * 3 + 2] = b;
+      ambVel.push({
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: -0.3 - Math.random() * 0.4,
+        vz: (Math.random() - 0.5) * 0.6,
+        seed: Math.random() * 100
+      });
+    }
+
+    ambientParticleGeo.setAttribute('position', new THREE.BufferAttribute(ambPos, 3));
+    ambientParticleGeo.setAttribute('color', new THREE.BufferAttribute(ambCol, 3));
+
+    const ambientParticleMat = new THREE.PointsMaterial({
+      size: 1.4,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.82
+    });
+    const ambientParticleSystem = new THREE.Points(ambientParticleGeo, ambientParticleMat);
+    scene.add(ambientParticleSystem);
+
+    function updateAmbientParticles(dt, time) {
+      if (reducedMotion.matches) return;
+      const pos = ambientParticleGeo.attributes.position;
+      const col = ambientParticleGeo.attributes.color;
+      for (let i = 0; i < AMBIENT_PARTICLE_COUNT; i++) {
+        const idx = i * 3;
+        const v = ambVel[i];
+        let px = pos.array[idx] + (v.vx + Math.sin(time * 1.5 + v.seed) * 0.4) * dt;
+        let py = pos.array[idx + 1] + (v.vy + Math.cos(time * 1.2 + v.seed) * 0.2) * dt;
+        let pz = pos.array[idx + 2] + v.vz * dt;
+
+        if (py < 0.3) py = 22;
+        if (px < -34) px = 34;
+        if (px > 34) px = -34;
+        if (pz < -970) pz = -20;
+        if (pz > -20) pz = -970;
+
+        pos.array[idx] = px;
+        pos.array[idx + 1] = py;
+        pos.array[idx + 2] = pz;
+
+        const [r, g, b] = getBiomeColorForZ(pz);
+        col.array[idx] = r;
+        col.array[idx + 1] = g;
+        col.array[idx + 2] = b;
+      }
+      pos.needsUpdate = true;
+      col.needsUpdate = true;
+    }
+
+    // 7c) TRAUMA-BASED 3D CAMERA SHAKE SYSTEM
+    let cameraTrauma = 0;
+    function addCameraTrauma(amount) {
+      if (reducedMotion.matches) return;
+      cameraTrauma = Math.min(1.0, cameraTrauma + amount);
+    }
 
     // Each cliff face has its own world-scale UVs so the studs stay square.
     const dirtTex = createStuddedTexture('#94623f', '#795031', 1, 1);

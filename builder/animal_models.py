@@ -136,10 +136,11 @@ JS_ANIMAL_MODELS = """
           addBox(0.75, 0.55, 0.65, tanMat, 0, -0.2, -0.6, 0, 0, 0, headGroup);
           addBox(0.28, 0.2, 0.15, darkNose, 0, 0, -0.93, 0, 0, 0, headGroup);
           // Round Ears
-          addBox(0.35, 0.35, 0.18, baseMat, -0.48, 0.6, 0.05, 0, 0, 0, headGroup);
-          addBox(0.35, 0.35, 0.18, baseMat, 0.48, 0.6, 0.05, 0, 0, 0, headGroup);
-          addBox(0.2, 0.2, 0.05, tanMat, -0.48, 0.6, -0.05, 0, 0, 0, headGroup);
-          addBox(0.2, 0.2, 0.05, tanMat, 0.48, 0.6, -0.05, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.35, 0.35, 0.18, baseMat, -0.48, 0.6, 0.05, 0, 0, 0, earGroup);
+          addBox(0.35, 0.35, 0.18, baseMat, 0.48, 0.6, 0.05, 0, 0, 0, earGroup);
+          addBox(0.2, 0.2, 0.05, tanMat, -0.48, 0.6, -0.05, 0, 0, 0, earGroup);
+          addBox(0.2, 0.2, 0.05, tanMat, 0.48, 0.6, -0.05, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.15, 0.15, 0.05, 0.38, -0.6, headGroup);
           // 4 Sturdy Claws Legs
           [[-0.55, -0.7], [0.55, -0.7], [-0.55, 0.7], [0.55, 0.7]].forEach(([lx, lz]) => {
@@ -166,8 +167,9 @@ JS_ANIMAL_MODELS = """
           headGroup.position.set(0, 2.65 * s, -1.35 * s);
           addBox(0.75, 0.75, 1.1, baseMat, 0, 0, 0, 0, 0, 0, headGroup);
           addBox(0.65, 0.55, 0.55, blackMat, 0, -0.1, -0.6, 0, 0, 0, headGroup);
-          addBox(0.18, 0.35, 0.12, baseMat, -0.28, 0.45, 0.25, 0, 0, 0, headGroup);
-          addBox(0.18, 0.35, 0.12, baseMat, 0.28, 0.45, 0.25, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.18, 0.35, 0.12, baseMat, -0.28, 0.45, 0.25, 0, 0, 0, earGroup);
+          addBox(0.18, 0.35, 0.12, baseMat, 0.28, 0.45, 0.25, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.38, -0.35, headGroup);
           // 4 Hooved Legs
           [[-0.45, -0.65], [0.45, -0.65], [-0.45, 0.65], [0.45, 0.65]].forEach(([lx, lz]) => {
@@ -222,8 +224,9 @@ JS_ANIMAL_MODELS = """
           addBox(0.65, 0.5, 0.55, baseMat, 0, -0.15, -0.5, 0, 0, 0, headGroup);
           addBox(0.25, 0.18, 0.12, noseMat, 0, 0.05, -0.78, 0, 0, 0, headGroup);
           // Ears
-          addBox(0.25, 0.25, 0.12, baseMat, -0.45, 0.6, 0.2, 0, 0, 0, headGroup);
-          addBox(0.25, 0.25, 0.12, baseMat, 0.45, 0.6, 0.2, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.25, 0.25, 0.12, baseMat, -0.45, 0.6, 0.2, 0, 0, 0, earGroup);
+          addBox(0.25, 0.25, 0.12, baseMat, 0.45, 0.6, 0.2, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.35, -0.55, headGroup);
           // Articulated Jaw with Fangs
           jawGroup.position.set(0, 1.45 * s, -1.35 * s);
@@ -421,8 +424,9 @@ JS_ANIMAL_MODELS = """
           addBox(1.4, 0.42, 0.65, whiteMat, 0, -0.2, -0.2, 0, 0, 0, headGroup);
           addBox(0.5, 0.38, 0.45, whiteMat, 0, -0.15, -0.5, 0, 0, 0, headGroup);
           addBox(0.2, 0.15, 0.1, stripeMat, 0, 0, -0.73, 0, 0, 0, headGroup);
-          addBox(0.24, 0.28, 0.12, baseMat, -0.42, 0.55, 0, 0, 0, 0, headGroup);
-          addBox(0.24, 0.28, 0.12, baseMat, 0.42, 0.55, 0, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.24, 0.28, 0.12, baseMat, -0.42, 0.55, 0, 0, 0, 0, earGroup);
+          addBox(0.24, 0.28, 0.12, baseMat, 0.42, 0.55, 0, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.35, -0.55, headGroup);
           // 4 Paws
           [[-0.48, -0.65], [0.48, -0.65], [-0.48, 0.65], [0.48, 0.65]].forEach(([lx, lz]) => {

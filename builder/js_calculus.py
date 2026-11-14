@@ -33,13 +33,23 @@ JS_CALCULUS = """
         const secSq = 1 / (safeCos * safeCos);
         const deriv = food.A * food.B * secSq;
         const maxDeriv = food.A * food.B * (1 / (0.22 * 0.22));
-        return { pos, deriv, maxDeriv };
+        const sinVal = Math.sin(arg);
+        const deriv2 = 2 * food.A * food.B * food.B * secSq * (sinVal / safeCos);
+        const maxDeriv2 = 2 * Math.abs(food.A * food.B * food.B) * (1 / (0.22 * 0.22)) * (1 / 0.22);
+        return { pos, deriv, maxDeriv, deriv2, maxDeriv2 };
       } else {
         const pos = food.A * Math.sin(food.B * t) + food.C * Math.cos(food.D * t);
         const deriv = food.A * food.B * Math.cos(food.B * t) - food.C * food.D * Math.sin(food.D * t);
         const maxDeriv = Math.abs(food.A * food.B) + Math.abs(food.C * food.D);
-        return { pos, deriv, maxDeriv };
+        const deriv2 = -food.A * food.B * food.B * Math.sin(food.B * t) - food.C * food.D * food.D * Math.cos(food.D * t);
+        const maxDeriv2 = Math.abs(food.A * food.B * food.B) + Math.abs(food.C * food.D * food.D) || 1;
+        return { pos, deriv, maxDeriv, deriv2, maxDeriv2 };
       }
+    }
+
+    function isInflectionPoint(calc) {
+      if (!calc || !calc.maxDeriv2) return false;
+      return (Math.abs(calc.deriv2) / calc.maxDeriv2) <= 0.12;
     }
 
     function evaluateRampCalculus(x0) {
@@ -64,16 +74,22 @@ JS_CALCULUS = """
         foodName: th.food.name,
         formulaStr: th.food.formulaStr,
         derivStr: th.food.derivStr,
+        deriv2Str: th.food.deriv2Str || '',
         t0: th.t0,
         posVal: th.calc.pos,
         derivVal: th.calc.deriv,
         maxDeriv: th.calc.maxDeriv,
         derivRatio: Math.abs(th.calc.deriv) / (th.calc.maxDeriv || 1),
+        deriv2Val: th.calc.deriv2,
+        maxDeriv2: th.calc.maxDeriv2,
+        deriv2Ratio: Math.abs(th.calc.deriv2) / (th.calc.maxDeriv2 || 1),
         rampX0: state.rampX0,
         rampSlope: th.ramp.slope,
         angleDeg: th.ramp.angleDeg,
         isCritical: th.isCriticalPoint,
         isSurge: th.isMaxDerivSurge,
+        isInflection: th.isInflectionPoint,
+        isMasterstroke: th.isCriticalPoint && th.isInflectionPoint,
         distance: th.distance,
         animal: th.chosenAnimal,
         size: th.chosenSize,
@@ -98,13 +114,15 @@ JS_CALCULUS = """
         </div>
         <div><strong>Time of Launch:</strong> t₀ = ${w.t0.toFixed(3)} s</div>
         <div><strong>Position Function:</strong> ${w.formulaStr} = <span class="text-cyan-400">${w.posVal.toFixed(3)}</span></div>
-        <div><strong>Instantaneous Derivative:</strong> ${w.derivStr} = <span class="text-amber-400 font-bold">${w.derivVal.toFixed(3)}</span></div>
+        <div><strong>First Derivative (Velocity):</strong> ${w.derivStr} = <span class="text-amber-400 font-bold">${w.derivVal.toFixed(3)}</span></div>
+        <div><strong>Second Derivative (Curvature):</strong> ${w.deriv2Str || "P''(t)"} = <span class="text-purple-400 font-bold">${(w.deriv2Val !== undefined ? w.deriv2Val.toFixed(3) : '0.000')}</span> (|P''|/Max = ${((w.deriv2Ratio || 0) * 100).toFixed(1)}%)</div>
         <div><strong>Ramp Tangent Line:</strong> y(x) = 2sin(x) ⟹ m = y'(${w.rampX0.toFixed(2)}) = 2cos(${w.rampX0.toFixed(2)}) = <span class="text-emerald-400 font-bold">${w.rampSlope.toFixed(3)}</span> (Launch θ = ${w.angleDeg.toFixed(1)}°)</div>
         <div class="my-1 border-t border-gray-800 pt-1">
           <strong>Calculus Strategy Evaluation:</strong><br>
-          • Derivative Ratio: |P'(t₀)| / Max = ${(w.derivRatio * 100).toFixed(1)}%<br>
           • Critical Point Test (P' ≈ 0): ${w.isCritical ? '<span class="text-yellow-400 font-bold">CRITICAL EXTREMUM DETECTED (Guaranteed 5x-25x Mutation!)</span>' : 'None'}<br>
-          • Max Surge Test (|P'| ≥ 82%): ${w.isSurge ? '<span class="text-cyan-400 font-bold">DERIVATIVE VELOCITY SURGE (+30% Distance!)</span>' : 'Standard'}
+          • Max Surge Test (|P'| ≥ 82%): ${w.isSurge ? '<span class="text-cyan-400 font-bold">DERIVATIVE VELOCITY SURGE (+30% Distance!)</span>' : 'Standard'}<br>
+          • Inflection Point Test (P'' ≈ 0): ${w.isInflection ? '<span class="text-fuchsia-400 font-bold">HARMONIC RESONANCE (+50% Bonus XP & Coins!)</span>' : 'Standard'}<br>
+          ${w.isMasterstroke ? '• <span class="text-amber-300 font-black animate-pulse">🌟 DUAL CALCULUS MASTERSTROKE! (Critical + Inflection)</span><br>' : ''}
         </div>
         <div class="border-t border-gray-800 pt-1 text-lime-400">
           <strong>Outcome:</strong> Final Ballistic Distance = <strong>${w.distance.toFixed(1)}m</strong> ⟹ Caught <strong>${w.size ? w.size.name.toUpperCase() : ''} ${w.mutation.name} ${w.animal.name}</strong> (Rarity: 1 in ${formatNum(w.odds || 10)}) earning <strong>$${formatNum(w.income)}/s</strong>!

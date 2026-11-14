@@ -362,19 +362,22 @@ JS_GAMEPLAY = """
       const p = THREE.MathUtils.clamp((now - throwPoseStart) / duration, 0, 1);
       if (throwPoseReleased) {
         const recovery = (1 - p) ** 2;
-        rightArm.rotation.x = -1.52 * recovery;
-        rightArm.rotation.z = -0.24 * recovery;
-        torsoMesh.rotation.x = 0.21 * recovery;
-        torsoMesh.rotation.y = -0.25 * recovery;
+        rightArm.rotation.x = -1.65 * recovery;
+        rightArm.rotation.z = -0.32 * recovery;
+        leftArm.rotation.x = 0.55 * recovery;
+        torsoMesh.rotation.x = 0.28 * recovery;
+        torsoMesh.rotation.y = -0.35 * recovery;
+        playerRig.position.y = -0.15 * recovery;
         return;
       }
       const windup = THREE.MathUtils.smoothstep(p, 0, 0.66);
       const swing = THREE.MathUtils.smoothstep(p, 0.66, 1);
-      rightArm.rotation.x = 2.08 * windup - 3.60 * swing;
-      rightArm.rotation.z = 0.26 * windup - 0.50 * swing;
-      leftArm.rotation.x = -0.43 * (windup - swing);
-      torsoMesh.rotation.x = -0.17 * windup + 0.38 * swing;
-      torsoMesh.rotation.y = 0.32 * windup - 0.57 * swing;
+      rightArm.rotation.x = 2.25 * windup - 3.85 * swing;
+      rightArm.rotation.z = 0.32 * windup - 0.55 * swing;
+      leftArm.rotation.x = -0.55 * (windup - swing);
+      torsoMesh.rotation.x = -0.22 * windup + 0.42 * swing;
+      torsoMesh.rotation.y = 0.38 * windup - 0.62 * swing;
+      playerRig.position.y = -0.12 * windup + 0.05 * swing;
     }
 
     function executeCalculusThrow() {
@@ -398,6 +401,9 @@ JS_GAMEPLAY = """
       const isCriticalPoint = food.type !== 'tan' && derivRatio <= 0.18;
       const isMaxDerivSurge = derivRatio >= 0.82;
       const surgeBonus = isMaxDerivSurge ? 1.30 : 1.0;
+      const isInflection = isInflectionPoint(calc);
+      const isMasterstroke = isCriticalPoint && isInflection;
+      const harmonicBonus = isInflection ? 1.5 : 1.0;
 
       // REBALANCED PROGRESSION FORMULA:
       // Distance strictly controlled by strength power 0.72 and food.distMult!
@@ -452,8 +458,18 @@ JS_GAMEPLAY = """
       const totalOdds = Math.round(chosenAnimal.baseOdds * chosenSize.chanceNum * chosenMutation.chanceNum);
       const oddsDisplayStr = `1 in ${formatNum(totalOdds)}`;
 
-      const finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult);
+      let finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult * harmonicBonus);
       const isNewDiscovery = !state.unlockedIndex.has(chosenAnimal.id);
+
+      // Award bonus pullUpXp if inflection point hit (Harmonic Resonance)
+      if (isInflection) {
+        state.pullUpXp += 1;
+        if (state.pullUpXp >= state.pullUpMaxXp) {
+          state.pullUpXp -= state.pullUpMaxXp;
+          state.pullUpLevel++;
+          state.baseStrength += 5;
+        }
+      }
 
       // Distance mapping to expanded 3D Z coordinate (-14 to -900)
       const normDist = Math.min(1, Math.pow(distance / 5500, 0.48));
@@ -469,9 +485,17 @@ JS_GAMEPLAY = """
       throwPoseReleased = false;
 
       // Floating readout on throw
-      const readoutText = isMaxDerivSurge ? '⚡ MAX SURGE! +19 POWER' : isCriticalPoint ? '🎯 CRITICAL POINT!' : 'PERFECT!';
-      const readoutColor = isMaxDerivSurge ? '#38bdf8' : isCriticalPoint ? '#facc15' : '#4ade80';
-      showFloatingPopup(playerGroup.position, readoutText, readoutColor);
+      if (isMasterstroke) {
+        showFloatingPopup(playerGroup.position, '🌟 DUAL CALCULUS MASTERSTROKE! (Crit + Inflection)', '#fde047');
+      } else if (isInflection) {
+        showFloatingPopup(playerGroup.position, '⚡ HARMONIC RESONANCE! (+50% Bonus)', '#e879f9');
+      } else if (isMaxDerivSurge) {
+        showFloatingPopup(playerGroup.position, '🚀 VELOCITY SURGE! (+30% Distance)', '#38bdf8');
+      } else if (isCriticalPoint) {
+        showFloatingPopup(playerGroup.position, '🎯 CRITICAL POINT! (Guaranteed Mutation)', '#facc15');
+      } else {
+        showFloatingPopup(playerGroup.position, 'PERFECT THROW!', '#4ade80');
+      }
 
       setTimeout(() => {
         updateThrowPose(throwPoseStart + THROW_WINDUP_MS);
@@ -488,7 +512,12 @@ JS_GAMEPLAY = """
         projectileGroup.visible = true;
 
         audio.playThrowSound(isMaxDerivSurge, isCriticalPoint);
-        if (isMaxDerivSurge) triggerScreenShake();
+        if (isMaxDerivSurge) {
+          triggerScreenShake();
+          if (typeof addCameraTrauma === 'function') addCameraTrauma(0.85);
+        } else if (typeof addCameraTrauma === 'function') {
+          addCameraTrauma(0.35);
+        }
 
         state.activeThrow = {
           phase: 'flying',
@@ -506,6 +535,8 @@ JS_GAMEPLAY = """
           isNewDiscovery,
           isCriticalPoint,
           isMaxDerivSurge,
+          isInflectionPoint: isInflection,
+          isMasterstroke,
           t0,
           calc,
           ramp,
@@ -911,6 +942,7 @@ JS_GAMEPLAY = """
       state.cash += sellValue;
       state.inventory.splice(idx, 1);
       audio.playCoinSound();
+      showFloatingPopup(new THREE.Vector3(STATIONS.sell.x, 2.5, STATIONS.sell.z), `+$${formatNum(sellValue)} Coins 💰`, '#facc15');
       renderSellStall();
       updateHUD();
       saveGame();
@@ -924,6 +956,7 @@ JS_GAMEPLAY = """
       state.cash += total;
       state.inventory = state.inventory.filter(i => i.equipped);
       audio.playCoinSound();
+      showFloatingPopup(new THREE.Vector3(STATIONS.sell.x, 2.5, STATIONS.sell.z), `+$${formatNum(total)} Coins 💰`, '#facc15');
       showToast(`💰 Sold ${unequipped.length} unequipped pets for +$${formatNum(total)}!`, 'bg-lime-400 text-black');
       renderSellStall();
       updateHUD();
@@ -1443,8 +1476,11 @@ JS_GAMEPLAY = """
 
       const badgeCrit = document.getElementById('badgeCritStatus');
       const badgeSurge = document.getElementById('badgeSurgeStatus');
+      const badgeInflect = document.getElementById('badgeInflectionStatus');
       const indCrit = document.getElementById('critPointIndicator');
       const regimeBadge = document.getElementById('calcRegimeBadge');
+
+      const isInflection = isInflectionPoint(calc);
 
       if (isCriticalPoint) {
         badgeCrit.className = 'bg-yellow-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
@@ -1454,10 +1490,26 @@ JS_GAMEPLAY = """
         indCrit.classList.add('hidden');
       }
 
+      if (badgeInflect) {
+        if (isInflection) {
+          badgeInflect.className = 'bg-fuchsia-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
+        } else {
+          badgeInflect.className = 'bg-black/80 border-2 border-fuchsia-400 rounded-xl px-2.5 py-0.5 text-[10px] text-fuchsia-300 font-extrabold shadow';
+        }
+      }
+
       if (isMaxDerivSurge) {
         badgeSurge.className = 'bg-cyan-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
         regimeBadge.textContent = 'MAX SURGE';
         regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-400 text-black shadow';
+      } else if (isCriticalPoint && isInflection) {
+        badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
+        regimeBadge.textContent = 'MASTERSTROKE';
+        regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-black shadow animate-pulse';
+      } else if (isInflection) {
+        badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
+        regimeBadge.textContent = 'INFLECTION';
+        regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-fuchsia-400 text-black shadow pulse-glow';
       } else if (isCriticalPoint) {
         badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
         regimeBadge.textContent = 'CRITICAL POINT';
@@ -1630,6 +1682,11 @@ JS_GAMEPLAY = """
           if (!reducedMotion.matches) {
             projectileGroup.rotation.x += dt * 6.6;
             projectileGroup.rotation.y += dt * 4.1;
+            // Projectile squash-and-stretch on launch
+            const osc = Math.exp(-p * 7) * Math.cos(p * 20);
+            const stretch = 1.0 + 0.50 * osc;
+            const squash = 1.0 - 0.25 * osc;
+            projectileGroup.scale.set(squash, squash, stretch);
           }
 
           const camLift = reducedMotion.matches ? 4.8 : 2.6 + (1 - p) * 2.4;
@@ -1653,6 +1710,7 @@ JS_GAMEPLAY = """
           document.getElementById('flightLuckMult').textContent = `${liveLuck}X`;
 
           if (th.progress >= 1.0) {
+            projectileGroup.scale.set(1, 1, 1);
             transitionTo3DCatchCutscene(th);
           }
         } else if (th.phase === 'reveal') {
@@ -1666,14 +1724,25 @@ JS_GAMEPLAY = """
           const chew = Math.max(0, Math.sin(t * 20)) * bite;
           const motion = reducedMotion.matches ? 0 : 1;
           const joints = animalMesh.userData;
-          animalMesh.position.y = th.revealRestY;
-          animalMesh.scale.set(1 + chew * 0.035 * motion, 1 - chew * 0.055 * motion, 1 + chew * 0.035 * motion);
+          // Catch celebration hop after eating food
+          const hopT = Math.max(0, t - 1.18);
+          const hopBounce = (hopT > 0 && hopT < 0.75) ? Math.sin(hopT * Math.PI / 0.75) * 1.25 * motion : 0;
+          animalMesh.position.y = th.revealRestY + hopBounce;
+          animalMesh.scale.set(1 + chew * 0.035 * motion, 1 - chew * 0.055 * motion + (hopBounce > 0 ? 0.08 * motion : 0), 1 + chew * 0.035 * motion);
           if (joints.head) joints.head.rotation.x = -(bite * 0.27 + chew * 0.06) * motion;
           if (joints.jaw) joints.jaw.rotation.x = chew * 0.43 * motion;
           if (joints.tail) joints.tail.rotation.y = Math.sin(t * 7) * 0.27 * motion;
-          if (joints.ears) joints.ears.rotation.x = bite * 0.20 * motion;
+          if (joints.ears) joints.ears.rotation.x = (bite * 0.20 + (hopBounce > 0 ? 0.25 : 0)) * motion;
           th.revealBait.scale.setScalar(0.85 * (1 - THREE.MathUtils.smoothstep(t, 0.35, 0.93)));
           th.revealBait.visible = t < 0.93;
+
+          if (!th.celebratedHop && t >= 1.2) {
+            th.celebratedHop = true;
+            if (typeof addCameraTrauma === 'function') addCameraTrauma(0.4);
+            const celebrateText = th.isNewDiscovery ? '🌟 NEW DISCOVERY! 💖' : '🐾 CAUGHT! ✨';
+            const celebrateColor = th.isNewDiscovery ? '#facc15' : '#f472b6';
+            showFloatingPopup(new THREE.Vector3(animalMesh.position.x, th.revealRestY + 2.8, th.targetZ), celebrateText, celebrateColor);
+          }
 
           if (reducedMotion.matches || t >= 2.6) confettiGroup.visible = false;
           if (confettiGroup.visible) {
@@ -1746,6 +1815,20 @@ JS_GAMEPLAY = """
         const cz = playerGroup.position.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
         camera.position.set(cx, cy, cz);
         camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2.2, playerGroup.position.z - 2);
+      }
+
+      // Trauma-Based Camera Shake decay and non-linear offset
+      if (typeof cameraTrauma !== 'undefined' && cameraTrauma > 0) {
+        const shake = cameraTrauma * cameraTrauma;
+        const maxTrans = 0.52;
+        camera.position.x += (Math.random() * 2 - 1) * maxTrans * shake;
+        camera.position.y += (Math.random() * 2 - 1) * maxTrans * shake;
+        camera.position.z += (Math.random() * 2 - 1) * maxTrans * shake;
+        cameraTrauma = Math.max(0, cameraTrauma - dt * 2.5);
+      }
+
+      if (typeof updateAmbientParticles === 'function') {
+        updateAmbientParticles(dt, state.t);
       }
 
       sky.position.copy(camera.position);

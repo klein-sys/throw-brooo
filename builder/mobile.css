@@ -25,13 +25,34 @@ button:disabled { opacity: .55; cursor: default; }
 #catchAnimalName { max-width: 94vw; overflow-wrap: anywhere; line-height: 1.2; }
 #catchTapPrompt { min-height: 44px; padding: 12px 24px; border-radius: 16px; background: #0f172acc; border: 1px solid #ffffff66; }
 #throwActionBtn { text-shadow: none; }
-#badgeCritStatus span, #badgeSurgeStatus span { color: inherit; }
+#badgeCritStatus span, #badgeSurgeStatus span, #badgeInflectionStatus span { color: inherit; }
 #catchRevealModal, #flightOverlay { padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(20px + var(--safe-bottom)); }
 .training-meter { height: 12px; background: #334155; border-radius: 12px; overflow: hidden; }
 .training-meter > div { height: 100%; width: 0; background: #38bdf8; }
 #trainingCue { font-size: 12px; color: #bae6fd; min-height: 18px; text-align: center; }
 #pullUpZoneHUD { pointer-events: none; }
 #pullUpZoneHUD > * { pointer-events: auto; }
+
+/* Glassmorphism Polish & Station Accent Borders */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.82) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45) !important;
+}
+#stationNav button[aria-pressed="true"] {
+  outline: 2px solid #38bdf8;
+  outline-offset: -3px;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.7), inset 0 0 8px rgba(56, 189, 248, 0.4);
+}
+.pulse-glow {
+  animation: pulse-glow-anim 1.2s infinite alternate ease-in-out;
+}
+@keyframes pulse-glow-anim {
+  from { box-shadow: 0 0 4px rgba(234, 179, 8, 0.5); transform: scale(1); }
+  to { box-shadow: 0 0 16px rgba(234, 179, 8, 0.9); transform: scale(1.02); }
+}
 body[data-activity="pullup"] #calcExpandedPanel,
 body[data-activity="pullup"] #calcMinimizedBar,
 body[data-activity="pullup"] #joystickZone,

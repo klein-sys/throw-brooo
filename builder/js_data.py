@@ -25,43 +25,43 @@ JS_DATA = """
       {
         id: 'carrot', name: 'Carrot', icon: '🥕', tier: 'Tier 1 • Common', cost: 0,
         type: 'sincos', A: 2, B: 1.2, C: 0, D: 1.2,
-        formulaStr: 'P(t) = 2sin(1.2t)', derivStr: "P'(t) = 2.4cos(1.2t)",
+        formulaStr: 'P(t) = 2sin(1.2t)', derivStr: "P'(t) = 2.4cos(1.2t)", deriv2Str: "P''(t) = -2.88sin(1.2t)",
         distMult: 1.8, foodMult: 1.0, luck: 1.0, color: 0xf97316
       },
       {
         id: 'apple', name: 'Apple', icon: '🍎', tier: 'Tier 1 • Common', cost: 80,
         type: 'sincos', A: 0, B: 1.4, C: 3, D: 1.4,
-        formulaStr: 'P(t) = 3cos(1.4t)', derivStr: "P'(t) = -4.2sin(1.4t)",
+        formulaStr: 'P(t) = 3cos(1.4t)', derivStr: "P'(t) = -4.2sin(1.4t)", deriv2Str: "P''(t) = -5.88cos(1.4t)",
         distMult: 3.5, foodMult: 1.8, luck: 1.4, color: 0xef4444
       },
       {
         id: 'banana', name: 'Banana', icon: '🍌', tier: 'Tier 2 • Uncommon', cost: 450,
         type: 'sincos', A: 3, B: 1.5, C: 2, D: 1.5,
-        formulaStr: 'P(t) = 3sin(1.5t) + 2cos(1.5t)', derivStr: "P'(t) = 4.5cos(1.5t) - 3sin(1.5t)",
+        formulaStr: 'P(t) = 3sin(1.5t) + 2cos(1.5t)', derivStr: "P'(t) = 4.5cos(1.5t) - 3sin(1.5t)", deriv2Str: "P''(t) = -6.75sin(1.5t) - 4.5cos(1.5t)",
         distMult: 7.5, foodMult: 3.2, luck: 2.2, color: 0xfacc15
       },
       {
         id: 'toast', name: 'Toast', icon: '🍞', tier: 'Tier 2 • Rare', cost: 3500,
         type: 'sincos', A: 4, B: 2.0, C: -2, D: 2.0,
-        formulaStr: 'P(t) = 4sin(2t) - 2cos(2t)', derivStr: "P'(t) = 8cos(2t) + 4sin(2t)",
+        formulaStr: 'P(t) = 4sin(2t) - 2cos(2t)', derivStr: "P'(t) = 8cos(2t) + 4sin(2t)", deriv2Str: "P''(t) = -16sin(2t) + 8cos(2t)",
         distMult: 16.0, foodMult: 6.5, luck: 4.0, color: 0xd97706
       },
       {
         id: 'orange', name: 'Orange', icon: '🍊', tier: 'Tier 3 • Epic', cost: 30000,
         type: 'sincos', A: 5, B: 2.4, C: 3, D: 1.2,
-        formulaStr: 'P(t) = 5sin(2.4t) + 3cos(1.2t)', derivStr: "P'(t) = 12cos(2.4t) - 3.6sin(1.2t)",
+        formulaStr: 'P(t) = 5sin(2.4t) + 3cos(1.2t)', derivStr: "P'(t) = 12cos(2.4t) - 3.6sin(1.2t)", deriv2Str: "P''(t) = -28.8sin(2.4t) - 4.32cos(1.2t)",
         distMult: 35.0, foodMult: 15.0, luck: 8.5, color: 0xfb923c
       },
       {
         id: 'pear', name: 'Golden Pear', icon: '🍐', tier: 'Tier 4 • Legendary', cost: 250000,
         type: 'sincos', A: 4, B: 1.4, C: 6, D: 2.8,
-        formulaStr: 'P(t) = 4sin(1.4t) + 6cos(2.8t)', derivStr: "P'(t) = 5.6cos(1.4t) - 16.8sin(2.8t)",
+        formulaStr: 'P(t) = 4sin(1.4t) + 6cos(2.8t)', derivStr: "P'(t) = 5.6cos(1.4t) - 16.8sin(2.8t)", deriv2Str: "P''(t) = -7.84sin(1.4t) - 47.04cos(2.8t)",
         distMult: 65.0, foodMult: 35.0, luck: 20.0, color: 0xa3e635
       },
       {
         id: 'lobster', name: 'Cosmic Lobster', icon: '🦞', tier: 'Tier 5 • Cosmic', cost: 1800000,
         type: 'tan', A: 2.5, B: 0.9, C: 0, D: 0.9,
-        formulaStr: 'P(t) = 2.5tan(0.9t)', derivStr: "P'(t) = 2.25sec²(0.9t)",
+        formulaStr: 'P(t) = 2.5tan(0.9t)', derivStr: "P'(t) = 2.25sec²(0.9t)", deriv2Str: "P''(t) = 4.05sec²(0.9t)tan(0.9t)",
         distMult: 120.0, foodMult: 90.0, luck: 60.0, color: 0xc084fc
       }
     ];

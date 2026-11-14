@@ -269,14 +269,22 @@ function polishedIdleBob(group, phase) {
 function animatePolishedAnimal(group, phase) {
   const p = group.userData.polishedModel;
   if (!p) return;
-  if (group.userData.ears && group.userData.ears.children.length)
-    group.userData.ears.rotation.z = Math.sin(phase * .7) * .09;
-  if (p.profile.motion === 'swim' && group.userData.tail)
-    group.userData.tail.rotation.y = Math.sin(phase * 1.8) * .48;
-  if (p.profile.motion === 'scuttle' && group.userData.tail)
-    group.userData.tail.rotation.x = Math.sin(phase*.7) * .12;
+  // Subtle sinusoidal vertical breathing scale
+  const breath = 1 + Math.sin(phase * 0.45) * 0.03;
+  if (!group.userData.origScaleY) group.userData.origScaleY = group.scale.y;
+  group.scale.y = group.userData.origScaleY * breath;
+
+  if (group.userData.ears && group.userData.ears.children.length) {
+    group.userData.ears.rotation.x = Math.sin(phase * 1.4) * 0.12;
+    group.userData.ears.rotation.z = Math.sin(phase * 0.7) * 0.09;
+  }
+  if (group.userData.tail) {
+    if (p.profile.motion === 'swim') group.userData.tail.rotation.y = Math.sin(phase * 1.8) * 0.48;
+    else if (p.profile.motion === 'scuttle') group.userData.tail.rotation.x = Math.sin(phase * 0.7) * 0.12;
+    else group.userData.tail.rotation.y = Math.sin(phase * 1.3) * 0.28;
+  }
   if (p.profile.motion === 'flap' && group.userData.leftWing && group.userData.rightWing) {
-    const flap = Math.sin(phase*2.3) * .52;
+    const flap = Math.sin(phase * 2.3) * 0.52;
     group.userData.leftWing.rotation.z = flap;
     group.userData.rightWing.rotation.z = -flap;
   }

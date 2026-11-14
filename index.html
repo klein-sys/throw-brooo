@@ -217,13 +217,34 @@ button:disabled { opacity: .55; cursor: default; }
 #catchAnimalName { max-width: 94vw; overflow-wrap: anywhere; line-height: 1.2; }
 #catchTapPrompt { min-height: 44px; padding: 12px 24px; border-radius: 16px; background: #0f172acc; border: 1px solid #ffffff66; }
 #throwActionBtn { text-shadow: none; }
-#badgeCritStatus span, #badgeSurgeStatus span { color: inherit; }
+#badgeCritStatus span, #badgeSurgeStatus span, #badgeInflectionStatus span { color: inherit; }
 #catchRevealModal, #flightOverlay { padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(20px + var(--safe-bottom)); }
 .training-meter { height: 12px; background: #334155; border-radius: 12px; overflow: hidden; }
 .training-meter > div { height: 100%; width: 0; background: #38bdf8; }
 #trainingCue { font-size: 12px; color: #bae6fd; min-height: 18px; text-align: center; }
 #pullUpZoneHUD { pointer-events: none; }
 #pullUpZoneHUD > * { pointer-events: auto; }
+
+/* Glassmorphism Polish & Station Accent Borders */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.82) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45) !important;
+}
+#stationNav button[aria-pressed="true"] {
+  outline: 2px solid #38bdf8;
+  outline-offset: -3px;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.7), inset 0 0 8px rgba(56, 189, 248, 0.4);
+}
+.pulse-glow {
+  animation: pulse-glow-anim 1.2s infinite alternate ease-in-out;
+}
+@keyframes pulse-glow-anim {
+  from { box-shadow: 0 0 4px rgba(234, 179, 8, 0.5); transform: scale(1); }
+  to { box-shadow: 0 0 16px rgba(234, 179, 8, 0.9); transform: scale(1.02); }
+}
 body[data-activity="pullup"] #calcExpandedPanel,
 body[data-activity="pullup"] #calcMinimizedBar,
 body[data-activity="pullup"] #joystickZone,
@@ -513,6 +534,10 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
         <div id="badgeSurgeStatus" class="bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow flex items-center justify-between">
           <span>⚡ MAX SURGE (|P'|=Max):</span>
           <span class="text-cyan-400 font-bold">+30% DISTANCE</span>
+        </div>
+        <div id="badgeInflectionStatus" class="bg-black/80 border-2 border-fuchsia-400 rounded-xl px-2.5 py-0.5 text-[10px] text-fuchsia-300 font-extrabold shadow flex items-center justify-between">
+          <span>⚡ INFLECTION (P''≈0):</span>
+          <span class="text-fuchsia-400 font-bold">+50% XP & COINS</span>
         </div>
       </div>
 
@@ -916,43 +941,43 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
       {
         id: 'carrot', name: 'Carrot', icon: '🥕', tier: 'Tier 1 • Common', cost: 0,
         type: 'sincos', A: 2, B: 1.2, C: 0, D: 1.2,
-        formulaStr: 'P(t) = 2sin(1.2t)', derivStr: "P'(t) = 2.4cos(1.2t)",
+        formulaStr: 'P(t) = 2sin(1.2t)', derivStr: "P'(t) = 2.4cos(1.2t)", deriv2Str: "P''(t) = -2.88sin(1.2t)",
         distMult: 1.8, foodMult: 1.0, luck: 1.0, color: 0xf97316
       },
       {
         id: 'apple', name: 'Apple', icon: '🍎', tier: 'Tier 1 • Common', cost: 80,
         type: 'sincos', A: 0, B: 1.4, C: 3, D: 1.4,
-        formulaStr: 'P(t) = 3cos(1.4t)', derivStr: "P'(t) = -4.2sin(1.4t)",
+        formulaStr: 'P(t) = 3cos(1.4t)', derivStr: "P'(t) = -4.2sin(1.4t)", deriv2Str: "P''(t) = -5.88cos(1.4t)",
         distMult: 3.5, foodMult: 1.8, luck: 1.4, color: 0xef4444
       },
       {
         id: 'banana', name: 'Banana', icon: '🍌', tier: 'Tier 2 • Uncommon', cost: 450,
         type: 'sincos', A: 3, B: 1.5, C: 2, D: 1.5,
-        formulaStr: 'P(t) = 3sin(1.5t) + 2cos(1.5t)', derivStr: "P'(t) = 4.5cos(1.5t) - 3sin(1.5t)",
+        formulaStr: 'P(t) = 3sin(1.5t) + 2cos(1.5t)', derivStr: "P'(t) = 4.5cos(1.5t) - 3sin(1.5t)", deriv2Str: "P''(t) = -6.75sin(1.5t) - 4.5cos(1.5t)",
         distMult: 7.5, foodMult: 3.2, luck: 2.2, color: 0xfacc15
       },
       {
         id: 'toast', name: 'Toast', icon: '🍞', tier: 'Tier 2 • Rare', cost: 3500,
         type: 'sincos', A: 4, B: 2.0, C: -2, D: 2.0,
-        formulaStr: 'P(t) = 4sin(2t) - 2cos(2t)', derivStr: "P'(t) = 8cos(2t) + 4sin(2t)",
+        formulaStr: 'P(t) = 4sin(2t) - 2cos(2t)', derivStr: "P'(t) = 8cos(2t) + 4sin(2t)", deriv2Str: "P''(t) = -16sin(2t) + 8cos(2t)",
         distMult: 16.0, foodMult: 6.5, luck: 4.0, color: 0xd97706
       },
       {
         id: 'orange', name: 'Orange', icon: '🍊', tier: 'Tier 3 • Epic', cost: 30000,
         type: 'sincos', A: 5, B: 2.4, C: 3, D: 1.2,
-        formulaStr: 'P(t) = 5sin(2.4t) + 3cos(1.2t)', derivStr: "P'(t) = 12cos(2.4t) - 3.6sin(1.2t)",
+        formulaStr: 'P(t) = 5sin(2.4t) + 3cos(1.2t)', derivStr: "P'(t) = 12cos(2.4t) - 3.6sin(1.2t)", deriv2Str: "P''(t) = -28.8sin(2.4t) - 4.32cos(1.2t)",
         distMult: 35.0, foodMult: 15.0, luck: 8.5, color: 0xfb923c
       },
       {
         id: 'pear', name: 'Golden Pear', icon: '🍐', tier: 'Tier 4 • Legendary', cost: 250000,
         type: 'sincos', A: 4, B: 1.4, C: 6, D: 2.8,
-        formulaStr: 'P(t) = 4sin(1.4t) + 6cos(2.8t)', derivStr: "P'(t) = 5.6cos(1.4t) - 16.8sin(2.8t)",
+        formulaStr: 'P(t) = 4sin(1.4t) + 6cos(2.8t)', derivStr: "P'(t) = 5.6cos(1.4t) - 16.8sin(2.8t)", deriv2Str: "P''(t) = -7.84sin(1.4t) - 47.04cos(2.8t)",
         distMult: 65.0, foodMult: 35.0, luck: 20.0, color: 0xa3e635
       },
       {
         id: 'lobster', name: 'Cosmic Lobster', icon: '🦞', tier: 'Tier 5 • Cosmic', cost: 1800000,
         type: 'tan', A: 2.5, B: 0.9, C: 0, D: 0.9,
-        formulaStr: 'P(t) = 2.5tan(0.9t)', derivStr: "P'(t) = 2.25sec²(0.9t)",
+        formulaStr: 'P(t) = 2.5tan(0.9t)', derivStr: "P'(t) = 2.25sec²(0.9t)", deriv2Str: "P''(t) = 4.05sec²(0.9t)tan(0.9t)",
         distMult: 120.0, foodMult: 90.0, luck: 60.0, color: 0xc084fc
       }
     ];
@@ -1434,13 +1459,23 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
         const secSq = 1 / (safeCos * safeCos);
         const deriv = food.A * food.B * secSq;
         const maxDeriv = food.A * food.B * (1 / (0.22 * 0.22));
-        return { pos, deriv, maxDeriv };
+        const sinVal = Math.sin(arg);
+        const deriv2 = 2 * food.A * food.B * food.B * secSq * (sinVal / safeCos);
+        const maxDeriv2 = 2 * Math.abs(food.A * food.B * food.B) * (1 / (0.22 * 0.22)) * (1 / 0.22);
+        return { pos, deriv, maxDeriv, deriv2, maxDeriv2 };
       } else {
         const pos = food.A * Math.sin(food.B * t) + food.C * Math.cos(food.D * t);
         const deriv = food.A * food.B * Math.cos(food.B * t) - food.C * food.D * Math.sin(food.D * t);
         const maxDeriv = Math.abs(food.A * food.B) + Math.abs(food.C * food.D);
-        return { pos, deriv, maxDeriv };
+        const deriv2 = -food.A * food.B * food.B * Math.sin(food.B * t) - food.C * food.D * food.D * Math.cos(food.D * t);
+        const maxDeriv2 = Math.abs(food.A * food.B * food.B) + Math.abs(food.C * food.D * food.D) || 1;
+        return { pos, deriv, maxDeriv, deriv2, maxDeriv2 };
       }
+    }
+
+    function isInflectionPoint(calc) {
+      if (!calc || !calc.maxDeriv2) return false;
+      return (Math.abs(calc.deriv2) / calc.maxDeriv2) <= 0.12;
     }
 
     function evaluateRampCalculus(x0) {
@@ -1465,16 +1500,22 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
         foodName: th.food.name,
         formulaStr: th.food.formulaStr,
         derivStr: th.food.derivStr,
+        deriv2Str: th.food.deriv2Str || '',
         t0: th.t0,
         posVal: th.calc.pos,
         derivVal: th.calc.deriv,
         maxDeriv: th.calc.maxDeriv,
         derivRatio: Math.abs(th.calc.deriv) / (th.calc.maxDeriv || 1),
+        deriv2Val: th.calc.deriv2,
+        maxDeriv2: th.calc.maxDeriv2,
+        deriv2Ratio: Math.abs(th.calc.deriv2) / (th.calc.maxDeriv2 || 1),
         rampX0: state.rampX0,
         rampSlope: th.ramp.slope,
         angleDeg: th.ramp.angleDeg,
         isCritical: th.isCriticalPoint,
         isSurge: th.isMaxDerivSurge,
+        isInflection: th.isInflectionPoint,
+        isMasterstroke: th.isCriticalPoint && th.isInflectionPoint,
         distance: th.distance,
         animal: th.chosenAnimal,
         size: th.chosenSize,
@@ -1499,13 +1540,15 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
         </div>
         <div><strong>Time of Launch:</strong> t₀ = ${w.t0.toFixed(3)} s</div>
         <div><strong>Position Function:</strong> ${w.formulaStr} = <span class="text-cyan-400">${w.posVal.toFixed(3)}</span></div>
-        <div><strong>Instantaneous Derivative:</strong> ${w.derivStr} = <span class="text-amber-400 font-bold">${w.derivVal.toFixed(3)}</span></div>
+        <div><strong>First Derivative (Velocity):</strong> ${w.derivStr} = <span class="text-amber-400 font-bold">${w.derivVal.toFixed(3)}</span></div>
+        <div><strong>Second Derivative (Curvature):</strong> ${w.deriv2Str || "P''(t)"} = <span class="text-purple-400 font-bold">${(w.deriv2Val !== undefined ? w.deriv2Val.toFixed(3) : '0.000')}</span> (|P''|/Max = ${((w.deriv2Ratio || 0) * 100).toFixed(1)}%)</div>
         <div><strong>Ramp Tangent Line:</strong> y(x) = 2sin(x) ⟹ m = y'(${w.rampX0.toFixed(2)}) = 2cos(${w.rampX0.toFixed(2)}) = <span class="text-emerald-400 font-bold">${w.rampSlope.toFixed(3)}</span> (Launch θ = ${w.angleDeg.toFixed(1)}°)</div>
         <div class="my-1 border-t border-gray-800 pt-1">
           <strong>Calculus Strategy Evaluation:</strong><br>
-          • Derivative Ratio: |P'(t₀)| / Max = ${(w.derivRatio * 100).toFixed(1)}%<br>
           • Critical Point Test (P' ≈ 0): ${w.isCritical ? '<span class="text-yellow-400 font-bold">CRITICAL EXTREMUM DETECTED (Guaranteed 5x-25x Mutation!)</span>' : 'None'}<br>
-          • Max Surge Test (|P'| ≥ 82%): ${w.isSurge ? '<span class="text-cyan-400 font-bold">DERIVATIVE VELOCITY SURGE (+30% Distance!)</span>' : 'Standard'}
+          • Max Surge Test (|P'| ≥ 82%): ${w.isSurge ? '<span class="text-cyan-400 font-bold">DERIVATIVE VELOCITY SURGE (+30% Distance!)</span>' : 'Standard'}<br>
+          • Inflection Point Test (P'' ≈ 0): ${w.isInflection ? '<span class="text-fuchsia-400 font-bold">HARMONIC RESONANCE (+50% Bonus XP & Coins!)</span>' : 'Standard'}<br>
+          ${w.isMasterstroke ? '• <span class="text-amber-300 font-black animate-pulse">🌟 DUAL CALCULUS MASTERSTROKE! (Critical + Inflection)</span><br>' : ''}
         </div>
         <div class="border-t border-gray-800 pt-1 text-lime-400">
           <strong>Outcome:</strong> Final Ballistic Distance = <strong>${w.distance.toFixed(1)}m</strong> ⟹ Caught <strong>${w.size ? w.size.name.toUpperCase() : ''} ${w.mutation.name} ${w.animal.name}</strong> (Rarity: 1 in ${formatNum(w.odds || 10)}) earning <strong>$${formatNum(w.income)}/s</strong>!
@@ -1784,14 +1827,22 @@ function polishedIdleBob(group, phase) {
 function animatePolishedAnimal(group, phase) {
   const p = group.userData.polishedModel;
   if (!p) return;
-  if (group.userData.ears && group.userData.ears.children.length)
-    group.userData.ears.rotation.z = Math.sin(phase * .7) * .09;
-  if (p.profile.motion === 'swim' && group.userData.tail)
-    group.userData.tail.rotation.y = Math.sin(phase * 1.8) * .48;
-  if (p.profile.motion === 'scuttle' && group.userData.tail)
-    group.userData.tail.rotation.x = Math.sin(phase*.7) * .12;
+  // Subtle sinusoidal vertical breathing scale
+  const breath = 1 + Math.sin(phase * 0.45) * 0.03;
+  if (!group.userData.origScaleY) group.userData.origScaleY = group.scale.y;
+  group.scale.y = group.userData.origScaleY * breath;
+
+  if (group.userData.ears && group.userData.ears.children.length) {
+    group.userData.ears.rotation.x = Math.sin(phase * 1.4) * 0.12;
+    group.userData.ears.rotation.z = Math.sin(phase * 0.7) * 0.09;
+  }
+  if (group.userData.tail) {
+    if (p.profile.motion === 'swim') group.userData.tail.rotation.y = Math.sin(phase * 1.8) * 0.48;
+    else if (p.profile.motion === 'scuttle') group.userData.tail.rotation.x = Math.sin(phase * 0.7) * 0.12;
+    else group.userData.tail.rotation.y = Math.sin(phase * 1.3) * 0.28;
+  }
   if (p.profile.motion === 'flap' && group.userData.leftWing && group.userData.rightWing) {
-    const flap = Math.sin(phase*2.3) * .52;
+    const flap = Math.sin(phase * 2.3) * 0.52;
     group.userData.leftWing.rotation.z = flap;
     group.userData.rightWing.rotation.z = -flap;
   }
@@ -1945,10 +1996,11 @@ function disposePolishedAnimal(group) {
           addBox(0.75, 0.55, 0.65, tanMat, 0, -0.2, -0.6, 0, 0, 0, headGroup);
           addBox(0.28, 0.2, 0.15, darkNose, 0, 0, -0.93, 0, 0, 0, headGroup);
           // Round Ears
-          addBox(0.35, 0.35, 0.18, baseMat, -0.48, 0.6, 0.05, 0, 0, 0, headGroup);
-          addBox(0.35, 0.35, 0.18, baseMat, 0.48, 0.6, 0.05, 0, 0, 0, headGroup);
-          addBox(0.2, 0.2, 0.05, tanMat, -0.48, 0.6, -0.05, 0, 0, 0, headGroup);
-          addBox(0.2, 0.2, 0.05, tanMat, 0.48, 0.6, -0.05, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.35, 0.35, 0.18, baseMat, -0.48, 0.6, 0.05, 0, 0, 0, earGroup);
+          addBox(0.35, 0.35, 0.18, baseMat, 0.48, 0.6, 0.05, 0, 0, 0, earGroup);
+          addBox(0.2, 0.2, 0.05, tanMat, -0.48, 0.6, -0.05, 0, 0, 0, earGroup);
+          addBox(0.2, 0.2, 0.05, tanMat, 0.48, 0.6, -0.05, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.15, 0.15, 0.05, 0.38, -0.6, headGroup);
           // 4 Sturdy Claws Legs
           [[-0.55, -0.7], [0.55, -0.7], [-0.55, 0.7], [0.55, 0.7]].forEach(([lx, lz]) => {
@@ -1975,8 +2027,9 @@ function disposePolishedAnimal(group) {
           headGroup.position.set(0, 2.65 * s, -1.35 * s);
           addBox(0.75, 0.75, 1.1, baseMat, 0, 0, 0, 0, 0, 0, headGroup);
           addBox(0.65, 0.55, 0.55, blackMat, 0, -0.1, -0.6, 0, 0, 0, headGroup);
-          addBox(0.18, 0.35, 0.12, baseMat, -0.28, 0.45, 0.25, 0, 0, 0, headGroup);
-          addBox(0.18, 0.35, 0.12, baseMat, 0.28, 0.45, 0.25, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.18, 0.35, 0.12, baseMat, -0.28, 0.45, 0.25, 0, 0, 0, earGroup);
+          addBox(0.18, 0.35, 0.12, baseMat, 0.28, 0.45, 0.25, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.38, -0.35, headGroup);
           // 4 Hooved Legs
           [[-0.45, -0.65], [0.45, -0.65], [-0.45, 0.65], [0.45, 0.65]].forEach(([lx, lz]) => {
@@ -2031,8 +2084,9 @@ function disposePolishedAnimal(group) {
           addBox(0.65, 0.5, 0.55, baseMat, 0, -0.15, -0.5, 0, 0, 0, headGroup);
           addBox(0.25, 0.18, 0.12, noseMat, 0, 0.05, -0.78, 0, 0, 0, headGroup);
           // Ears
-          addBox(0.25, 0.25, 0.12, baseMat, -0.45, 0.6, 0.2, 0, 0, 0, headGroup);
-          addBox(0.25, 0.25, 0.12, baseMat, 0.45, 0.6, 0.2, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.25, 0.25, 0.12, baseMat, -0.45, 0.6, 0.2, 0, 0, 0, earGroup);
+          addBox(0.25, 0.25, 0.12, baseMat, 0.45, 0.6, 0.2, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.35, -0.55, headGroup);
           // Articulated Jaw with Fangs
           jawGroup.position.set(0, 1.45 * s, -1.35 * s);
@@ -2230,8 +2284,9 @@ function disposePolishedAnimal(group) {
           addBox(1.4, 0.42, 0.65, whiteMat, 0, -0.2, -0.2, 0, 0, 0, headGroup);
           addBox(0.5, 0.38, 0.45, whiteMat, 0, -0.15, -0.5, 0, 0, 0, headGroup);
           addBox(0.2, 0.15, 0.1, stripeMat, 0, 0, -0.73, 0, 0, 0, headGroup);
-          addBox(0.24, 0.28, 0.12, baseMat, -0.42, 0.55, 0, 0, 0, 0, headGroup);
-          addBox(0.24, 0.28, 0.12, baseMat, 0.42, 0.55, 0, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.24, 0.28, 0.12, baseMat, -0.42, 0.55, 0, 0, 0, 0, earGroup);
+          addBox(0.24, 0.28, 0.12, baseMat, 0.42, 0.55, 0, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.35, -0.55, headGroup);
           // 4 Paws
           [[-0.48, -0.65], [0.48, -0.65], [-0.48, 0.65], [0.48, 0.65]].forEach(([lx, lz]) => {
@@ -2616,10 +2671,41 @@ function disposePolishedAnimal(group) {
     );
     rampGroup.add(rampArrow);
 
+    // Dynamic 3D Tangent Slope Line on Launch Ramp
+    const tangentLinePositions = new Float32Array(6);
+    const tangentLineGeo = new THREE.BufferGeometry();
+    tangentLineGeo.setAttribute('position', new THREE.BufferAttribute(tangentLinePositions, 3));
+    const tangentLineMat = new THREE.LineBasicMaterial({
+      color: 0x38bdf8,
+      linewidth: 3,
+      transparent: true,
+      opacity: 0.95
+    });
+    const rampTangentLine = new THREE.Line(tangentLineGeo, tangentLineMat);
+    rampGroup.add(rampTangentLine);
+
+    const rampContactPoint = new THREE.Mesh(
+      new THREE.SphereGeometry(0.36, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    rampGroup.add(rampContactPoint);
+
     function update3DRampVisuals() {
       const ramp = evaluateRampCalculus(state.rampX0);
       const dir = new THREE.Vector3(0, Math.sin(ramp.angleRad), -Math.cos(ramp.angleRad)).normalize();
       rampArrow.setDirection(dir);
+
+      // Contact point on ramp curve
+      const cy = ramp.y0 * 0.75 + 1.4;
+      rampContactPoint.position.set(0, cy, 0);
+
+      // Tangent line extending along tangent direction
+      const p1 = new THREE.Vector3(0, cy, 0).addScaledVector(dir, -4.2);
+      const p2 = new THREE.Vector3(0, cy, 0).addScaledVector(dir, 5.2);
+      const pos = tangentLineGeo.attributes.position;
+      pos.setXYZ(0, p1.x, p1.y, p1.z);
+      pos.setXYZ(1, p2.x, p2.y, p2.z);
+      pos.needsUpdate = true;
     }
     update3DRampVisuals();
 
@@ -2812,12 +2898,102 @@ function disposePolishedAnimal(group) {
       tree.position.set(x, y, z);
       tree.rotation.y = variant * 0.83;
       tree.scale.setScalar(scale);
+      tree.userData = { isForestTree: true };
       scenicBlock(tree, bark, 0, 2.7, 0, 1.45, 5.4, 1.6, true);
       scenicBlock(tree, bark, 0.83, 4.1, -0.04, 0.7, 2.6, 0.7).rotation.z = -0.57;
       scenicBlock(tree, leaves[0], 0, 5.65, 0.1, 5.0, 1.9, 4.4, true);
       scenicBlock(tree, leaves[1], -0.7, 6.9, -0.4, 3.5, 2.0, 3.8, true);
       scenicBlock(tree, leaves[2], 0.87, 7.8, 0.3, 2.65, 1.65, 2.7, true);
       scene.add(tree);
+      return tree;
+    }
+
+    // Bespoke Thematic Biome Scenery Props Materials
+    const cactusGreen = new THREE.MeshLambertMaterial({ color: 0x15803d });
+    const cactusBud = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
+    const sandstoneMat = new THREE.MeshLambertMaterial({ color: 0xd97706 });
+    const palmTrunkMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+    const palmLeafMat = new THREE.MeshLambertMaterial({ color: 0x16a34a });
+    const coconutMat = new THREE.MeshLambertMaterial({ color: 0x451a03 });
+    const coralPink = new THREE.MeshLambertMaterial({ color: 0xf43f5e });
+    const coralCyan = new THREE.MeshLambertMaterial({ color: 0x06b6d4 });
+    const coralGold = new THREE.MeshLambertMaterial({ color: 0xf59e0b });
+    const anemoneMat = new THREE.MeshLambertMaterial({ color: 0x38bdf8, emissive: 0x0369a1 });
+    const crystalMat = new THREE.MeshLambertMaterial({ color: 0xc084fc, emissive: 0x581c87, transparent: true, opacity: 0.92 });
+    const crystalRuneMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
+
+    function buildDesertCactus(x, y, z, scale = 1) {
+      const cactus = new THREE.Group();
+      cactus.position.set(x, y, z);
+      cactus.scale.setScalar(scale);
+      cactus.userData = { isDesertCactus: true };
+      scenicBlock(cactus, cactusGreen, 0, 3.2, 0, 1.3, 6.4, 1.3, true);
+      scenicBlock(cactus, cactusBud, 0, 6.6, 0, 0.6, 0.5, 0.6);
+      scenicBlock(cactus, cactusGreen, -1.2, 2.8, 0, 1.4, 1.1, 1.1, true);
+      scenicBlock(cactus, cactusGreen, -1.8, 4.2, 0, 1.1, 2.6, 1.1, true);
+      scenicBlock(cactus, cactusBud, -1.8, 5.6, 0, 0.5, 0.4, 0.5);
+      scenicBlock(cactus, cactusGreen, 1.2, 3.6, 0, 1.4, 1.1, 1.1, true);
+      scenicBlock(cactus, cactusGreen, 1.8, 4.8, 0, 1.1, 2.2, 1.1, true);
+      scenicBlock(cactus, cactusBud, 1.8, 6.0, 0, 0.5, 0.4, 0.5);
+      scenicBlock(cactus, sandstoneMat, 0, 0.3, 0, 2.2, 0.6, 2.2);
+      scene.add(cactus);
+      return cactus;
+    }
+
+    function buildJunglePalm(x, y, z, scale = 1) {
+      const palm = new THREE.Group();
+      palm.position.set(x, y, z);
+      palm.scale.setScalar(scale);
+      palm.userData = { isJunglePalm: true };
+      for (let i = 0; i < 5; i++) {
+        const tx = Math.sin(i * 0.28) * 0.9;
+        const ty = 1.1 + i * 2.0;
+        scenicBlock(palm, palmTrunkMat, tx, ty, 0, 1.4 - i * 0.1, 2.1, 1.4 - i * 0.1, true);
+      }
+      const topX = Math.sin(4 * 0.28) * 0.9;
+      const topY = 1.1 + 4 * 2.0 + 1.2;
+      scenicBlock(palm, coconutMat, topX - 0.45, topY - 0.4, 0.35, 0.6, 0.6, 0.6);
+      scenicBlock(palm, coconutMat, topX + 0.45, topY - 0.4, -0.35, 0.6, 0.6, 0.6);
+      [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((angle, idx) => {
+        const lx = topX + Math.cos(angle) * 3.2;
+        const lz = Math.sin(angle) * 3.2;
+        const leaf = scenicBlock(palm, palmLeafMat, lx, topY - 0.3, lz, 3.6, 0.45, 1.8, true);
+        leaf.rotation.y = angle;
+        leaf.rotation.z = (idx % 2 === 0 ? 0.25 : -0.25);
+      });
+      scene.add(palm);
+      return palm;
+    }
+
+    function buildOceanCoral(x, y, z, scale = 1) {
+      const coral = new THREE.Group();
+      coral.position.set(x, y, z);
+      coral.scale.setScalar(scale);
+      coral.userData = { isOceanCoral: true };
+      scenicBlock(coral, coralPink, 0, 3.5, 0, 2.0, 7.0, 2.0, true);
+      scenicBlock(coral, coralCyan, -1.8, 2.4, 0.6, 1.5, 4.8, 1.5, true);
+      scenicBlock(coral, coralGold, 1.6, 2.8, -0.6, 1.6, 5.5, 1.6, true);
+      scenicBlock(coral, anemoneMat, 0, 7.2, 0, 1.2, 0.8, 1.2);
+      scenicBlock(coral, anemoneMat, -1.8, 5.0, 0.6, 0.9, 0.6, 0.9);
+      scenicBlock(coral, anemoneMat, 1.6, 5.8, -0.6, 0.9, 0.6, 0.9);
+      scenicBlock(coral, stone, 0, 0.4, 0, 4.8, 0.8, 4.8);
+      scene.add(coral);
+      return coral;
+    }
+
+    function buildMythicalCrystal(x, y, z, scale = 1) {
+      const crystal = new THREE.Group();
+      crystal.position.set(x, y, z);
+      crystal.scale.setScalar(scale);
+      crystal.userData = { isMythicalCrystal: true };
+      scenicBlock(crystal, crystalMat, 0, 5.2, 0, 2.4, 10.4, 2.4, true);
+      scenicBlock(crystal, crystalMat, -2.0, 3.4, 1.2, 1.4, 6.8, 1.4, true);
+      scenicBlock(crystal, crystalMat, 1.8, 3.8, -1.2, 1.5, 7.6, 1.5, true);
+      scenicBlock(crystal, crystalRuneMat, 0, 10.8, 0, 1.0, 1.2, 1.0);
+      const floatRock = scenicBlock(crystal, crystalMat, 0, 13.0, 0, 1.2, 1.2, 1.2);
+      floatRock.userData = { isFloatingRune: true };
+      scene.add(crystal);
+      return crystal;
     }
 
     // Broad cloud silhouettes above the cliffs keep a clear horizon for throwing.
@@ -2898,6 +3074,9 @@ function disposePolishedAnimal(group) {
           const mound = new THREE.Mesh(new THREE.ConeGeometry(1.8, 4.5, 6), new THREE.MeshLambertMaterial({ color: 0xb45309 }));
           mound.position.set((z % 2 === 0 ? -20 : 20), 2.25, z + 8);
           scene.add(mound);
+          // Savanna Saguaro Cacti & Sandstone boulders along border
+          buildDesertCactus((z % 2 === 0 ? -32 : 32), 0, z + 12, 0.82);
+          scenicBlock(scene, sandstoneMat, (z % 2 === 0 ? 25 : -25), 0.6, z + 4, 2.5, 1.2, 2.5);
         }
       }
 
@@ -2929,18 +3108,28 @@ function disposePolishedAnimal(group) {
         rim.position.y = 0.15;
         oasisG.add(rim, water);
         scene.add(oasisG);
+
+        // Saguaro Cacti & Sandstone Formations lining both canyon walls
+        for (let z = b.zStart - 12; z > b.zEnd + 12; z -= 28) {
+          [-30, 30].forEach((xSide, i) => {
+            buildDesertCactus(xSide, 0, z + (i === 0 ? 0 : 7), 0.95);
+            scenicBlock(scene, sandstoneMat, xSide - Math.sign(xSide) * 3, 0.8, z + 12, 3.2, 1.6, 2.8);
+          });
+        }
       }
 
       // Jungle: Segmented Bamboo Groves & Mossy Aztec Pillars
       if (b.id === 'jungle') {
         for (let z = b.zStart - 12; z > b.zEnd + 12; z -= 26) {
-          [-28, 28].forEach(xSide => {
+          [-28, 28].forEach((xSide, i) => {
             // Bamboo cluster
             for (let bIdx = -2; bIdx <= 2; bIdx++) {
               const bamboo = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 12, 8), new THREE.MeshLambertMaterial({ color: 0x16a34a }));
               bamboo.position.set(xSide + bIdx * 1.1, 6, z + (bIdx % 2) * 1.1);
               scene.add(bamboo);
             }
+            // Lush Canopy Palms lining the jungle canyon border
+            buildJunglePalm(xSide + (i === 0 ? -4 : 4), 0, z + 12, 1.05);
           });
         }
       }
@@ -2952,6 +3141,8 @@ function disposePolishedAnimal(group) {
             const coral = new THREE.Mesh(new THREE.BoxGeometry(4.5, 7.5, 4.5), new THREE.MeshLambertMaterial({ color: i % 2 === 0 ? 0xec4899 : 0x06b6d4 }));
             coral.position.set(xSide, 3.75, z);
             scene.add(coral);
+            // Multi-branch coral spires & glowing sea fans
+            buildOceanCoral(xSide + (i === 0 ? -3 : 3), 0, z + 14, 0.92);
           });
         }
       }
@@ -2959,14 +3150,100 @@ function disposePolishedAnimal(group) {
       // Mythical: Glowing Crystalline Monoliths Pulsating with Calculus Runes
       if (b.id === 'mythical') {
         for (let z = b.zStart - 16; z > b.zEnd + 16; z -= 32) {
-          [-28, 28].forEach(xSide => {
+          [-28, 28].forEach((xSide, i) => {
             const mono = new THREE.Mesh(new THREE.OctahedronGeometry(4.2, 0), new THREE.MeshLambertMaterial({ color: 0xc084fc, emissive: 0x4a044e }));
             mono.position.set(xSide, 8, z);
             scene.add(mono);
+            // Glowing translucent crystal monoliths with floating runes
+            buildMythicalCrystal(xSide + (i === 0 ? -3 : 3), 0, z + 16, 1.0);
           });
         }
       }
     });
+
+    // 7b) AMBIENT BIOME ATMOSPHERIC PARTICLE AMBIANCE
+    const AMBIENT_PARTICLE_COUNT = 240;
+    const ambientParticleGeo = new THREE.BufferGeometry();
+    const ambPos = new Float32Array(AMBIENT_PARTICLE_COUNT * 3);
+    const ambCol = new Float32Array(AMBIENT_PARTICLE_COUNT * 3);
+    const ambVel = [];
+
+    function getBiomeColorForZ(z) {
+      if (z > -140) return [0.35, 0.85, 0.25]; // Forest: green leaf motes
+      if (z > -300) return [0.92, 0.75, 0.27]; // Savanna: golden dust
+      if (z > -480) return [0.95, 0.62, 0.22]; // Desert: warm sand
+      if (z > -680) return [0.18, 0.78, 0.38]; // Jungle: spore green
+      if (z > -840) return [0.22, 0.72, 0.95]; // Ocean: blue water bubbles
+      return [0.75, 0.45, 0.98];              // Mythical: cosmic stardust
+    }
+
+    for (let i = 0; i < AMBIENT_PARTICLE_COUNT; i++) {
+      const z = -20 - Math.random() * 950;
+      const x = (Math.random() - 0.5) * 68;
+      const y = 1.0 + Math.random() * 22;
+      ambPos[i * 3] = x;
+      ambPos[i * 3 + 1] = y;
+      ambPos[i * 3 + 2] = z;
+      const [r, g, b] = getBiomeColorForZ(z);
+      ambCol[i * 3] = r;
+      ambCol[i * 3 + 1] = g;
+      ambCol[i * 3 + 2] = b;
+      ambVel.push({
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: -0.3 - Math.random() * 0.4,
+        vz: (Math.random() - 0.5) * 0.6,
+        seed: Math.random() * 100
+      });
+    }
+
+    ambientParticleGeo.setAttribute('position', new THREE.BufferAttribute(ambPos, 3));
+    ambientParticleGeo.setAttribute('color', new THREE.BufferAttribute(ambCol, 3));
+
+    const ambientParticleMat = new THREE.PointsMaterial({
+      size: 1.4,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.82
+    });
+    const ambientParticleSystem = new THREE.Points(ambientParticleGeo, ambientParticleMat);
+    scene.add(ambientParticleSystem);
+
+    function updateAmbientParticles(dt, time) {
+      if (reducedMotion.matches) return;
+      const pos = ambientParticleGeo.attributes.position;
+      const col = ambientParticleGeo.attributes.color;
+      for (let i = 0; i < AMBIENT_PARTICLE_COUNT; i++) {
+        const idx = i * 3;
+        const v = ambVel[i];
+        let px = pos.array[idx] + (v.vx + Math.sin(time * 1.5 + v.seed) * 0.4) * dt;
+        let py = pos.array[idx + 1] + (v.vy + Math.cos(time * 1.2 + v.seed) * 0.2) * dt;
+        let pz = pos.array[idx + 2] + v.vz * dt;
+
+        if (py < 0.3) py = 22;
+        if (px < -34) px = 34;
+        if (px > 34) px = -34;
+        if (pz < -970) pz = -20;
+        if (pz > -20) pz = -970;
+
+        pos.array[idx] = px;
+        pos.array[idx + 1] = py;
+        pos.array[idx + 2] = pz;
+
+        const [r, g, b] = getBiomeColorForZ(pz);
+        col.array[idx] = r;
+        col.array[idx + 1] = g;
+        col.array[idx + 2] = b;
+      }
+      pos.needsUpdate = true;
+      col.needsUpdate = true;
+    }
+
+    // 7c) TRAUMA-BASED 3D CAMERA SHAKE SYSTEM
+    let cameraTrauma = 0;
+    function addCameraTrauma(amount) {
+      if (reducedMotion.matches) return;
+      cameraTrauma = Math.min(1.0, cameraTrauma + amount);
+    }
 
     // Each cliff face has its own world-scale UVs so the studs stay square.
     const dirtTex = createStuddedTexture('#94623f', '#795031', 1, 1);
@@ -3740,19 +4017,22 @@ function disposePolishedAnimal(group) {
       const p = THREE.MathUtils.clamp((now - throwPoseStart) / duration, 0, 1);
       if (throwPoseReleased) {
         const recovery = (1 - p) ** 2;
-        rightArm.rotation.x = -1.52 * recovery;
-        rightArm.rotation.z = -0.24 * recovery;
-        torsoMesh.rotation.x = 0.21 * recovery;
-        torsoMesh.rotation.y = -0.25 * recovery;
+        rightArm.rotation.x = -1.65 * recovery;
+        rightArm.rotation.z = -0.32 * recovery;
+        leftArm.rotation.x = 0.55 * recovery;
+        torsoMesh.rotation.x = 0.28 * recovery;
+        torsoMesh.rotation.y = -0.35 * recovery;
+        playerRig.position.y = -0.15 * recovery;
         return;
       }
       const windup = THREE.MathUtils.smoothstep(p, 0, 0.66);
       const swing = THREE.MathUtils.smoothstep(p, 0.66, 1);
-      rightArm.rotation.x = 2.08 * windup - 3.60 * swing;
-      rightArm.rotation.z = 0.26 * windup - 0.50 * swing;
-      leftArm.rotation.x = -0.43 * (windup - swing);
-      torsoMesh.rotation.x = -0.17 * windup + 0.38 * swing;
-      torsoMesh.rotation.y = 0.32 * windup - 0.57 * swing;
+      rightArm.rotation.x = 2.25 * windup - 3.85 * swing;
+      rightArm.rotation.z = 0.32 * windup - 0.55 * swing;
+      leftArm.rotation.x = -0.55 * (windup - swing);
+      torsoMesh.rotation.x = -0.22 * windup + 0.42 * swing;
+      torsoMesh.rotation.y = 0.38 * windup - 0.62 * swing;
+      playerRig.position.y = -0.12 * windup + 0.05 * swing;
     }
 
     function executeCalculusThrow() {
@@ -3776,6 +4056,9 @@ function disposePolishedAnimal(group) {
       const isCriticalPoint = food.type !== 'tan' && derivRatio <= 0.18;
       const isMaxDerivSurge = derivRatio >= 0.82;
       const surgeBonus = isMaxDerivSurge ? 1.30 : 1.0;
+      const isInflection = isInflectionPoint(calc);
+      const isMasterstroke = isCriticalPoint && isInflection;
+      const harmonicBonus = isInflection ? 1.5 : 1.0;
 
       // REBALANCED PROGRESSION FORMULA:
       // Distance strictly controlled by strength power 0.72 and food.distMult!
@@ -3830,8 +4113,18 @@ function disposePolishedAnimal(group) {
       const totalOdds = Math.round(chosenAnimal.baseOdds * chosenSize.chanceNum * chosenMutation.chanceNum);
       const oddsDisplayStr = `1 in ${formatNum(totalOdds)}`;
 
-      const finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult);
+      let finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult * harmonicBonus);
       const isNewDiscovery = !state.unlockedIndex.has(chosenAnimal.id);
+
+      // Award bonus pullUpXp if inflection point hit (Harmonic Resonance)
+      if (isInflection) {
+        state.pullUpXp += 1;
+        if (state.pullUpXp >= state.pullUpMaxXp) {
+          state.pullUpXp -= state.pullUpMaxXp;
+          state.pullUpLevel++;
+          state.baseStrength += 5;
+        }
+      }
 
       // Distance mapping to expanded 3D Z coordinate (-14 to -900)
       const normDist = Math.min(1, Math.pow(distance / 5500, 0.48));
@@ -3847,9 +4140,17 @@ function disposePolishedAnimal(group) {
       throwPoseReleased = false;
 
       // Floating readout on throw
-      const readoutText = isMaxDerivSurge ? '⚡ MAX SURGE! +19 POWER' : isCriticalPoint ? '🎯 CRITICAL POINT!' : 'PERFECT!';
-      const readoutColor = isMaxDerivSurge ? '#38bdf8' : isCriticalPoint ? '#facc15' : '#4ade80';
-      showFloatingPopup(playerGroup.position, readoutText, readoutColor);
+      if (isMasterstroke) {
+        showFloatingPopup(playerGroup.position, '🌟 DUAL CALCULUS MASTERSTROKE! (Crit + Inflection)', '#fde047');
+      } else if (isInflection) {
+        showFloatingPopup(playerGroup.position, '⚡ HARMONIC RESONANCE! (+50% Bonus)', '#e879f9');
+      } else if (isMaxDerivSurge) {
+        showFloatingPopup(playerGroup.position, '🚀 VELOCITY SURGE! (+30% Distance)', '#38bdf8');
+      } else if (isCriticalPoint) {
+        showFloatingPopup(playerGroup.position, '🎯 CRITICAL POINT! (Guaranteed Mutation)', '#facc15');
+      } else {
+        showFloatingPopup(playerGroup.position, 'PERFECT THROW!', '#4ade80');
+      }
 
       setTimeout(() => {
         updateThrowPose(throwPoseStart + THROW_WINDUP_MS);
@@ -3866,7 +4167,12 @@ function disposePolishedAnimal(group) {
         projectileGroup.visible = true;
 
         audio.playThrowSound(isMaxDerivSurge, isCriticalPoint);
-        if (isMaxDerivSurge) triggerScreenShake();
+        if (isMaxDerivSurge) {
+          triggerScreenShake();
+          if (typeof addCameraTrauma === 'function') addCameraTrauma(0.85);
+        } else if (typeof addCameraTrauma === 'function') {
+          addCameraTrauma(0.35);
+        }
 
         state.activeThrow = {
           phase: 'flying',
@@ -3884,6 +4190,8 @@ function disposePolishedAnimal(group) {
           isNewDiscovery,
           isCriticalPoint,
           isMaxDerivSurge,
+          isInflectionPoint: isInflection,
+          isMasterstroke,
           t0,
           calc,
           ramp,
@@ -4289,6 +4597,7 @@ function disposePolishedAnimal(group) {
       state.cash += sellValue;
       state.inventory.splice(idx, 1);
       audio.playCoinSound();
+      showFloatingPopup(new THREE.Vector3(STATIONS.sell.x, 2.5, STATIONS.sell.z), `+$${formatNum(sellValue)} Coins 💰`, '#facc15');
       renderSellStall();
       updateHUD();
       saveGame();
@@ -4302,6 +4611,7 @@ function disposePolishedAnimal(group) {
       state.cash += total;
       state.inventory = state.inventory.filter(i => i.equipped);
       audio.playCoinSound();
+      showFloatingPopup(new THREE.Vector3(STATIONS.sell.x, 2.5, STATIONS.sell.z), `+$${formatNum(total)} Coins 💰`, '#facc15');
       showToast(`💰 Sold ${unequipped.length} unequipped pets for +$${formatNum(total)}!`, 'bg-lime-400 text-black');
       renderSellStall();
       updateHUD();
@@ -4821,8 +5131,11 @@ function disposePolishedAnimal(group) {
 
       const badgeCrit = document.getElementById('badgeCritStatus');
       const badgeSurge = document.getElementById('badgeSurgeStatus');
+      const badgeInflect = document.getElementById('badgeInflectionStatus');
       const indCrit = document.getElementById('critPointIndicator');
       const regimeBadge = document.getElementById('calcRegimeBadge');
+
+      const isInflection = isInflectionPoint(calc);
 
       if (isCriticalPoint) {
         badgeCrit.className = 'bg-yellow-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
@@ -4832,10 +5145,26 @@ function disposePolishedAnimal(group) {
         indCrit.classList.add('hidden');
       }
 
+      if (badgeInflect) {
+        if (isInflection) {
+          badgeInflect.className = 'bg-fuchsia-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
+        } else {
+          badgeInflect.className = 'bg-black/80 border-2 border-fuchsia-400 rounded-xl px-2.5 py-0.5 text-[10px] text-fuchsia-300 font-extrabold shadow';
+        }
+      }
+
       if (isMaxDerivSurge) {
         badgeSurge.className = 'bg-cyan-400 border-2 border-black rounded-xl px-2.5 py-0.5 text-[10px] text-black font-black shadow pulse-glow';
         regimeBadge.textContent = 'MAX SURGE';
         regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-400 text-black shadow';
+      } else if (isCriticalPoint && isInflection) {
+        badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
+        regimeBadge.textContent = 'MASTERSTROKE';
+        regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-black shadow animate-pulse';
+      } else if (isInflection) {
+        badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
+        regimeBadge.textContent = 'INFLECTION';
+        regimeBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-fuchsia-400 text-black shadow pulse-glow';
       } else if (isCriticalPoint) {
         badgeSurge.className = 'bg-black/80 border-2 border-cyan-400 rounded-xl px-2.5 py-0.5 text-[10px] text-cyan-300 font-extrabold shadow';
         regimeBadge.textContent = 'CRITICAL POINT';
@@ -5008,6 +5337,11 @@ function disposePolishedAnimal(group) {
           if (!reducedMotion.matches) {
             projectileGroup.rotation.x += dt * 6.6;
             projectileGroup.rotation.y += dt * 4.1;
+            // Projectile squash-and-stretch on launch
+            const osc = Math.exp(-p * 7) * Math.cos(p * 20);
+            const stretch = 1.0 + 0.50 * osc;
+            const squash = 1.0 - 0.25 * osc;
+            projectileGroup.scale.set(squash, squash, stretch);
           }
 
           const camLift = reducedMotion.matches ? 4.8 : 2.6 + (1 - p) * 2.4;
@@ -5031,6 +5365,7 @@ function disposePolishedAnimal(group) {
           document.getElementById('flightLuckMult').textContent = `${liveLuck}X`;
 
           if (th.progress >= 1.0) {
+            projectileGroup.scale.set(1, 1, 1);
             transitionTo3DCatchCutscene(th);
           }
         } else if (th.phase === 'reveal') {
@@ -5044,14 +5379,25 @@ function disposePolishedAnimal(group) {
           const chew = Math.max(0, Math.sin(t * 20)) * bite;
           const motion = reducedMotion.matches ? 0 : 1;
           const joints = animalMesh.userData;
-          animalMesh.position.y = th.revealRestY;
-          animalMesh.scale.set(1 + chew * 0.035 * motion, 1 - chew * 0.055 * motion, 1 + chew * 0.035 * motion);
+          // Catch celebration hop after eating food
+          const hopT = Math.max(0, t - 1.18);
+          const hopBounce = (hopT > 0 && hopT < 0.75) ? Math.sin(hopT * Math.PI / 0.75) * 1.25 * motion : 0;
+          animalMesh.position.y = th.revealRestY + hopBounce;
+          animalMesh.scale.set(1 + chew * 0.035 * motion, 1 - chew * 0.055 * motion + (hopBounce > 0 ? 0.08 * motion : 0), 1 + chew * 0.035 * motion);
           if (joints.head) joints.head.rotation.x = -(bite * 0.27 + chew * 0.06) * motion;
           if (joints.jaw) joints.jaw.rotation.x = chew * 0.43 * motion;
           if (joints.tail) joints.tail.rotation.y = Math.sin(t * 7) * 0.27 * motion;
-          if (joints.ears) joints.ears.rotation.x = bite * 0.20 * motion;
+          if (joints.ears) joints.ears.rotation.x = (bite * 0.20 + (hopBounce > 0 ? 0.25 : 0)) * motion;
           th.revealBait.scale.setScalar(0.85 * (1 - THREE.MathUtils.smoothstep(t, 0.35, 0.93)));
           th.revealBait.visible = t < 0.93;
+
+          if (!th.celebratedHop && t >= 1.2) {
+            th.celebratedHop = true;
+            if (typeof addCameraTrauma === 'function') addCameraTrauma(0.4);
+            const celebrateText = th.isNewDiscovery ? '🌟 NEW DISCOVERY! 💖' : '🐾 CAUGHT! ✨';
+            const celebrateColor = th.isNewDiscovery ? '#facc15' : '#f472b6';
+            showFloatingPopup(new THREE.Vector3(animalMesh.position.x, th.revealRestY + 2.8, th.targetZ), celebrateText, celebrateColor);
+          }
 
           if (reducedMotion.matches || t >= 2.6) confettiGroup.visible = false;
           if (confettiGroup.visible) {
@@ -5124,6 +5470,20 @@ function disposePolishedAnimal(group) {
         const cz = playerGroup.position.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
         camera.position.set(cx, cy, cz);
         camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2.2, playerGroup.position.z - 2);
+      }
+
+      // Trauma-Based Camera Shake decay and non-linear offset
+      if (typeof cameraTrauma !== 'undefined' && cameraTrauma > 0) {
+        const shake = cameraTrauma * cameraTrauma;
+        const maxTrans = 0.52;
+        camera.position.x += (Math.random() * 2 - 1) * maxTrans * shake;
+        camera.position.y += (Math.random() * 2 - 1) * maxTrans * shake;
+        camera.position.z += (Math.random() * 2 - 1) * maxTrans * shake;
+        cameraTrauma = Math.max(0, cameraTrauma - dt * 2.5);
+      }
+
+      if (typeof updateAmbientParticles === 'function') {
+        updateAmbientParticles(dt, state.t);
       }
 
       sky.position.copy(camera.position);
