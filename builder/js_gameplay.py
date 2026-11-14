@@ -62,11 +62,12 @@ JS_GAMEPLAY = """
     });
     window.addEventListener('keyup', e => { delete keys[e.key.toLowerCase()]; });
     window.addEventListener('blur', resetInput);
+    window.addEventListener('contextmenu', e => { e.preventDefault(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) resetInput(); });
 
     // Each pointer owns its gesture: looking and walking can happen together.
     container.addEventListener('pointerdown', e => {
-      if (currentModal || state.activeThrow || isThrowWindup || cameraPointer !== null || e.button !== 0) return;
+      if (currentModal || state.activeThrow || isThrowWindup || cameraPointer !== null || (e.button !== 0 && e.button !== 2)) return;
       cameraPointer = e.pointerId;
       lastMouseX = e.clientX;
       lastMouseY = e.clientY;
