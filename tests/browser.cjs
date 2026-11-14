@@ -134,10 +134,19 @@ async function desktopFlow() {
 
   await canvas.click({ position: { x: 50, y: 50 } });
   await page.keyboard.down('w');
-  assert.equal(await page.evaluate(() => !!keys['w']), true, 'Key W is active');
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { button: 'right' });
+  await page.keyboard.down('d');
+  assert.equal(await page.evaluate(() => !!keys['w'] && !!keys['d']), true, 'Keys W and D are active');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2, { steps: 3 });
+  await page.mouse.up({ button: 'right' });
   await page.keyboard.up('w');
-  assert.equal(await page.evaluate(() => !!keys['w']), false, 'Key W released after right-click without sticking');
+  await page.keyboard.up('d');
+  assert.equal(await page.evaluate(() => Object.keys(keys).length), 0, 'Movement keys released after right-click without sticking');
+
+  // Verify window focus reset safety
+  await page.evaluate(() => { keys['w'] = true; window.dispatchEvent(new Event('focus')); });
+  assert.equal(await page.evaluate(() => Object.keys(keys).length), 0, 'Window focus purges any orphaned keys');
 
   await page.close();
   console.log('PASS desktop activities, modal focus, catch, demo isolation, settings and keyboard');
@@ -164,6 +173,22 @@ async function mobileFlow(width, height) {
   await check(page, () => joystickActive, false, 'Joystick releases independently');
   await session.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
   await check(page, () => cameraPointer, null);
+
+  // Verify secondary click on joystick does not activate walking
+  const joyRightClickActive = await page.locator('#joystickZone').evaluate(el => {
+    const ev = new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 2, pointerId: 10 });
+    el.dispatchEvent(ev);
+    return joystickActive;
+  });
+  assert.equal(joyRightClickActive, false, 'Right click on joystick must not activate movement');
+
+  // Verify window-level pointerup safety recovers orphaned joystick pointer
+  await page.evaluate(() => {
+    joystickActive = true;
+    joystickPointer = 99;
+    window.dispatchEvent(new PointerEvent('pointerup', { pointerId: 99 }));
+  });
+  assert.equal(await page.evaluate(() => joystickActive), false, 'Window pointerup must reset joystick');
   await page.locator('#stationNav button').nth(0).tap();
   await page.locator('#calcMinimizedBar button').tap();
   await check(page, () => oscCanvas.width > 0 && oscCanvas.height > 0, true);
