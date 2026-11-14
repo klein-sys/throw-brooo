@@ -6,8 +6,36 @@ JS_THREE = """
      *************************************************************************/
     const container = document.getElementById('webglContainer');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x38bdf8); // Vibrant Roblox sky blue
-    scene.fog = new THREE.FogExp2(0x38bdf8, 0.0022);
+    scene.background = new THREE.Color(0x50bcec);
+    scene.fog = new THREE.FogExp2(0x9adcf0, 0.0020);
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+    // The camera-centered sky is independent of the canyon's depth fog.
+    const sky = new THREE.Mesh(new THREE.SphereGeometry(980, 24, 12), new THREE.ShaderMaterial({
+      side: THREE.BackSide, depthWrite: false,
+      uniforms: {
+        horizon: { value: new THREE.Color(0x9adcf0) },
+        zenith: { value: new THREE.Color(0x168fdf) }
+      },
+      vertexShader: `
+        varying vec3 skyDirection;
+        void main() {
+          skyDirection = position;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 horizon;
+        uniform vec3 zenith;
+        varying vec3 skyDirection;
+        void main() {
+          float height = smoothstep(-0.06, 0.58, normalize(skyDirection).y);
+          gl_FragColor = vec4(mix(horizon, zenith, height), 1.0);
+        }
+      `
+    }));
+    sky.renderOrder = -100;
+    scene.add(sky);
 
     const camera = new THREE.PerspectiveCamera(54, window.innerWidth / window.innerHeight, 0.2, 1200);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
@@ -16,7 +44,7 @@ JS_THREE = """
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.13;
     container.appendChild(renderer.domElement);
 
     function applyGraphicsQuality() {
@@ -47,21 +75,32 @@ JS_THREE = """
     });
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.78);
-    scene.add(ambientLight);
+    const skyFill = new THREE.HemisphereLight(0xe4f7ff, 0xc3c388, 0.77);
+    scene.add(skyFill);
 
-    const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.95);
-    sunLight.position.set(65, 110, 70);
+    const sunLight = new THREE.DirectionalLight(0xfff4d2, 1.12);
+    sunLight.position.set(-34, 72, 35);
+    sunLight.shadow.normalBias = 0.16;
+    sunLight.shadow.bias = -0.0003;
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 1024;
     sunLight.shadow.mapSize.height = 1024;
     sunLight.shadow.camera.near = 0.5;
-    sunLight.shadow.camera.far = 600;
+    sunLight.shadow.camera.far = 200;
     sunLight.shadow.camera.left = -90;
     sunLight.shadow.camera.right = 90;
     sunLight.shadow.camera.top = 90;
     sunLight.shadow.camera.bottom = -90;
-    scene.add(sunLight);
+    scene.add(sunLight, sunLight.target);
+
+    function updateWorldLighting(x, z) {
+      // Step the shadow focus with the action without shifting its sun angle.
+      const targetX = Math.round(x / 8) * 8;
+      const targetZ = Math.round(z / 8) * 8;
+      if (sunLight.target.position.x === targetX && sunLight.target.position.z === targetZ) return;
+      sunLight.target.position.set(targetX, 0, targetZ);
+      sunLight.position.set(targetX - 34, 72, targetZ + 35);
+    }
 
     // Helper: Create Authentic Roblox Studded Canvas Texture
     function createStuddedTexture(c1, c2, repeatsX, repeatsY) {
@@ -76,28 +115,19 @@ JS_THREE = """
       g.fillRect(0, 0, 64, 64);
       g.fillRect(64, 64, 64, 64);
 
-      const centers = [[32, 32], [96, 32], [32, 96], [96, 96]];
-      centers.forEach(([cx, cy]) => {
-        g.fillStyle = 'rgba(0, 0, 0, 0.18)';
-        g.beginPath();
-        g.arc(cx, cy + 2, 12, 0, Math.PI * 2);
-        g.fill();
-
-        g.fillStyle = 'rgba(255, 255, 255, 0.22)';
-        g.beginPath();
-        g.arc(cx, cy, 12, 0, Math.PI * 2);
-        g.fill();
-
-        g.fillStyle = 'rgba(0, 0, 0, 0.12)';
-        g.beginPath();
-        g.arc(cx, cy, 9.5, 0, Math.PI * 2);
-        g.fill();
-
-        g.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        g.beginPath();
-        g.arc(cx - 2, cy - 2, 7, 0, Math.PI * 2);
-        g.fill();
-      });
+      for (const y of [8, 40, 72, 104]) {
+        for (const x of [8, 40, 72, 104]) {
+          g.fillStyle = 'rgba(24, 30, 11, 0.24)';
+          g.fillRect(x + 1, y + 2, 16, 16);
+          g.fillStyle = 'rgba(255, 255, 225, 0.16)';
+          g.fillRect(x, y, 16, 16);
+          g.fillStyle = 'rgba(62, 70, 28, 0.11)';
+          g.fillRect(x + 2, y + 2, 12, 12);
+          g.fillStyle = 'rgba(0, 0, 0, 0.12)';
+          g.fillRect(x + 13, y + 2, 1, 12);
+          g.fillRect(x + 2, y + 13, 12, 1);
+        }
+      }
 
       const tex = new THREE.CanvasTexture(cnv);
       tex.magFilter = THREE.NearestFilter;
@@ -109,7 +139,7 @@ JS_THREE = """
     }
 
     // 1) EXPANDED Base Lawn Hub Ground (110 units wide x 90 units deep)
-    const hubTex = createStuddedTexture('#4ade80', '#22c55e', 44, 36);
+    const hubTex = createStuddedTexture('#46d90a', '#37c70a', 17, 14);
     const hubGround = new THREE.Mesh(
       new THREE.PlaneGeometry(110, 90),
       new THREE.MeshLambertMaterial({ map: hubTex })
@@ -120,7 +150,7 @@ JS_THREE = """
     scene.add(hubGround);
 
     // 2) EXPANDED Orange & Yellow Checkered Launch Line Strip (z = -14)
-    const launchTex = createStuddedTexture('#f59e0b', '#fde047', 28, 2);
+    const launchTex = createStuddedTexture('#ff7e13', '#ffba20', 21, 1.5);
     const launchStrip = new THREE.Mesh(
       new THREE.BoxGeometry(68, 0.25, 5.0),
       new THREE.MeshLambertMaterial({ map: launchTex })
@@ -129,11 +159,18 @@ JS_THREE = """
     launchStrip.receiveShadow = true;
     scene.add(launchStrip);
 
-    // Glowing Neon Boundary Strips flanking Launch Line
+    const launchBase = new THREE.Mesh(
+      new THREE.BoxGeometry(68.4, 0.15, 5.25),
+      new THREE.MeshLambertMaterial({ color: 0xb65010 })
+    );
+    launchBase.position.set(0, 0.075, -14);
+    scene.add(launchBase);
+
+    // Bright boundary rails make the launch strip readable at a distance.
     [-16.6, -11.4].forEach(stripZ => {
       const neonBorder = new THREE.Mesh(
-        new THREE.BoxGeometry(68.2, 0.32, 0.35),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
+        new THREE.BoxGeometry(68.2, 0.14, 0.32),
+        new THREE.MeshBasicMaterial({ color: 0xfff4b3, toneMapped: false })
       );
       neonBorder.position.set(0, 0.16, stripZ);
       scene.add(neonBorder);
@@ -332,12 +369,55 @@ JS_THREE = """
 
     // 7) 6 EXPANSIVE 3D BIOME RUNWAY ZONES (76 UNITS WIDE, DOWN TO Z = -980)
     const RUNWAY_WIDTH = 76;
-    const biomeArchMeshMap = [];
+    const terrainColors = {
+      forest: ['#45df0d', '#36c70a'], savanna: ['#e7be45', '#d4a63d'],
+      desert: ['#ecac69', '#d79453'], jungle: ['#3bab56', '#31984b'],
+      ocean: ['#3baabf', '#309bae'], mythical: ['#a977dc', '#9765cc']
+    };
+    const scenicBox = new THREE.BoxGeometry(1, 1, 1);
+    const bark = new THREE.MeshLambertMaterial({ color: 0x98502d });
+    const leaves = [0x2bac18, 0x4fca1d, 0x72d924].map(color => new THREE.MeshLambertMaterial({ color }));
+    const moss = new THREE.MeshLambertMaterial({ color: 0x8ada28 });
+    const stone = new THREE.MeshLambertMaterial({ color: 0x94acac });
+    const cloudMaterial = new THREE.MeshLambertMaterial({ color: 0xf3fcff, fog: false });
+
+    function scenicBlock(parent, material, x, y, z, w, h, d, castsShadow = false) {
+      const mesh = new THREE.Mesh(scenicBox, material);
+      mesh.position.set(x, y, z);
+      mesh.scale.set(w, h, d);
+      mesh.castShadow = castsShadow;
+      mesh.receiveShadow = castsShadow;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function buildForestTree(x, y, z, variant, scale = 1) {
+      const tree = new THREE.Group();
+      tree.position.set(x, y, z);
+      tree.rotation.y = variant * 0.83;
+      tree.scale.setScalar(scale);
+      scenicBlock(tree, bark, 0, 2.7, 0, 1.45, 5.4, 1.6, true);
+      scenicBlock(tree, bark, 0.83, 4.1, -0.04, 0.7, 2.6, 0.7).rotation.z = -0.57;
+      scenicBlock(tree, leaves[0], 0, 5.65, 0.1, 5.0, 1.9, 4.4, true);
+      scenicBlock(tree, leaves[1], -0.7, 6.9, -0.4, 3.5, 2.0, 3.8, true);
+      scenicBlock(tree, leaves[2], 0.87, 7.8, 0.3, 2.65, 1.65, 2.7, true);
+      scene.add(tree);
+    }
+
+    // Broad cloud silhouettes above the cliffs keep a clear horizon for throwing.
+    for (let i = 0; i < 10; i++) {
+      const x = (i % 2 === 0 ? -1 : 1) * (37 + (i % 3) * 17);
+      const y = 47 + (i % 4) * 7;
+      const z = 15 - i * 97;
+      scenicBlock(scene, cloudMaterial, x, y, z, 18, 2.1, 7.5);
+      scenicBlock(scene, cloudMaterial, x + 2.5, y + 1.6, z - 0.8, 10, 2.2, 6.2);
+    }
 
     BIOMES.forEach((b, idx) => {
       const length = Math.abs(b.zEnd - b.zStart);
       const zCenter = (b.zStart + b.zEnd) / 2;
-      const bTex = createStuddedTexture(b.cssColor, '#1e293b', 24, Math.round(length / 4));
+      const [lightTile, darkTile] = terrainColors[b.id];
+      const bTex = createStuddedTexture(lightTile, darkTile, 12, Math.max(1, Math.round(length / 6.4)));
       const plane = new THREE.Mesh(
         new THREE.PlaneGeometry(RUNWAY_WIDTH, length),
         new THREE.MeshLambertMaterial({ map: bTex })
@@ -375,31 +455,17 @@ JS_THREE = """
         scene.add(archG);
       }
 
-      // Thematic Environment Props along the edges of each biome:
-      // Forest: Layered Pine Trees & Birch Trees & Stumps
       if (b.id === 'forest') {
-        for (let z = b.zStart - 8; z > b.zEnd + 8; z -= 18) {
-          [-30, 30].forEach((xSide, sIdx) => {
-            const isBirch = (sIdx + Math.round(z)) % 2 === 0;
-            const trunk = new THREE.Mesh(
-              new THREE.BoxGeometry(1.4, 5.5, 1.4),
-              new THREE.MeshLambertMaterial({ color: isBirch ? 0xf8fafc : 0x78350f })
-            );
-            trunk.position.set(xSide, 2.75, z);
-            const leaves = new THREE.Mesh(
-              new THREE.BoxGeometry(5.2, 5.2, 5.2),
-              new THREE.MeshLambertMaterial({ color: isBirch ? 0xfacc15 : 0x166534 })
-            );
-            leaves.position.set(xSide, 7.5, z);
-            scene.add(trunk, leaves);
-          });
-          // Tree Stumps with sprouts
-          const stump = new THREE.Mesh(
-            new THREE.BoxGeometry(1.8, 0.8, 1.8),
-            new THREE.MeshLambertMaterial({ color: 0x92400e })
-          );
-          stump.position.set((z % 2 === 0 ? -22 : 22), 0.4, z + 6);
-          scene.add(stump);
+        for (let i = 0, z = b.zStart - 7; z > b.zEnd + 4; i++, z -= 14) {
+          for (const side of [-1, 1]) {
+            const x = side * (29 + (i % 3) * 2);
+            const stagger = side === 1 ? 4 : 0;
+            buildForestTree(x, 0, z + stagger, i + side, 0.84 + (i % 3) * 0.16);
+            const rockX = side * (23 + (i % 3) * 1.6);
+            scenicBlock(scene, stone, rockX, 0.42, z + 5 + stagger, 1.8, 0.84, 1.4).rotation.y = i * 0.7;
+            scenicBlock(scene, moss, rockX + 0.1, 0.89, z + 5 + stagger, 1.45, 0.16, 1.1);
+            scenicBlock(scene, leaves[1], x - side * 2, 0.68, z - 3 + stagger, 0.46, 1.3, 0.48).rotation.z = side * 0.19;
+          }
         }
       }
 
@@ -486,28 +552,40 @@ JS_THREE = """
       }
     });
 
-    // 8) MULTI-TIERED STEPPED BROWN DIRT CANYON CLIFFS (MATCHING VIDEO SCREENSHOTS)
-    const dirtTex = createStuddedTexture('#78350f', '#5a2507', 8, 96);
+    // Each cliff face has its own world-scale UVs so the studs stay square.
+    const dirtTex = createStuddedTexture('#94623f', '#795031', 1, 1);
+    const cliffGrass = createStuddedTexture('#50da11', '#3bc50e', 1, 1);
     const wallMat = new THREE.MeshLambertMaterial({ map: dirtTex });
-    const wallTopMat = new THREE.MeshLambertMaterial({ color: 0x22c55e });
+    const grassMat = new THREE.MeshLambertMaterial({ map: cliffGrass });
+    function cliffBlock(x, y, z, w, h, d, material, receiveShadow = false) {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const uv = geo.attributes.uv;
+      [[d,h], [d,h], [w,d], [w,d], [w,h], [w,h]].forEach(([width, height], face) => {
+        for (let i = face * 4; i < face * 4 + 4; i++) {
+          uv.setXY(i, uv.getX(i) * width / 5.6, uv.getY(i) * height / 5.6);
+        }
+      });
+      const mesh = new THREE.Mesh(geo, material);
+      mesh.position.set(x, y, z);
+      mesh.receiveShadow = receiveShadow;
+      scene.add(mesh);
+    }
 
-    // Inner Terraced Cliffs flanking runway
-    [-46, 46].forEach(xWall => {
-      const wall1 = new THREE.Mesh(new THREE.BoxGeometry(16, 18, 1050), wallMat);
-      wall1.position.set(xWall, 9, -480);
-      const top1 = new THREE.Mesh(new THREE.BoxGeometry(17, 2.2, 1050), wallTopMat);
-      top1.position.set(xWall, 19, -480);
-      scene.add(wall1, top1);
-    });
+    for (const side of [-1, 1]) {
+      cliffBlock(side * 47, 8.5, -523, 18, 17, 946, wallMat, true);
+      cliffBlock(side * 47, 17.8, -523, 19, 1.65, 946, grassMat);
+      cliffBlock(side * 67, 15, -480, 22, 30, 1050, wallMat);
+      cliffBlock(side * 67, 30.9, -480, 23, 1.8, 1050, grassMat);
 
-    // Outer Taller Cliff Terraces
-    [-68, 68].forEach(xWall => {
-      const wall2 = new THREE.Mesh(new THREE.BoxGeometry(22, 36, 1050), wallMat);
-      wall2.position.set(xWall, 18, -480);
-      const top2 = new THREE.Mesh(new THREE.BoxGeometry(23, 2.5, 1050), wallTopMat);
-      top2.position.set(xWall, 37, -480);
-      scene.add(wall2, top2);
-    });
+      for (let i = 0, z = -55; z > -978; i++, z -= 11) {
+        const drop = [1.8, 3.1, 1.15, 2.25, 0.75][(i + (side === 1 ? 2 : 0)) % 5];
+        cliffBlock(side * 38, 17.35 - drop / 2, z, 2.15, drop, 2.7 + (i % 3) * 1.3, grassMat);
+      }
+      for (let i = 0; i < 10; i++) {
+        const z = -43 - i * 18;
+        buildForestTree(side * (47 + i % 3), 18.625, z, i + side, 0.67 + i % 3 * 0.1);
+      }
+    }
 
     // 9) MOUNTED CANYON WALL 3D "LUCKIEST CATCHES - YOUR BEST RECORDS" BILLBOARD
     const luckiestBoardCanvas = document.createElement('canvas');
@@ -617,49 +695,132 @@ JS_THREE = """
       tl.el = el;
     });
 
-    // 11) 3D BLOCKY ROBLOX PLAYER CHARACTER WITH DYNAMIC THROW RIG
+    // Shoulder and hip pivots let the block avatar actually swing its limbs.
     const playerGroup = new THREE.Group();
-    const headMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(1.1, 1.1, 1.1),
-      new THREE.MeshLambertMaterial({ color: 0xfde047 })
-    );
-    headMesh.position.y = 3.25;
-    headMesh.castShadow = true;
+    const playerRig = new THREE.Group();
+    const skin = new THREE.MeshLambertMaterial({ color: 0xffcd95 });
+    const jacket = new THREE.MeshLambertMaterial({ color: 0x178fff });
+    const jacketLight = new THREE.MeshLambertMaterial({ color: 0x65c4ff });
+    const trousers = new THREE.MeshLambertMaterial({ color: 0x283d71 });
+    const soles = new THREE.MeshLambertMaterial({ color: 0x17233a });
+    const hat = new THREE.MeshLambertMaterial({ color: 0xe92f3d });
+    const faceInk = new THREE.MeshBasicMaterial({ color: 0x24263a });
 
-    const torsoMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(1.5, 1.6, 0.8),
-      new THREE.MeshLambertMaterial({ color: 0xef4444 })
-    );
+    const torsoMesh = new THREE.Group();
     torsoMesh.position.y = 1.9;
-    torsoMesh.castShadow = true;
+    scenicBlock(torsoMesh, jacket, 0, 0, 0, 1.5, 1.52, 0.86, true);
+    scenicBlock(torsoMesh, jacketLight, 0, -0.04, 0.445, 0.12, 1.2, 0.04);
+    scenicBlock(torsoMesh, jacketLight, 0, 0.59, 0.17, 1.02, 0.22, 0.62);
 
-    const leftArm = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 1.5, 0.5),
-      new THREE.MeshLambertMaterial({ color: 0xfde047 })
-    );
-    leftArm.position.set(-1.05, 1.9, 0);
+    const head = new THREE.Group();
+    head.position.y = 1.29;
+    scenicBlock(head, skin, 0, 0, 0, 1.06, 0.99, 1.0, true);
+    scenicBlock(head, hat, 0, 0.47, 0, 1.18, 0.24, 1.08, true);
+    scenicBlock(head, hat, 0, 0.34, 0.44, 1.21, 0.12, 0.7);
+    for (const x of [-0.2, 0.2]) {
+      scenicBlock(head, faceInk, x, 0.02, 0.514, 0.10, 0.14, 0.035);
+    }
+    scenicBlock(head, faceInk, 0, -0.2, 0.515, 0.23, 0.055, 0.035);
+    torsoMesh.add(head);
 
-    const rightArm = leftArm.clone();
-    rightArm.position.set(1.05, 1.9, 0);
+    function buildArm(side) {
+      const arm = new THREE.Group();
+      arm.position.set(side * 1.01, 0.51, 0);
+      scenicBlock(arm, jacket, 0, -0.38, 0, 0.51, 0.96, 0.58, true);
+      scenicBlock(arm, jacketLight, 0, -0.81, 0, 0.51, 0.12, 0.58);
+      scenicBlock(arm, skin, 0, -1.02, 0, 0.45, 0.32, 0.48, true);
+      torsoMesh.add(arm);
+      return arm;
+    }
 
-    const leftLeg = new THREE.Mesh(
-      new THREE.BoxGeometry(0.65, 1.1, 0.65),
-      new THREE.MeshLambertMaterial({ color: 0x2563eb })
-    );
-    leftLeg.position.set(-0.4, 0.55, 0);
+    function buildLeg(side) {
+      const leg = new THREE.Group();
+      leg.position.set(side * 0.39, 1.19, 0);
+      scenicBlock(leg, trousers, 0, -0.43, 0, 0.66, 0.94, 0.65, true);
+      scenicBlock(leg, soles, 0, -1.04, 0.13, 0.69, 0.29, 0.94, true);
+      playerRig.add(leg);
+      return leg;
+    }
 
-    const rightLeg = leftLeg.clone();
-    rightLeg.position.set(0.4, 0.55, 0);
-
-    const heldFoodMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.7, 0.7, 0.7),
-      new THREE.MeshLambertMaterial({ color: 0xf97316 })
-    );
-    heldFoodMesh.position.set(1.15, 2.2, -0.6);
-
-    playerGroup.add(headMesh, torsoMesh, leftArm, rightArm, leftLeg, rightLeg, heldFoodMesh);
+    const leftArm = buildArm(-1);
+    const rightArm = buildArm(1);
+    const leftLeg = buildLeg(-1);
+    const rightLeg = buildLeg(1);
+    const heldFoodMesh = new THREE.Group();
+    heldFoodMesh.position.set(0, -1.01, 0.52);
+    heldFoodMesh.scale.setScalar(0.58);
+    rightArm.add(heldFoodMesh);
+    playerRig.add(torsoMesh);
+    playerGroup.add(playerRig);
     playerGroup.position.set(state.playerPos.x, 0, state.playerPos.z);
+    playerGroup.rotation.y = Math.PI;
     scene.add(playerGroup);
+
+    // Bait pieces share geometry and are cloned for the hand, flight and reveal.
+    const foodModels = new Map();
+    function getFoodModel(food) {
+      if (foodModels.has(food.id)) return foodModels.get(food.id);
+      const foodModel = new THREE.Group();
+      const body = new THREE.MeshLambertMaterial({ color: food.color });
+      const leaf = new THREE.MeshLambertMaterial({ color: 0x318b30 });
+      const stem = new THREE.MeshLambertMaterial({ color: 0x7b4a28 });
+      const accent = new THREE.MeshLambertMaterial({ color: new THREE.Color(food.color).multiplyScalar(0.77) });
+      const block = (material, x, y, z, w, h, d) => scenicBlock(foodModel, material, x, y, z, w, h, d, true);
+
+      switch (food.id) {
+        case 'carrot':
+          block(body, 0, 0.23, 0.12, 0.48, 0.46, 0.88);
+          block(body, 0, 0.19, -0.43, 0.33, 0.35, 0.45);
+          block(accent, 0, 0.14, -0.71, 0.2, 0.25, 0.21);
+          block(leaf, 0, 0.26, 0.75, 0.19, 0.17, 0.37);
+          block(leaf, -0.13, 0.31, 0.92, 0.17, 0.16, 0.35).rotation.y = 0.53;
+          block(leaf, 0.13, 0.31, 0.92, 0.17, 0.16, 0.35).rotation.y = -0.53;
+          break;
+        case 'apple':
+        case 'orange':
+        case 'pear': {
+          const pear = food.id === 'pear';
+          block(body, 0, 0.45, 0, 0.9, 0.63, 0.82);
+          block(accent, 0, 0.15, 0, 0.68, 0.27, 0.66);
+          block(body, 0, 0.78, 0, pear ? 0.57 : 0.72, pear ? 0.47 : 0.24, 0.67);
+          const stemY = pear ? 1.07 : 0.9;
+          block(stem, 0.03, stemY, 0.01, 0.12, 0.31, 0.12).rotation.z = -0.2;
+          block(leaf, 0.22, stemY + 0.1, 0, 0.36, 0.12, 0.25).rotation.z = 0.43;
+          break;
+        }
+        case 'banana':
+          for (let i = -2; i <= 2; i++) {
+            block(i % 2 ? body : accent, 0, 0.17 + i * i * 0.067, i * 0.25, 0.32, 0.39, 0.4).rotation.x = i * 0.28;
+          }
+          block(stem, 0, 0.46, 0.7, 0.16, 0.18, 0.2);
+          break;
+        case 'toast': {
+          const crumb = new THREE.MeshLambertMaterial({ color: 0xfdd896 });
+          block(accent, 0, 0.13, 0, 0.85, 0.26, 1.06);
+          block(crumb, 0, 0.265, 0, 0.7, 0.06, 0.86);
+          block(body, 0, 0.17, -0.48, 0.97, 0.32, 0.32);
+          break;
+        }
+        case 'lobster':
+          block(body, 0, 0.3, 0, 0.48, 0.51, 0.93);
+          block(accent, 0, 0.2, 0.66, 0.65, 0.28, 0.4);
+          for (const side of [-1, 1]) {
+            block(accent, side * 0.37, 0.24, -0.23, 0.4, 0.22, 0.22);
+            block(body, side * 0.52, 0.3, -0.52, 0.38, 0.34, 0.51).rotation.y = side * 0.22;
+          }
+          break;
+      }
+
+      foodModels.set(food.id, foodModel);
+      return foodModel;
+    }
+
+    function setFoodModel(holder, food) {
+      if (holder.userData.foodId === food.id) return;
+      holder.clear();
+      holder.add(getFoodModel(food).clone());
+      holder.userData.foodId = food.id;
+    }
 
     // 12) 3D VOXEL ANIMAL GENERATOR & LAWN PLOT PET SYNC
     const plotPetsGroup = new THREE.Group();
@@ -740,11 +901,6 @@ JS_THREE = """
     // 13) THROW PROJECTILE & CUTSCENE SHOWCASE WITH BEACON AND CONFETTI
     const projectileGroup = new THREE.Group();
     projectileGroup.visible = false;
-    const projectileMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.85, 0.85, 0.85),
-      new THREE.MeshLambertMaterial({ color: 0xf97316 })
-    );
-    projectileGroup.add(projectileMesh);
     scene.add(projectileGroup);
 
     const cutsceneGroup = new THREE.Group();
@@ -756,7 +912,8 @@ JS_THREE = """
     const beaconMat = new THREE.MeshBasicMaterial({
       color: 0xfacc15,
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.16,
+      depthWrite: false,
       side: THREE.DoubleSide
     });
     const cutsceneBeacon = new THREE.Mesh(beaconGeo, beaconMat);
@@ -764,13 +921,14 @@ JS_THREE = """
     cutsceneGroup.add(cutsceneBeacon);
 
     // Confetti particles for cutscene explosion
-    const CONFETTI_COUNT = 45;
+    const CONFETTI_COUNT = 32;
+    const confettiGeometry = new THREE.PlaneGeometry(0.23, 0.23);
     const confettiGroup = new THREE.Group();
     const confettiMeshes = [];
     const confettiColors = [0xef4444, 0x3b82f6, 0x10b981, 0xfacc15, 0xec4899, 0xa855f7];
     for (let i = 0; i < CONFETTI_COUNT; i++) {
       const cMesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.28, 0.28),
+        confettiGeometry,
         new THREE.MeshBasicMaterial({ color: confettiColors[i % confettiColors.length], side: THREE.DoubleSide })
       );
       cMesh.userData = {

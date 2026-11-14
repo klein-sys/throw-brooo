@@ -46,8 +46,8 @@ JS_ANIMAL_MODELS = """
       function addEyes(headX, headY, headZ, eyeW, eyeH, eyeD, sepX, fwdZ, parent = g) {
         addBox(eyeW * 1.25, eyeH * 1.25, 0.05, whiteMat, headX - sepX, headY, headZ + fwdZ, 0, 0, 0, parent);
         addBox(eyeW * 1.25, eyeH * 1.25, 0.05, whiteMat, headX + sepX, headY, headZ + fwdZ, 0, 0, 0, parent);
-        addBox(eyeW, eyeH, 0.08, eyeMat, headX - sepX, headY, headZ + fwdZ + 0.02, 0, 0, 0, parent);
-        addBox(eyeW, eyeH, 0.08, eyeMat, headX + sepX, headY, headZ + fwdZ + 0.02, 0, 0, 0, parent);
+        addBox(eyeW, eyeH, 0.08, eyeMat, headX - sepX, headY, headZ + fwdZ + Math.sign(fwdZ) * 0.025, 0, 0, 0, parent);
+        addBox(eyeW, eyeH, 0.08, eyeMat, headX + sepX, headY, headZ + fwdZ + Math.sign(fwdZ) * 0.025, 0, 0, 0, parent);
       }
 
       // Initialize animatable sub-groups
@@ -92,28 +92,34 @@ JS_ANIMAL_MODELS = """
         }
 
         case 'bunny': {
-          const pinkMat = new THREE.MeshLambertMaterial({ color: 0xf472b6 });
-          // Fluffy Body
-          addBox(1.15, 1.05, 1.35, baseMat, 0, 0.65, 0);
-          // Head
-          headGroup.position.set(0, 1.35 * s, -0.65 * s);
-          addBox(0.95, 0.9, 0.9, baseMat, 0, 0, 0, 0, 0, 0, headGroup);
-          // Tall Upright Rabbit Ears with Pink Inset
-          addBox(0.22, 1.35, 0.18, baseMat, -0.28, 1.0, 0, 0, 0, 0.1, headGroup);
-          addBox(0.22, 1.35, 0.18, baseMat, 0.28, 1.0, 0, 0, 0, -0.1, headGroup);
-          addBox(0.12, 1.1, 0.05, pinkMat, -0.28, 1.0, -0.1, 0, 0, 0.1, headGroup);
-          addBox(0.12, 1.1, 0.05, pinkMat, 0.28, 1.0, -0.1, 0, 0, -0.1, headGroup);
-          // Pink Nose
-          addBox(0.14, 0.12, 0.12, pinkMat, 0, -0.1, -0.5, 0, 0, 0, headGroup);
-          addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.32, -0.48, headGroup);
-          // Paws
-          addBox(0.28, 0.25, 0.4, baseMat, -0.32, 0.12, -0.55);
-          addBox(0.28, 0.25, 0.4, baseMat, 0.32, 0.12, -0.55);
-          addBox(0.35, 0.35, 0.65, baseMat, -0.52, 0.18, 0.25);
-          addBox(0.35, 0.35, 0.65, baseMat, 0.52, 0.18, 0.25);
-          // Puffy Tail
-          tailGroup.position.set(0, 0.75 * s, 0.75 * s);
-          addBox(0.42, 0.42, 0.42, baseMat, 0, 0, 0, 0, 0, 0, tailGroup);
+          const paleFur = new THREE.MeshLambertMaterial({ color: bodyColor });
+          paleFur.color.lerp(new THREE.Color(0xe1efff), isGold || isRainbow || isCosmic ? 0.19 : 0.55);
+          const pink = new THREE.MeshLambertMaterial({ color: 0xe897b3 });
+          addBox(1.24, 1.11, 1.48, baseMat, 0, 0.68, 0.2);
+          addBox(0.95, 0.63, 0.2, paleFur, 0, 0.67, -0.56);
+          headGroup.position.set(0, 1.36 * s, -0.68 * s);
+          addBox(1.03, 0.96, 0.94, baseMat, 0, 0, 0, 0, 0, 0, headGroup);
+          addBox(0.62, 0.32, 0.24, paleFur, 0, -0.25, -0.45, 0, 0, 0, headGroup);
+          addBox(0.16, 0.12, 0.1, pink, 0, -0.14, -0.6, 0, 0, 0, headGroup);
+          addBox(0.18, 0.12, 0.06, toothMat, 0, -0.44, -0.52, 0, 0, 0, headGroup);
+          addEyes(0, 0.05, 0, 0.16, 0.19, 0.05, 0.31, -0.49, headGroup);
+
+          headGroup.add(earGroup);
+          for (const side of [-1, 1]) {
+            const ear = new THREE.Group();
+            ear.position.set(side * 0.29 * s, 0.38 * s, 0);
+            ear.rotation.z = -side * 0.16;
+            addBox(0.25, 1.16, 0.24, baseMat, 0, 0.55, 0, 0, 0, 0, ear);
+            addBox(0.19, 0.23, 0.23, baseMat, 0, 1.14, 0, 0, 0, 0, ear);
+            addBox(0.13, 0.88, 0.04, pink, 0, 0.60, -0.124, 0, 0, 0, ear);
+            earGroup.add(ear);
+            addBox(0.29, 0.34, 0.48, paleFur, side * 0.34, 0.17, -0.61);
+            addBox(0.44, 0.59, 0.77, baseMat, side * 0.56, 0.32, 0.28);
+            addBox(0.42, 0.21, 0.7, paleFur, side * 0.56, 0.11, 0.11);
+          }
+
+          tailGroup.position.set(0, 0.63 * s, 0.91 * s);
+          addBox(0.46, 0.46, 0.38, paleFur, 0, 0, 0.11, 0, 0, 0, tailGroup);
           break;
         }
 
