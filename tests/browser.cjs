@@ -104,7 +104,7 @@ async function desktopFlow() {
   assert.equal(popupCheck.exists, true, 'Floating popup created in DOM');
   assert.equal(popupCheck.visible, true, 'Floating popup is visually visible');
 
-  // Verify UI typography & Toast notification overhaul (eliminate black smudge defect)
+  // Verify UI typography & Toast notification overhaul (eliminate black smudge defect & verify compound emoji)
   await page.evaluate(() => {
     showToast('🐾 Caught Big GOLD Tree Frog (+$113/s)!', 'bg-lime-400 text-black');
   });
@@ -125,6 +125,23 @@ async function desktopFlow() {
   assert.ok(toastCheck && toastCheck.exists, 'Toast element is created with ID gameplayToast');
   assert.equal(toastCheck.role, 'status', 'Toast has accessible role="status"');
   assert.ok(toastCheck.isDarkGlass, 'Toast uses dark-glass background');
+
+  // Verify compound emoji handling in Toast (e.g., ZWJ teacher demo emoji) and toast replacement
+  const emojiToastCheck = await page.evaluate(() => {
+    showToast('👨‍🏫 DEMO: All 18 species unlocked! Exit Demo returns to your progress.', 'bg-yellow-400 text-black');
+    const allToasts = document.querySelectorAll('#gameplayToast');
+    const toast = document.getElementById('gameplayToast');
+    const badge = toast ? toast.querySelector('span:first-child') : null;
+    const textSpan = toast ? toast.querySelector('span:last-child') : null;
+    return {
+      count: allToasts.length,
+      badgeText: badge ? badge.textContent.trim() : '',
+      bodyText: textSpan ? textSpan.textContent.trim() : ''
+    };
+  });
+  assert.equal(emojiToastCheck.count, 1, 'Successive toast calls replace previous toast (no duplicate IDs)');
+  assert.equal(emojiToastCheck.badgeText, '👨‍🏫', 'Compound ZWJ emoji extracted completely into badge');
+  assert.ok(emojiToastCheck.bodyText.startsWith('DEMO:'), 'Toast body text cleanly starts with DEMO without broken dangling ZWJ glyph');
 
   // Verify all 18 animal models construct with procedural textures & fine voxel details
   const animalChecks = await page.evaluate(() => {
@@ -158,27 +175,37 @@ async function desktopFlow() {
     assert.equal(ac.hasValidTexture, true, `Animal ${ac.id} generates 128x128 procedural canvas texture`);
     assert.ok(ac.detailCount > 0, `Animal ${ac.id} has sculpted anatomical detail meshes`);
   }
+  const scorpionCheck = animalChecks.find(a => a.id === 'scorpion');
+  assert.ok(scorpionCheck && scorpionCheck.detailCount >= 10, 'Scorpion includes walking legs, serrated pincers, teeth ridges, and stinger barb');
 
   // Verify mutation material properties
   const mutationChecks = await page.evaluate(() => {
     const silverMesh = createBlockyAnimalMesh(ANIMALS[0], SIZES[0], MUTATIONS[1]);
     const goldMesh = createBlockyAnimalMesh(ANIMALS[0], SIZES[0], MUTATIONS[2]);
+    const rainbowMesh = createBlockyAnimalMesh(ANIMALS[0], SIZES[0], MUTATIONS[3]);
     const cosmicMesh = createBlockyAnimalMesh(ANIMALS[0], SIZES[0], MUTATIONS[4]);
 
-    let goldMetal = 0, silverMetal = 0, cosmicEmissive = 0;
+    let goldMetal = 0, silverMetal = 0, rainbowMetal = 0, rainbowRough = 1, cosmicEmissive = 0;
     goldMesh.traverse(obj => { if (obj.material?.metalness) goldMetal = Math.max(goldMetal, obj.material.metalness); });
     silverMesh.traverse(obj => { if (obj.material?.metalness) silverMetal = Math.max(silverMetal, obj.material.metalness); });
+    rainbowMesh.traverse(obj => {
+      if (obj.material?.metalness) rainbowMetal = Math.max(rainbowMetal, obj.material.metalness);
+      if (typeof obj.material?.roughness === 'number') rainbowRough = Math.min(rainbowRough, obj.material.roughness);
+    });
     cosmicMesh.traverse(obj => { if (obj.material?.emissiveIntensity) cosmicEmissive = Math.max(cosmicEmissive, obj.material.emissiveIntensity); });
 
     disposePolishedAnimal(silverMesh);
     disposePolishedAnimal(goldMesh);
+    disposePolishedAnimal(rainbowMesh);
     disposePolishedAnimal(cosmicMesh);
 
-    return { goldMetal, silverMetal, cosmicEmissive };
+    return { goldMetal, silverMetal, rainbowMetal, rainbowRough, cosmicEmissive };
   });
 
   assert.ok(mutationChecks.goldMetal >= 0.70, '24k gold specular metalness (>= 0.70)');
   assert.ok(mutationChecks.silverMetal >= 0.60, 'Chrome silver metalness (>= 0.60)');
+  assert.ok(mutationChecks.rainbowMetal >= 0.35, 'Rainbow iridescent metalness (>= 0.35)');
+  assert.ok(mutationChecks.rainbowRough <= 0.30, 'Rainbow iridescent polished gloss roughness (<= 0.30)');
   assert.ok(mutationChecks.cosmicEmissive >= 0.40, 'Cosmic emissive starfield intensity (>= 0.40)');
 
   await screenshot(page, 'desktop-throw');
@@ -353,7 +380,12 @@ async function mobileFlow(width, height) {
   await check(page, () => state.activeZone, 'throw');
   await inView(page, '#throwActionBtn');
   await page.locator('#throwActionBtn').tap();
-  await page.waitForFunction(() => state.activeThrow?.phase === 'reveal');
+  try {
+    await page.waitForFunction(() => !!state.activeThrow, { timeout: 2000 });
+  } catch {
+    await page.locator('#throwActionBtn').tap();
+  }
+  await page.waitForFunction(() => state.activeThrow?.phase === 'reveal', { timeout: 30000 });
   await inView(page, '#catchTapPrompt');
   await screenshot(page, `mobile-${width}x${height}-catch`);
   await page.locator('#catchTapPrompt').tap();

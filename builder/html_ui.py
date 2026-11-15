@@ -229,7 +229,7 @@ HTML_UI = """
       </div>
 
       <!-- Main "TAP TO THROW!" Button -->
-      <button onclick="executeCalculusThrow()" id="throwActionBtn" class="rblx-btn bg-gradient-to-b from-yellow-300 via-amber-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-black font-extrabold text-lg sm:text-2xl px-6 sm:px-8 py-3 sm:py-4 rounded-3xl rblx-stroke-sm shadow-2xl flex flex-col items-center leading-none">
+      <button onclick="executeCalculusThrow()" id="throwActionBtn" class="rblx-btn bg-gradient-to-b from-yellow-300 via-amber-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-black font-extrabold text-lg sm:text-2xl px-6 sm:px-8 py-3 sm:py-4 rounded-3xl shadow-2xl flex flex-col items-center leading-none">
         <span>TAP TO THROW!</span>
         <span class="text-[10px] sm:text-xs font-bold text-gray-900 mt-1">or press SPACE</span>
       </button>
@@ -507,7 +507,7 @@ HTML_UI = """
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="bg-gradient-to-r from-amber-500 to-yellow-600 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
         <div>
-          <span class="text-black font-extrabold text-base sm:text-lg rblx-stroke-sm">🏆 Your Luckiest Catches</span>
+          <span class="text-black font-extrabold text-base sm:text-lg">🏆 Your Luckiest Catches</span>
           <div class="text-[10px] text-gray-900 font-bold">Personal Hall of Fame & Best Records</div>
         </div>
         <button onclick="closeModal('leaderboardModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>

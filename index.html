@@ -48,10 +48,17 @@
     .text-black.rblx-stroke,
     .text-black.rblx-stroke-sm,
     .text-black.rblx-stroke-subtle,
+    .text-black .rblx-stroke,
+    .text-black .rblx-stroke-sm,
+    .text-black .rblx-stroke-subtle,
     .text-slate-900.rblx-stroke,
     .text-slate-900.rblx-stroke-sm,
+    .text-slate-900 .rblx-stroke,
+    .text-slate-900 .rblx-stroke-sm,
     .text-gray-900.rblx-stroke,
-    .text-gray-900.rblx-stroke-sm {
+    .text-gray-900.rblx-stroke-sm,
+    .text-gray-900 .rblx-stroke,
+    .text-gray-900 .rblx-stroke-sm {
       -webkit-text-stroke: 0 !important;
       text-shadow: none !important;
     }
@@ -213,7 +220,6 @@ button:disabled { opacity: .55; cursor: default; }
 #topNav { top: calc(8px + var(--safe-top)); max-width: 1280px; }
 #zoneBanner { top: calc(72px + var(--safe-top)); }
 #stationNav button { min-height: 44px; }
-#stationNav button[aria-pressed="true"] { outline: 2px solid white; outline-offset: -5px; }
 #gameStats button, .game-modal button { min-width: 44px; min-height: 44px; }
 .game-modal { padding-top: max(12px, var(--safe-top)); padding-bottom: max(12px, var(--safe-bottom)); }
 .game-modal > div { max-height: calc(100dvh - 32px - var(--safe-top) - var(--safe-bottom)); }
@@ -570,7 +576,7 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
       </div>
 
       <!-- Main "TAP TO THROW!" Button -->
-      <button onclick="executeCalculusThrow()" id="throwActionBtn" class="rblx-btn bg-gradient-to-b from-yellow-300 via-amber-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-black font-extrabold text-lg sm:text-2xl px-6 sm:px-8 py-3 sm:py-4 rounded-3xl rblx-stroke-sm shadow-2xl flex flex-col items-center leading-none">
+      <button onclick="executeCalculusThrow()" id="throwActionBtn" class="rblx-btn bg-gradient-to-b from-yellow-300 via-amber-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-black font-extrabold text-lg sm:text-2xl px-6 sm:px-8 py-3 sm:py-4 rounded-3xl shadow-2xl flex flex-col items-center leading-none">
         <span>TAP TO THROW!</span>
         <span class="text-[10px] sm:text-xs font-bold text-gray-900 mt-1">or press SPACE</span>
       </button>
@@ -848,7 +854,7 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
     <div class="bg-gray-900 border-4 border-black rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="bg-gradient-to-r from-amber-500 to-yellow-600 px-4 py-2.5 border-b-3 border-black flex items-center justify-between">
         <div>
-          <span class="text-black font-extrabold text-base sm:text-lg rblx-stroke-sm">🏆 Your Luckiest Catches</span>
+          <span class="text-black font-extrabold text-base sm:text-lg">🏆 Your Luckiest Catches</span>
           <div class="text-[10px] text-gray-900 font-bold">Personal Hall of Fame & Best Records</div>
         </div>
         <button onclick="closeModal('leaderboardModal')" aria-label="Close panel" class="rblx-btn bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-0.5 rounded-xl">✕</button>
@@ -2011,6 +2017,18 @@ function createAnimalTexture(animalId, mutationId, baseHex) {
     }
   }
 
+  // Iridescent chromatic gradient overlay for Rainbow mutations
+  if (isRainbow) {
+    const rainGrad = ctx.createLinearGradient(0, 0, 128, 128);
+    rainGrad.addColorStop(0, 'rgba(244, 114, 182, 0.45)');
+    rainGrad.addColorStop(0.25, 'rgba(192, 132, 252, 0.45)');
+    rainGrad.addColorStop(0.5, 'rgba(129, 140, 248, 0.45)');
+    rainGrad.addColorStop(0.75, 'rgba(56, 189, 248, 0.45)');
+    rainGrad.addColorStop(1, 'rgba(52, 211, 153, 0.45)');
+    ctx.fillStyle = rainGrad;
+    ctx.fillRect(0, 0, 128, 128);
+  }
+
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
   tex.minFilter = THREE.NearestFilter;
@@ -2037,6 +2055,7 @@ function polishedMaterial(hex, mutationId, preserve, transparent, opacity, side,
   if (POLISHED_MATERIALS.has(key)) return POLISHED_MATERIALS.get(key);
   const isSilver = !preserve && mutationId === 'silver';
   const isGolden = !preserve && mutationId === 'golden';
+  const isRainbow = !preserve && mutationId === 'rainbow';
   const isCosmic = !preserve && mutationId === 'cosmic';
 
   let map = null;
@@ -2046,8 +2065,8 @@ function polishedMaterial(hex, mutationId, preserve, transparent, opacity, side,
 
   const mat = new THREE.MeshStandardMaterial({
     color: polishedColor(hex, mutationId, preserve),
-    roughness: isGolden ? 0.18 : isSilver ? 0.22 : 0.58,
-    metalness: isGolden ? 0.72 : isSilver ? 0.65 : 0.08,
+    roughness: isGolden ? 0.18 : isSilver ? 0.22 : isRainbow ? 0.25 : 0.58,
+    metalness: isGolden ? 0.72 : isSilver ? 0.65 : isRainbow ? 0.40 : 0.08,
     map: map,
     flatShading: true,
     transparent: Boolean(transparent),
@@ -2200,6 +2219,17 @@ const POLISHED_DETAIL_BUILDERS = Object.freeze({
     // Walking leg segments
     for (const side of [-1, 1]) for (let i = 0; i < 3; i++)
       k.box(k.root, [side * (.85 + i * .24), .23, -.08 + i * .36], [.40, .10, .13], 0x92400e, {preserve:true, rot:[0, side * .23, side * .15]});
+    // Articulated serrated pincers (chelae) with inner tooth ridges
+    for (const side of [-1, 1]) {
+      // Outer movable pincer blade
+      k.cone(k.root, [side * .92, .36, -1.82], [.15, .54, .17], 0xb45309, {preserve:true, rot:[Math.PI * .5, 0, side * .35]});
+      // Inner fixed pincer finger
+      k.cone(k.root, [side * .68, .36, -1.78], [.13, .46, .15], 0xb45309, {preserve:true, rot:[Math.PI * .5, 0, -side * .25]});
+      // Serrated inner teeth ridges
+      for (let t = 0; t < 3; t++) {
+        k.cone(k.root, [side * (.80 - side * .04 * t), .36, -1.62 - t * .08], [.04, .08, .04], 0xfef08a, {preserve:true, rot:[0, 0, side * Math.PI * .5]});
+      }
+    }
     // Segmented arched tail
     for (let i = 0; i < 4; i++)
       k.orb(k.tail, [0, .15 + i * .27, -i * .37], [.45 - i * .06, .34, .42 - i * .05], 0xf59e0b);
@@ -2490,13 +2520,14 @@ function disposePolishedAnimal(group) {
       }
 
       function addEyes(headX, headY, headZ, eyeW, eyeH, eyeD, sepX, fwdZ, parent = g) {
+        const fwdSign = (fwdZ === 0 ? -1 : Math.sign(fwdZ));
         addBox(eyeW * 1.25, eyeH * 1.25, 0.05, whiteMat, headX - sepX, headY, headZ + fwdZ, 0, 0, 0, parent);
         addBox(eyeW * 1.25, eyeH * 1.25, 0.05, whiteMat, headX + sepX, headY, headZ + fwdZ, 0, 0, 0, parent);
-        addBox(eyeW, eyeH, 0.08, eyeMat, headX - sepX, headY, headZ + fwdZ + Math.sign(fwdZ) * 0.025, 0, 0, 0, parent);
-        addBox(eyeW, eyeH, 0.08, eyeMat, headX + sepX, headY, headZ + fwdZ + Math.sign(fwdZ) * 0.025, 0, 0, 0, parent);
+        addBox(eyeW, eyeH, 0.08, eyeMat, headX - sepX, headY, headZ + fwdZ + fwdSign * 0.025, 0, 0, 0, parent);
+        addBox(eyeW, eyeH, 0.08, eyeMat, headX + sepX, headY, headZ + fwdZ + fwdSign * 0.025, 0, 0, 0, parent);
         const glintW = eyeW * 0.35, glintH = eyeH * 0.35;
-        addBox(glintW, glintH, 0.09, whiteMat, headX - sepX + glintW * 0.5, headY + glintH * 0.5, headZ + fwdZ + Math.sign(fwdZ) * 0.035, 0, 0, 0, parent);
-        addBox(glintW, glintH, 0.09, whiteMat, headX + sepX + glintW * 0.5, headY + glintH * 0.5, headZ + fwdZ + Math.sign(fwdZ) * 0.035, 0, 0, 0, parent);
+        addBox(glintW, glintH, 0.09, whiteMat, headX - sepX + glintW * 0.5, headY + glintH * 0.5, headZ + fwdZ + fwdSign * 0.035, 0, 0, 0, parent);
+        addBox(glintW, glintH, 0.09, whiteMat, headX + sepX + glintW * 0.5, headY + glintH * 0.5, headZ + fwdZ + fwdSign * 0.035, 0, 0, 0, parent);
       }
 
       // Initialize animatable sub-groups
@@ -4792,8 +4823,8 @@ function disposePolishedAnimal(group) {
         }
         resonanceBonusCoins = Math.max(15, Math.round(finalIncome * 2));
         state.cash += resonanceBonusCoins;
-        updateTopHUD();
-        updatePullUpHUD();
+        updateHUD();
+        renderPullUpHUD();
       }
 
       // Distance mapping to expanded 3D Z coordinate (-14 to -900)
@@ -5738,6 +5769,9 @@ function disposePolishedAnimal(group) {
 
     function showToast(msg, colorClass) {
       const container = document.body;
+      const existingToast = document.getElementById('gameplayToast');
+      if (existingToast) existingToast.remove();
+
       const t = document.createElement('div');
       t.id = 'gameplayToast';
       t.setAttribute('role', 'status');
@@ -5758,13 +5792,29 @@ function disposePolishedAnimal(group) {
 
       t.className = `fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-[92vw] px-4 sm:px-5 py-2.5 rounded-full bg-slate-900/95 backdrop-blur-md border ${borderAccent} text-white font-extrabold text-xs sm:text-sm shadow-2xl flex items-center gap-2.5 transition-all duration-300 pointer-events-none select-none`;
 
-      // Extract leading emoji if present for a clean glowing circular badge
+      // Extract leading emoji if present for a clean glowing circular badge (handling grapheme clusters/ZWJ)
       let emoji = '';
       let textContent = msg;
-      const chars = Array.from(msg);
-      if (chars.length > 0 && chars[0].codePointAt(0) > 255) {
-        emoji = chars[0];
-        textContent = msg.slice(chars[0].length).trim();
+      if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        try {
+          const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+          const iterator = segmenter.segment(msg)[Symbol.iterator]();
+          const first = iterator.next();
+          if (!first.done && first.value && first.value.segment) {
+            const seg = first.value.segment;
+            if (seg.codePointAt(0) > 255) {
+              emoji = seg;
+              textContent = msg.slice(seg.length).trim();
+            }
+          }
+        } catch (e) {}
+      }
+      if (!emoji) {
+        const chars = Array.from(msg);
+        if (chars.length > 0 && chars[0].codePointAt(0) > 255) {
+          emoji = chars[0];
+          textContent = msg.slice(chars[0].length).trim();
+        }
       }
 
       const badgeHtml = emoji
