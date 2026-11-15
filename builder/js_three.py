@@ -1164,6 +1164,72 @@ JS_THREE = """
     }
     cutsceneGroup.add(confettiGroup);
 
+    // 3D Celebration Hop Burst (Hearts & Sparkle Stars)
+    const CELEBRATION_PARTICLE_COUNT = 24;
+    const celebrationBurstGroup = new THREE.Group();
+    celebrationBurstGroup.visible = false;
+    const celebrationParticles = [];
+    const starGeo = new THREE.OctahedronGeometry(0.26, 0);
+    const heartGeo = new THREE.BoxGeometry(0.28, 0.28, 0.28);
+    const starMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const heartMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+
+    for (let i = 0; i < CELEBRATION_PARTICLE_COUNT; i++) {
+      const isHeart = i % 2 === 0;
+      const pMesh = new THREE.Mesh(isHeart ? heartGeo : starGeo, isHeart ? heartMat : starMat);
+      pMesh.userData = {
+        vx: 0, vy: 0, vz: 0,
+        age: 0,
+        maxAge: 0.9,
+        baseScale: 0.8 + Math.random() * 0.5
+      };
+      celebrationParticles.push(pMesh);
+      celebrationBurstGroup.add(pMesh);
+    }
+    cutsceneGroup.add(celebrationBurstGroup);
+
+    function triggerCelebrationBurst(x, y, z) {
+      if (reducedMotion.matches) return;
+      celebrationBurstGroup.position.set(x, y, z);
+      celebrationBurstGroup.visible = true;
+      celebrationParticles.forEach((p, idx) => {
+        const theta = (idx / CELEBRATION_PARTICLE_COUNT) * Math.PI * 2;
+        const speed = 2.2 + Math.random() * 2.8;
+        p.position.set(0, 0, 0);
+        p.userData.vx = Math.cos(theta) * speed;
+        p.userData.vy = 3.5 + Math.random() * 2.5;
+        p.userData.vz = Math.sin(theta) * speed;
+        p.userData.age = 0;
+        p.userData.maxAge = 0.75 + Math.random() * 0.35;
+        p.scale.setScalar(p.userData.baseScale);
+      });
+    }
+
+    function updateCelebrationBurst(dt) {
+      if (!celebrationBurstGroup.visible) return;
+      let anyAlive = false;
+      celebrationParticles.forEach(p => {
+        p.userData.age += dt;
+        const progress = p.userData.age / p.userData.maxAge;
+        if (progress < 1.0) {
+          anyAlive = true;
+          p.position.x += p.userData.vx * dt;
+          p.position.y += p.userData.vy * dt;
+          p.position.z += p.userData.vz * dt;
+          p.userData.vy -= 8.5 * dt;
+          p.rotation.x += dt * 5.0;
+          p.rotation.y += dt * 6.0;
+          const scale = p.userData.baseScale * (1.0 - progress);
+          p.scale.setScalar(Math.max(0.01, scale));
+        } else {
+          p.scale.setScalar(0.001);
+        }
+      });
+      if (!anyAlive) {
+        celebrationBurstGroup.visible = false;
+      }
+    }
+
     // Station Floating 3D Labels
     const stationLabels = [];
     function initStationLabels() {

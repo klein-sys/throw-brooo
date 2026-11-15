@@ -120,6 +120,8 @@ JS_GAMEPLAY = """
     function syncActivityUI() {
       const busy = !!state.activeThrow || isThrowWindup;
       rampArrow.visible = !busy;
+      if (typeof rampTangentLine !== 'undefined') rampTangentLine.visible = !busy;
+      if (typeof rampContactPoint !== 'undefined') rampContactPoint.visible = !busy;
       document.body.dataset.activity = busy ? 'throwing' : state.isPullingUp ? 'pullup' : state.activeZone || 'explore';
       document.querySelectorAll('#stationNav button').forEach((btn, index) => {
         btn.setAttribute('aria-pressed', String(Object.keys(STATIONS)[index] === state.activeZone));
@@ -461,14 +463,21 @@ JS_GAMEPLAY = """
       let finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult * harmonicBonus);
       const isNewDiscovery = !state.unlockedIndex.has(chosenAnimal.id);
 
-      // Award bonus pullUpXp if inflection point hit (Harmonic Resonance)
+      // Award bonus pullUpXp & Coins if inflection point hit (Harmonic Resonance)
+      let resonanceBonusCoins = 0;
       if (isInflection) {
         state.pullUpXp += 1;
         if (state.pullUpXp >= state.pullUpMaxXp) {
           state.pullUpXp -= state.pullUpMaxXp;
           state.pullUpLevel++;
+          state.pullUpMaxXp = Math.round(state.pullUpMaxXp * 1.5);
           state.baseStrength += 5;
+          showToast(`💪 Strength Up! Level ${state.pullUpLevel} (+5 Strength)`, 'bg-sky-400 text-black');
         }
+        resonanceBonusCoins = Math.max(15, Math.round(finalIncome * 2));
+        state.cash += resonanceBonusCoins;
+        updateTopHUD();
+        updatePullUpHUD();
       }
 
       // Distance mapping to expanded 3D Z coordinate (-14 to -900)
@@ -487,8 +496,10 @@ JS_GAMEPLAY = """
       // Floating readout on throw
       if (isMasterstroke) {
         showFloatingPopup(playerGroup.position, '🌟 DUAL CALCULUS MASTERSTROKE! (Crit + Inflection)', '#fde047');
+        showFloatingPopup(new THREE.Vector3(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z), `+$${formatNum(resonanceBonusCoins)} Resonance Bounty! ⚡`, '#facc15');
       } else if (isInflection) {
         showFloatingPopup(playerGroup.position, '⚡ HARMONIC RESONANCE! (+50% Bonus)', '#e879f9');
+        showFloatingPopup(new THREE.Vector3(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z), `+$${formatNum(resonanceBonusCoins)} Resonance Bounty! 💰`, '#facc15');
       } else if (isMaxDerivSurge) {
         showFloatingPopup(playerGroup.position, '🚀 VELOCITY SURGE! (+30% Distance)', '#38bdf8');
       } else if (isCriticalPoint) {
@@ -735,6 +746,11 @@ JS_GAMEPLAY = """
       }
       state.inventory.push(newPet);
 
+      // Award base catch bounty coins
+      const catchCoins = Math.max(10, Math.round(th.chosenAnimal.baseIncome * 2));
+      state.cash += catchCoins;
+      showFloatingPopup(playerGroup.position, `+$${formatNum(catchCoins)} Coins 💰`, '#facc15');
+
       sync3DPlotPets();
       updateHUD();
       checkNewFoodUnlock();
@@ -765,7 +781,8 @@ JS_GAMEPLAY = """
       el.className = 'absolute font-black text-sm rblx-stroke floating-cash-anim';
       el.style.color = color;
       el.textContent = text;
-      document.getElementById('labelsContainer').appendChild(el);
+      const root = document.getElementById('floatingPopupsContainer') || document.getElementById('labelsContainer') || document.body;
+      root.appendChild(el);
       project3DToScreen(pos3D.clone().add(new THREE.Vector3(0, 3.5, 0)), el);
       setTimeout(() => el.remove(), 1250);
     }
@@ -1472,6 +1489,10 @@ JS_GAMEPLAY = """
 
       document.getElementById('livePosEq').textContent = `${food.formulaStr} = ${(calc.pos >= 0 ? '+' : '') + calc.pos.toFixed(2)}`;
       document.getElementById('liveDerivEq').textContent = `${food.derivStr} = ${(calc.deriv >= 0 ? '+' : '') + calc.deriv.toFixed(2)}`;
+      const liveDeriv2El = document.getElementById('liveDeriv2Eq');
+      if (liveDeriv2El) {
+        liveDeriv2El.textContent = `${food.deriv2Str || "P''(t)"} = ${(calc.deriv2 !== undefined && calc.deriv2 >= 0 ? '+' : '') + (calc.deriv2 !== undefined ? calc.deriv2.toFixed(2) : '0.00')}`;
+      }
       document.getElementById('minDerivReadout').textContent = `P'(t) = ${(calc.deriv >= 0 ? '+' : '') + calc.deriv.toFixed(2)}`;
 
       const badgeCrit = document.getElementById('badgeCritStatus');
@@ -1566,6 +1587,22 @@ JS_GAMEPLAY = """
         else oscCtx.lineTo(x, y);
       }
       oscCtx.stroke();
+
+      // P''(t) Curvature Wave (Purple Dashed)
+      const deriv2Scale = H * 0.35 / (calc.maxDeriv2 || 14);
+      oscCtx.strokeStyle = '#c084fc';
+      oscCtx.lineWidth = 1.8;
+      oscCtx.setLineDash([4, 3]);
+      oscCtx.beginPath();
+      for (let x = 0; x < W; x += 3) {
+        const tau = t - timeWindow + (x / W) * timeWindow;
+        const pt = evaluateFoodCalculus(food, tau);
+        const y = midY - (pt.deriv2 || 0) * deriv2Scale;
+        if (x === 0) oscCtx.moveTo(x, y);
+        else oscCtx.lineTo(x, y);
+      }
+      oscCtx.stroke();
+      oscCtx.setLineDash([]);
 
       // Tangent Line
       const curY = midY - calc.pos * scaleY;
@@ -1739,9 +1776,24 @@ JS_GAMEPLAY = """
           if (!th.celebratedHop && t >= 1.2) {
             th.celebratedHop = true;
             if (typeof addCameraTrauma === 'function') addCameraTrauma(0.4);
+            if (typeof triggerCelebrationBurst === 'function') {
+              triggerCelebrationBurst(animalMesh.position.x, th.revealRestY + 2.5, th.targetZ);
+            }
             const celebrateText = th.isNewDiscovery ? '🌟 NEW DISCOVERY! 💖' : '🐾 CAUGHT! ✨';
             const celebrateColor = th.isNewDiscovery ? '#facc15' : '#f472b6';
             showFloatingPopup(new THREE.Vector3(animalMesh.position.x, th.revealRestY + 2.8, th.targetZ), celebrateText, celebrateColor);
+          }
+
+          if (t >= 1.93) {
+            const idlePhase = (t - 1.93) * 3.5;
+            const breath = 1 + Math.sin(idlePhase * 0.8) * 0.035 * motion;
+            animalMesh.scale.set(breath, breath, breath);
+            if (joints.ears) {
+              joints.ears.rotation.x = Math.sin(idlePhase * 1.5) * 0.12 * motion;
+              joints.ears.rotation.z = Math.sin(idlePhase * 0.8) * 0.09 * motion;
+            }
+            if (joints.tail) joints.tail.rotation.y = Math.sin(idlePhase * 1.6) * 0.28 * motion;
+            if (joints.head) joints.head.rotation.x = Math.sin(idlePhase * 0.7) * 0.06 * motion;
           }
 
           if (reducedMotion.matches || t >= 2.6) confettiGroup.visible = false;
@@ -1827,8 +1879,12 @@ JS_GAMEPLAY = """
         cameraTrauma = Math.max(0, cameraTrauma - dt * 2.5);
       }
 
+      if (typeof updateCelebrationBurst === 'function') {
+        updateCelebrationBurst(dt);
+      }
+
       if (typeof updateAmbientParticles === 'function') {
-        updateAmbientParticles(dt, state.t);
+        updateAmbientParticles(dt, now * 0.001);
       }
 
       sky.position.copy(camera.position);

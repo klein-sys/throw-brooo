@@ -106,6 +106,19 @@
     .floating-cash-anim {
       animation: cashFloatUp 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
       pointer-events: none;
+      visibility: visible !important;
+    }
+    /* Glassmorphism Polish & Station Accent Borders */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.82) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.16) !important;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45) !important;
+    }
+    @keyframes activeStationPulse {
+      0% { box-shadow: 0 0 6px rgba(56, 189, 248, 0.5), inset 0 0 4px rgba(56, 189, 248, 0.3); }
+      100% { box-shadow: 0 0 18px rgba(56, 189, 248, 0.95), inset 0 0 10px rgba(56, 189, 248, 0.6); }
     }
     @keyframes pulseGlow {
       0%, 100% { filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.7)); }
@@ -230,13 +243,16 @@ button:disabled { opacity: .55; cursor: default; }
   background: rgba(15, 23, 42, 0.82) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.16) !important;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45) !important;
 }
 #stationNav button[aria-pressed="true"] {
   outline: 2px solid #38bdf8;
   outline-offset: -3px;
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.7), inset 0 0 8px rgba(56, 189, 248, 0.4);
+  animation: activeStationPulse 1.8s infinite ease-in-out alternate;
+}
+.floating-cash-anim {
+  visibility: visible !important;
 }
 .pulse-glow {
   animation: pulse-glow-anim 1.2s infinite alternate ease-in-out;
@@ -325,11 +341,14 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
   <!-- 3D FLOATING LABELS CONTAINER (PLOT PETS, INCOME POPUPS & STATIONS) -->
   <div id="labelsContainer" class="absolute inset-0 pointer-events-none z-10 overflow-hidden"></div>
 
+  <!-- TOP-LEVEL FLOATING REWARD TEXT OVERLAY (ALWAYS VISIBLE Z-50) -->
+  <div id="floatingPopupsContainer" class="fixed inset-0 pointer-events-none z-50 overflow-hidden"></div>
+
   <!-- TOP NAVIGATION BAR: TITLE, QUICK-WALK TELEPORTS & SHORTCUTS -->
   <div id="topNav" class="game-hud fixed top-2 left-1/2 -translate-x-1/2 z-20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-[98%] max-w-5xl pointer-events-none">
     
     <!-- Title & Math Pill -->
-    <div id="gameTitle" class="bg-gray-900/95 border-2 border-black rounded-2xl px-3 py-1 flex items-center gap-2 shadow-xl pointer-events-auto">
+    <div id="gameTitle" class="glass-panel rounded-2xl px-3 py-1 flex items-center gap-2 pointer-events-auto">
       <span class="text-yellow-400 font-extrabold text-xs sm:text-base rblx-stroke-sm">🥕 THROW FOOD 3D</span>
       <span class="hidden sm:inline-block bg-cyan-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-black shadow">
         MATH 101 CALCULUS
@@ -337,7 +356,7 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
     </div>
 
     <!-- Quick-Walk Station Teleport Bar -->
-    <div id="stationNav" role="navigation" aria-label="Activity stations" class="bg-gray-900/95 border-2 border-black rounded-2xl p-1 flex items-center gap-1 shadow-xl pointer-events-auto">
+    <div id="stationNav" role="navigation" aria-label="Activity stations" class="glass-panel rounded-2xl p-1 flex items-center gap-1 pointer-events-auto">
       <button onclick="walkToStation('throw')" class="rblx-btn bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-xl">
         🎯 Throw Line
       </button>
@@ -361,7 +380,7 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
     </button>
 
     <!-- Equipped Bait Pill -->
-    <button id="baitPill" onclick="openModal('shopModal')" title="Click to change bait in Food Shop" class="cursor-pointer bg-purple-700/95 hover:bg-purple-600 border-2 border-black rounded-2xl px-2.5 py-1 flex items-center gap-1.5 shadow-xl pointer-events-auto">
+    <button id="baitPill" onclick="openModal('shopModal')" title="Click to change bait in Food Shop" class="cursor-pointer glass-panel rounded-2xl px-2.5 py-1 flex items-center gap-1.5 pointer-events-auto">
       <span id="hudFoodIcon" class="text-base sm:text-lg">🥕</span>
       <div class="leading-tight">
         <div id="hudFoodName" class="text-white font-extrabold text-[11px] sm:text-xs rblx-stroke-sm">Carrot</div>
@@ -418,7 +437,7 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
   <!-- BOTTOM-LEFT STATS: MUSCLE STRENGTH & CASH DISPLAY -->
   <div id="gameStats" class="game-hud fixed bottom-3 left-3 z-20 flex flex-col gap-1.5 pointer-events-auto">
     <!-- Strength Pill with Muscle Icon, Number, Bonus & Settings Gear ⚙️ -->
-    <div class="flex items-center gap-2 bg-black/75 backdrop-blur-sm border-2 border-black rounded-2xl px-3 py-1 shadow-2xl">
+    <div class="flex items-center gap-2 glass-panel rounded-2xl px-3 py-1 shadow-2xl">
       <span class="text-2xl sm:text-3xl filter drop-shadow">💪</span>
       <div class="leading-none">
         <div class="flex items-center gap-1.5">
@@ -432,7 +451,7 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
     </div>
 
     <!-- Cash Pill with Money Icon, Cash Amount & $/s Passive Rate -->
-    <div class="flex items-center gap-2 bg-black/75 backdrop-blur-sm border-2 border-black rounded-2xl px-3 py-1 shadow-2xl">
+    <div class="flex items-center gap-2 glass-panel rounded-2xl px-3 py-1 shadow-2xl">
       <span class="text-2xl sm:text-3xl filter drop-shadow">💵</span>
       <div class="leading-none">
         <div id="cashDisplay" class="text-lime-400 font-extrabold text-lg sm:text-2xl rblx-stroke-sm">$0</div>
@@ -449,7 +468,7 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
   <!-- MINIMIZABLE LIVE TRIGONOMETRIC DERIVATIVE HUD (BOTTOM CENTER) -->
   <!-- 1) Minimized Pill Bar -->
   <div id="calcMinimizedBar" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 hidden pointer-events-auto">
-    <button onclick="toggleMinimizeCalcHUD(false)" class="rblx-btn bg-gray-900/95 border-2 border-black text-white px-4 py-1.5 rounded-full flex items-center gap-2 shadow-2xl">
+    <button onclick="toggleMinimizeCalcHUD(false)" class="rblx-btn glass-panel text-white px-4 py-1.5 rounded-full flex items-center gap-2 shadow-2xl">
       <span class="text-cyan-400 font-extrabold text-xs">📈 Expand Calculus HUD</span>
       <span class="text-gray-400 text-xs">|</span>
       <span id="minDerivReadout" class="mono-math text-amber-300 font-bold text-xs">P'(t) = +2.40</span>
@@ -459,7 +478,7 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
   </div>
 
   <!-- 2) Expanded Calculus Oscilloscope Panel -->
-  <div id="calcExpandedPanel" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-xl bg-gray-900/95 border-3 border-black rounded-2xl p-2.5 sm:p-3 shadow-2xl pointer-events-auto transition-all">
+  <div id="calcExpandedPanel" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-xl glass-panel rounded-2xl p-2.5 sm:p-3 shadow-2xl pointer-events-auto transition-all">
     <!-- Panel Header: Title, Minimizer, Pause & Status Badges -->
     <div class="flex items-center justify-between gap-1 pb-1.5 border-b border-gray-700">
       <div class="flex items-center gap-2">
@@ -480,9 +499,10 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
     <div class="relative w-full h-20 sm:h-24 bg-black/80 rounded-xl my-1.5 overflow-hidden border border-gray-700">
       <canvas id="oscCanvas" class="w-full h-full block"></canvas>
       <div class="absolute top-1 left-2 pointer-events-none flex items-center gap-2 text-[9px] mono-math font-bold">
-        <span class="text-cyan-400">● P(t) Position Wave</span>
-        <span class="text-amber-400">● P'(t) Derivative Velocity</span>
-        <span class="text-pink-400">● Tangent Slope</span>
+        <span class="text-cyan-400">● P(t) Wave</span>
+        <span class="text-amber-400">● P'(t) Velocity</span>
+        <span class="text-purple-400">● P''(t) Curv</span>
+        <span class="text-pink-400">● Tangent</span>
       </div>
       <div id="critPointIndicator" class="hidden absolute top-1 right-2 pointer-events-none text-[9px] font-extrabold text-yellow-300 bg-yellow-950/80 px-2 py-0.5 rounded border border-yellow-500">
         🎯 CRITICAL POINT (P' ≈ 0)
@@ -494,6 +514,7 @@ body[data-activity="throwing"] .game-hud { visibility: hidden; pointer-events: n
       <div class="bg-gray-800/80 p-1.5 rounded-xl border border-gray-700">
         <div id="livePosEq" class="text-cyan-300 font-bold truncate">P(t) = 2sin(1.2t) = +0.00</div>
         <div id="liveDerivEq" class="text-amber-300 font-bold truncate">P'(t) = 2.4cos(1.2t) = +2.40</div>
+        <div id="liveDeriv2Eq" class="text-purple-300 font-bold truncate">P''(t) = -2.88sin(1.2t) = +0.00</div>
       </div>
       <div class="bg-gray-800/80 p-1.5 rounded-xl border border-gray-700 flex flex-col justify-center">
         <div class="flex items-center justify-between text-[10px] leading-tight">
@@ -1832,6 +1853,9 @@ function animatePolishedAnimal(group, phase) {
   if (!group.userData.origScaleY) group.userData.origScaleY = group.scale.y;
   group.scale.y = group.userData.origScaleY * breath;
 
+  if (group.userData.head) {
+    group.userData.head.rotation.x = Math.sin(phase * 0.6) * 0.06;
+  }
   if (group.userData.ears && group.userData.ears.children.length) {
     group.userData.ears.rotation.x = Math.sin(phase * 1.4) * 0.12;
     group.userData.ears.rotation.z = Math.sin(phase * 0.7) * 0.09;
@@ -2118,6 +2142,9 @@ function disposePolishedAnimal(group) {
           headGroup.position.set(0, 3.0 * s, -1.45 * s);
           addBox(0.75, 0.75, 1.1, baseMat, 0, 0, 0, 0, 0, 0, headGroup);
           addBox(0.6, 0.45, 0.55, darkCamel, 0, -0.15, -0.5, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.16, 0.28, 0.12, baseMat, -0.32, 0.45, 0.2, 0, 0, 0, earGroup);
+          addBox(0.16, 0.28, 0.12, baseMat, 0.32, 0.45, 0.2, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.38, -0.35, headGroup);
           // 4 Legs
           [[-0.45, -0.75], [0.45, -0.75], [-0.45, 0.75], [0.45, 0.75]].forEach(([lx, lz]) => {
@@ -2381,6 +2408,9 @@ function disposePolishedAnimal(group) {
           addBox(0.75, 0.75, 1.1, baseMat, 0, 0, 0, 0, 0, 0, headGroup);
           addBox(0.16, 1.45, 0.16, hornMat, 0, 1.0, 0, 0.25, 0, 0, headGroup);
           addBox(0.25, 1.5, 0.85, maneMat, 0, -0.2, 0.65, -0.3, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.18, 0.35, 0.12, baseMat, -0.28, 0.45, 0.25, 0, 0, 0, earGroup);
+          addBox(0.18, 0.35, 0.12, baseMat, 0.28, 0.45, 0.25, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.38, -0.35, headGroup);
           // 4 Legs with Golden Hooves
           [[-0.45, -0.65], [0.45, -0.65], [-0.45, 0.65], [0.45, 0.65]].forEach(([lx, lz]) => {
@@ -3635,6 +3665,72 @@ function disposePolishedAnimal(group) {
     }
     cutsceneGroup.add(confettiGroup);
 
+    // 3D Celebration Hop Burst (Hearts & Sparkle Stars)
+    const CELEBRATION_PARTICLE_COUNT = 24;
+    const celebrationBurstGroup = new THREE.Group();
+    celebrationBurstGroup.visible = false;
+    const celebrationParticles = [];
+    const starGeo = new THREE.OctahedronGeometry(0.26, 0);
+    const heartGeo = new THREE.BoxGeometry(0.28, 0.28, 0.28);
+    const starMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const heartMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+
+    for (let i = 0; i < CELEBRATION_PARTICLE_COUNT; i++) {
+      const isHeart = i % 2 === 0;
+      const pMesh = new THREE.Mesh(isHeart ? heartGeo : starGeo, isHeart ? heartMat : starMat);
+      pMesh.userData = {
+        vx: 0, vy: 0, vz: 0,
+        age: 0,
+        maxAge: 0.9,
+        baseScale: 0.8 + Math.random() * 0.5
+      };
+      celebrationParticles.push(pMesh);
+      celebrationBurstGroup.add(pMesh);
+    }
+    cutsceneGroup.add(celebrationBurstGroup);
+
+    function triggerCelebrationBurst(x, y, z) {
+      if (reducedMotion.matches) return;
+      celebrationBurstGroup.position.set(x, y, z);
+      celebrationBurstGroup.visible = true;
+      celebrationParticles.forEach((p, idx) => {
+        const theta = (idx / CELEBRATION_PARTICLE_COUNT) * Math.PI * 2;
+        const speed = 2.2 + Math.random() * 2.8;
+        p.position.set(0, 0, 0);
+        p.userData.vx = Math.cos(theta) * speed;
+        p.userData.vy = 3.5 + Math.random() * 2.5;
+        p.userData.vz = Math.sin(theta) * speed;
+        p.userData.age = 0;
+        p.userData.maxAge = 0.75 + Math.random() * 0.35;
+        p.scale.setScalar(p.userData.baseScale);
+      });
+    }
+
+    function updateCelebrationBurst(dt) {
+      if (!celebrationBurstGroup.visible) return;
+      let anyAlive = false;
+      celebrationParticles.forEach(p => {
+        p.userData.age += dt;
+        const progress = p.userData.age / p.userData.maxAge;
+        if (progress < 1.0) {
+          anyAlive = true;
+          p.position.x += p.userData.vx * dt;
+          p.position.y += p.userData.vy * dt;
+          p.position.z += p.userData.vz * dt;
+          p.userData.vy -= 8.5 * dt;
+          p.rotation.x += dt * 5.0;
+          p.rotation.y += dt * 6.0;
+          const scale = p.userData.baseScale * (1.0 - progress);
+          p.scale.setScalar(Math.max(0.01, scale));
+        } else {
+          p.scale.setScalar(0.001);
+        }
+      });
+      if (!anyAlive) {
+        celebrationBurstGroup.visible = false;
+      }
+    }
+
     // Station Floating 3D Labels
     const stationLabels = [];
     function initStationLabels() {
@@ -3775,6 +3871,8 @@ function disposePolishedAnimal(group) {
     function syncActivityUI() {
       const busy = !!state.activeThrow || isThrowWindup;
       rampArrow.visible = !busy;
+      if (typeof rampTangentLine !== 'undefined') rampTangentLine.visible = !busy;
+      if (typeof rampContactPoint !== 'undefined') rampContactPoint.visible = !busy;
       document.body.dataset.activity = busy ? 'throwing' : state.isPullingUp ? 'pullup' : state.activeZone || 'explore';
       document.querySelectorAll('#stationNav button').forEach((btn, index) => {
         btn.setAttribute('aria-pressed', String(Object.keys(STATIONS)[index] === state.activeZone));
@@ -4116,14 +4214,21 @@ function disposePolishedAnimal(group) {
       let finalIncome = Math.round(chosenAnimal.baseIncome * chosenSize.mult * chosenMutation.mult * harmonicBonus);
       const isNewDiscovery = !state.unlockedIndex.has(chosenAnimal.id);
 
-      // Award bonus pullUpXp if inflection point hit (Harmonic Resonance)
+      // Award bonus pullUpXp & Coins if inflection point hit (Harmonic Resonance)
+      let resonanceBonusCoins = 0;
       if (isInflection) {
         state.pullUpXp += 1;
         if (state.pullUpXp >= state.pullUpMaxXp) {
           state.pullUpXp -= state.pullUpMaxXp;
           state.pullUpLevel++;
+          state.pullUpMaxXp = Math.round(state.pullUpMaxXp * 1.5);
           state.baseStrength += 5;
+          showToast(`💪 Strength Up! Level ${state.pullUpLevel} (+5 Strength)`, 'bg-sky-400 text-black');
         }
+        resonanceBonusCoins = Math.max(15, Math.round(finalIncome * 2));
+        state.cash += resonanceBonusCoins;
+        updateTopHUD();
+        updatePullUpHUD();
       }
 
       // Distance mapping to expanded 3D Z coordinate (-14 to -900)
@@ -4142,8 +4247,10 @@ function disposePolishedAnimal(group) {
       // Floating readout on throw
       if (isMasterstroke) {
         showFloatingPopup(playerGroup.position, '🌟 DUAL CALCULUS MASTERSTROKE! (Crit + Inflection)', '#fde047');
+        showFloatingPopup(new THREE.Vector3(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z), `+$${formatNum(resonanceBonusCoins)} Resonance Bounty! ⚡`, '#facc15');
       } else if (isInflection) {
         showFloatingPopup(playerGroup.position, '⚡ HARMONIC RESONANCE! (+50% Bonus)', '#e879f9');
+        showFloatingPopup(new THREE.Vector3(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z), `+$${formatNum(resonanceBonusCoins)} Resonance Bounty! 💰`, '#facc15');
       } else if (isMaxDerivSurge) {
         showFloatingPopup(playerGroup.position, '🚀 VELOCITY SURGE! (+30% Distance)', '#38bdf8');
       } else if (isCriticalPoint) {
@@ -4390,6 +4497,11 @@ function disposePolishedAnimal(group) {
       }
       state.inventory.push(newPet);
 
+      // Award base catch bounty coins
+      const catchCoins = Math.max(10, Math.round(th.chosenAnimal.baseIncome * 2));
+      state.cash += catchCoins;
+      showFloatingPopup(playerGroup.position, `+$${formatNum(catchCoins)} Coins 💰`, '#facc15');
+
       sync3DPlotPets();
       updateHUD();
       checkNewFoodUnlock();
@@ -4420,7 +4532,8 @@ function disposePolishedAnimal(group) {
       el.className = 'absolute font-black text-sm rblx-stroke floating-cash-anim';
       el.style.color = color;
       el.textContent = text;
-      document.getElementById('labelsContainer').appendChild(el);
+      const root = document.getElementById('floatingPopupsContainer') || document.getElementById('labelsContainer') || document.body;
+      root.appendChild(el);
       project3DToScreen(pos3D.clone().add(new THREE.Vector3(0, 3.5, 0)), el);
       setTimeout(() => el.remove(), 1250);
     }
@@ -5127,6 +5240,10 @@ function disposePolishedAnimal(group) {
 
       document.getElementById('livePosEq').textContent = `${food.formulaStr} = ${(calc.pos >= 0 ? '+' : '') + calc.pos.toFixed(2)}`;
       document.getElementById('liveDerivEq').textContent = `${food.derivStr} = ${(calc.deriv >= 0 ? '+' : '') + calc.deriv.toFixed(2)}`;
+      const liveDeriv2El = document.getElementById('liveDeriv2Eq');
+      if (liveDeriv2El) {
+        liveDeriv2El.textContent = `${food.deriv2Str || "P''(t)"} = ${(calc.deriv2 !== undefined && calc.deriv2 >= 0 ? '+' : '') + (calc.deriv2 !== undefined ? calc.deriv2.toFixed(2) : '0.00')}`;
+      }
       document.getElementById('minDerivReadout').textContent = `P'(t) = ${(calc.deriv >= 0 ? '+' : '') + calc.deriv.toFixed(2)}`;
 
       const badgeCrit = document.getElementById('badgeCritStatus');
@@ -5221,6 +5338,22 @@ function disposePolishedAnimal(group) {
         else oscCtx.lineTo(x, y);
       }
       oscCtx.stroke();
+
+      // P''(t) Curvature Wave (Purple Dashed)
+      const deriv2Scale = H * 0.35 / (calc.maxDeriv2 || 14);
+      oscCtx.strokeStyle = '#c084fc';
+      oscCtx.lineWidth = 1.8;
+      oscCtx.setLineDash([4, 3]);
+      oscCtx.beginPath();
+      for (let x = 0; x < W; x += 3) {
+        const tau = t - timeWindow + (x / W) * timeWindow;
+        const pt = evaluateFoodCalculus(food, tau);
+        const y = midY - (pt.deriv2 || 0) * deriv2Scale;
+        if (x === 0) oscCtx.moveTo(x, y);
+        else oscCtx.lineTo(x, y);
+      }
+      oscCtx.stroke();
+      oscCtx.setLineDash([]);
 
       // Tangent Line
       const curY = midY - calc.pos * scaleY;
@@ -5394,9 +5527,24 @@ function disposePolishedAnimal(group) {
           if (!th.celebratedHop && t >= 1.2) {
             th.celebratedHop = true;
             if (typeof addCameraTrauma === 'function') addCameraTrauma(0.4);
+            if (typeof triggerCelebrationBurst === 'function') {
+              triggerCelebrationBurst(animalMesh.position.x, th.revealRestY + 2.5, th.targetZ);
+            }
             const celebrateText = th.isNewDiscovery ? '🌟 NEW DISCOVERY! 💖' : '🐾 CAUGHT! ✨';
             const celebrateColor = th.isNewDiscovery ? '#facc15' : '#f472b6';
             showFloatingPopup(new THREE.Vector3(animalMesh.position.x, th.revealRestY + 2.8, th.targetZ), celebrateText, celebrateColor);
+          }
+
+          if (t >= 1.93) {
+            const idlePhase = (t - 1.93) * 3.5;
+            const breath = 1 + Math.sin(idlePhase * 0.8) * 0.035 * motion;
+            animalMesh.scale.set(breath, breath, breath);
+            if (joints.ears) {
+              joints.ears.rotation.x = Math.sin(idlePhase * 1.5) * 0.12 * motion;
+              joints.ears.rotation.z = Math.sin(idlePhase * 0.8) * 0.09 * motion;
+            }
+            if (joints.tail) joints.tail.rotation.y = Math.sin(idlePhase * 1.6) * 0.28 * motion;
+            if (joints.head) joints.head.rotation.x = Math.sin(idlePhase * 0.7) * 0.06 * motion;
           }
 
           if (reducedMotion.matches || t >= 2.6) confettiGroup.visible = false;
@@ -5482,8 +5630,12 @@ function disposePolishedAnimal(group) {
         cameraTrauma = Math.max(0, cameraTrauma - dt * 2.5);
       }
 
+      if (typeof updateCelebrationBurst === 'function') {
+        updateCelebrationBurst(dt);
+      }
+
       if (typeof updateAmbientParticles === 'function') {
-        updateAmbientParticles(dt, state.t);
+        updateAmbientParticles(dt, now * 0.001);
       }
 
       sky.position.copy(camera.position);

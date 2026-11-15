@@ -108,6 +108,19 @@ HTML_HEAD = """<!DOCTYPE html>
     .floating-cash-anim {
       animation: cashFloatUp 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
       pointer-events: none;
+      visibility: visible !important;
+    }
+    /* Glassmorphism Polish & Station Accent Borders */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.82) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.16) !important;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45) !important;
+    }
+    @keyframes activeStationPulse {
+      0% { box-shadow: 0 0 6px rgba(56, 189, 248, 0.5), inset 0 0 4px rgba(56, 189, 248, 0.3); }
+      100% { box-shadow: 0 0 18px rgba(56, 189, 248, 0.95), inset 0 0 10px rgba(56, 189, 248, 0.6); }
     }
     @keyframes pulseGlow {
       0%, 100% { filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.7)); }
