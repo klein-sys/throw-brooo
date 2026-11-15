@@ -48,6 +48,9 @@ JS_ANIMAL_MODELS = """
         addBox(eyeW * 1.25, eyeH * 1.25, 0.05, whiteMat, headX + sepX, headY, headZ + fwdZ, 0, 0, 0, parent);
         addBox(eyeW, eyeH, 0.08, eyeMat, headX - sepX, headY, headZ + fwdZ + Math.sign(fwdZ) * 0.025, 0, 0, 0, parent);
         addBox(eyeW, eyeH, 0.08, eyeMat, headX + sepX, headY, headZ + fwdZ + Math.sign(fwdZ) * 0.025, 0, 0, 0, parent);
+        const glintW = eyeW * 0.35, glintH = eyeH * 0.35;
+        addBox(glintW, glintH, 0.09, whiteMat, headX - sepX + glintW * 0.5, headY + glintH * 0.5, headZ + fwdZ + Math.sign(fwdZ) * 0.035, 0, 0, 0, parent);
+        addBox(glintW, glintH, 0.09, whiteMat, headX + sepX + glintW * 0.5, headY + glintH * 0.5, headZ + fwdZ + Math.sign(fwdZ) * 0.035, 0, 0, 0, parent);
       }
 
       // Initialize animatable sub-groups
