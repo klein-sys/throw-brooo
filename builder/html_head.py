@@ -20,44 +20,42 @@ HTML_HEAD = """<!DOCTYPE html>
       margin: 0;
       padding: 0;
       overflow: hidden;
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       background: #0f172a;
     }
     .mono-math {
       font-family: 'JetBrains Mono', monospace;
     }
     .rblx-stroke {
-      text-shadow:
-        -2.5px -2.5px 0 #000,
-         2.5px -2.5px 0 #000,
-        -2.5px  2.5px 0 #000,
-         2.5px  2.5px 0 #000,
-         0px    4.5px 0 #000;
+      -webkit-text-stroke: 2px #0f172a;
+      paint-order: stroke fill;
+      text-shadow: 0 3px 6px rgba(0, 0, 0, 0.6);
     }
     .rblx-stroke-lg {
-      text-shadow:
-        -3.5px -3.5px 0 #000,
-         3.5px -3.5px 0 #000,
-        -3.5px  3.5px 0 #000,
-         3.5px  3.5px 0 #000,
-        -4px    0px   0 #000,
-         4px    0px   0 #000,
-         0px    5.5px 0 #000;
+      -webkit-text-stroke: 3px #0f172a;
+      paint-order: stroke fill;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
     }
     .rblx-stroke-sm {
-      text-shadow:
-        -1.5px -1.5px 0 #000,
-         1.5px -1.5px 0 #000,
-        -1.5px  1.5px 0 #000,
-         1.5px  1.5px 0 #000,
-         0px    2.5px 0 #000;
+      -webkit-text-stroke: 1.2px #0f172a;
+      paint-order: stroke fill;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
     .rblx-stroke-subtle {
-      text-shadow:
-        -1px -1px 0 #000,
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000;
+      -webkit-text-stroke: 0.8px #0f172a;
+      paint-order: stroke fill;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+    /* Protect dark text from occlusive text strokes or black-on-black blobs */
+    .text-black.rblx-stroke,
+    .text-black.rblx-stroke-sm,
+    .text-black.rblx-stroke-subtle,
+    .text-slate-900.rblx-stroke,
+    .text-slate-900.rblx-stroke-sm,
+    .text-gray-900.rblx-stroke,
+    .text-gray-900.rblx-stroke-sm {
+      -webkit-text-stroke: 0 !important;
+      text-shadow: none !important;
     }
     .rblx-btn {
       border: 3px solid #111;

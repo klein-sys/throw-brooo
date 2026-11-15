@@ -46,6 +46,15 @@ button:disabled { opacity: .55; cursor: default; }
   outline-offset: -3px;
   animation: activeStationPulse 1.8s infinite ease-in-out alternate;
 }
+#stationNav button {
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+#stationNav button:hover {
+  transform: translateY(-1px);
+}
+#stationNav button:active {
+  transform: translateY(1.5px);
+}
 .floating-cash-anim {
   visibility: visible !important;
 }

@@ -1423,14 +1423,45 @@ JS_GAMEPLAY = """
     function showToast(msg, colorClass) {
       const container = document.body;
       const t = document.createElement('div');
-      t.className = `fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2 rounded-2xl border-2 border-black font-extrabold text-xs sm:text-sm shadow-2xl rblx-stroke-sm transition-all duration-300 pointer-events-none ${colorClass}`;
-      t.textContent = msg;
+      t.id = 'gameplayToast';
+      t.setAttribute('role', 'status');
+
+      // Determine accent glow and indicator styling
+      let borderAccent = 'border-lime-400/60 shadow-[0_10px_30px_-5px_rgba(34,197,94,0.45)]';
+      let dotColor = 'bg-lime-400 text-lime-400';
+      if (colorClass && colorClass.includes('rose')) {
+        borderAccent = 'border-rose-400/60 shadow-[0_10px_30px_-5px_rgba(244,63,94,0.45)]';
+        dotColor = 'bg-rose-400 text-rose-400';
+      } else if (colorClass && (colorClass.includes('amber') || colorClass.includes('yellow'))) {
+        borderAccent = 'border-amber-400/60 shadow-[0_10px_30px_-5px_rgba(251,191,36,0.45)]';
+        dotColor = 'bg-amber-400 text-amber-400';
+      } else if (colorClass && colorClass.includes('sky')) {
+        borderAccent = 'border-sky-400/60 shadow-[0_10px_30px_-5px_rgba(56,189,248,0.45)]';
+        dotColor = 'bg-sky-400 text-sky-400';
+      }
+
+      t.className = `fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-[92vw] px-4 sm:px-5 py-2.5 rounded-full bg-slate-900/95 backdrop-blur-md border ${borderAccent} text-white font-extrabold text-xs sm:text-sm shadow-2xl flex items-center gap-2.5 transition-all duration-300 pointer-events-none select-none`;
+
+      // Extract leading emoji if present for a clean glowing circular badge
+      let emoji = '';
+      let textContent = msg;
+      const chars = Array.from(msg);
+      if (chars.length > 0 && chars[0].codePointAt(0) > 255) {
+        emoji = chars[0];
+        textContent = msg.slice(chars[0].length).trim();
+      }
+
+      const badgeHtml = emoji
+        ? `<span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-sm shadow-inner">${emoji}</span>`
+        : `<span class="w-2.5 h-2.5 rounded-full ${dotColor} animate-pulse"></span>`;
+
+      t.innerHTML = `${badgeHtml}<span class="tracking-wide text-slate-100 font-extrabold leading-tight drop-shadow-sm">${textContent}</span>`;
       container.appendChild(t);
       setTimeout(() => {
         t.style.opacity = '0';
-        t.style.transform = 'translate(-50%, -15px)';
+        t.style.transform = 'translate(-50%, -18px) scale(0.96)';
         setTimeout(() => t.remove(), 350);
-      }, 2400);
+      }, 2700);
     }
 
     function togglePauseWave() {
