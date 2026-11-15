@@ -79,12 +79,30 @@ async function desktopFlow() {
   assert.equal(rampVisuals.hasTangentLine, true, '3D tangent line exists on launch ramp');
   assert.equal(rampVisuals.hasContactPoint, true, '3D contact point exists on launch ramp');
 
-  // Verify floating text popup DOM creation
+  // Verify live second derivative oscilloscope equation element
+  const deriv2ElText = await page.evaluate(() => document.getElementById('liveDeriv2Eq')?.textContent || '');
+  assert.ok(deriv2ElText.includes("P''(t)"), 'Live second derivative equation element is populated in Oscilloscope HUD');
+
+  // Verify glassmorphism class on primary HUD panels
+  const glassPanelsCount = await page.evaluate(() => document.querySelectorAll('.glass-panel').length);
+  assert.ok(glassPanelsCount >= 4, 'Glassmorphism panels applied to top bar, station nav, and HUD cards');
+
+  // Verify celebration burst particles exist in scene
+  const hasCelebrationBurst = await page.evaluate(() => typeof celebrationBurstGroup !== 'undefined' && !!celebrationBurstGroup);
+  assert.equal(hasCelebrationBurst, true, '3D celebration burst particles exist in cutscene group');
+
+  // Verify floating text popup DOM creation & actual visual visibility
   await page.evaluate(() => {
     showFloatingPopup(new THREE.Vector3(0, 0, 0), 'TEST POPUP', '#ffffff');
   });
-  const popupCount = await page.evaluate(() => document.querySelectorAll('#labelsContainer .floating-cash-anim').length);
-  assert.ok(popupCount >= 1, 'Floating popup created in labelsContainer');
+  const popupCheck = await page.evaluate(() => {
+    const el = document.querySelector('.floating-cash-anim');
+    if (!el) return { exists: false, visible: false };
+    const vis = getComputedStyle(el).visibility;
+    return { exists: true, visible: vis === 'visible' };
+  });
+  assert.equal(popupCheck.exists, true, 'Floating popup created in DOM');
+  assert.equal(popupCheck.visible, true, 'Floating popup is visually visible');
 
   await screenshot(page, 'desktop-throw');
   await page.locator('#stationNav button').nth(1).click();
@@ -115,7 +133,7 @@ async function desktopFlow() {
   await page.evaluate(() => walkToStation('pullup'));
   await check(page, () => state.activeZone, 'throw', 'Cannot teleport during wind-up');
   await page.waitForFunction(() => state.activeThrow?.phase === 'reveal', {timeout:30000});
-  await check(page, () => [getComputedStyle(document.getElementById('labelsContainer')).visibility, trajectoryLineMesh.visible, rampArrow.visible], ['hidden',false,false], 'Catch showcase hides world HUD clutter');
+  await check(page, () => [getComputedStyle(document.getElementById('labelsContainer')).visibility, trajectoryLineMesh.visible, rampArrow.visible, rampTangentLine.visible, rampContactPoint.visible], ['hidden',false,false,false,false], 'Catch showcase hides world HUD clutter');
   await screenshot(page, 'desktop-catch');
   await page.locator('#catchTapPrompt').click();
   await check(page, () => [state.activeThrow, state.inventory.length], [null,1], 'Collect button awards exactly one pet');
@@ -255,6 +273,7 @@ async function mobileFlow(width, height) {
     await page.locator(`#${id} button[aria-label="Close panel"]`).tap();
   }
   await page.locator('#stationNav button').nth(0).tap();
+  await check(page, () => state.activeZone, 'throw');
   await page.locator('#throwActionBtn').tap();
   await page.waitForFunction(() => state.activeThrow?.phase === 'reveal');
   await inView(page, '#catchTapPrompt');

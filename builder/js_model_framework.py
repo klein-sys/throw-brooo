@@ -277,6 +277,9 @@ function animatePolishedAnimal(group, phase) {
   if (!group.userData.origScaleY) group.userData.origScaleY = group.scale.y;
   group.scale.y = group.userData.origScaleY * breath;
 
+  if (group.userData.head) {
+    group.userData.head.rotation.x = Math.sin(phase * 0.6) * 0.06;
+  }
   if (group.userData.ears && group.userData.ears.children.length) {
     group.userData.ears.rotation.x = Math.sin(phase * 1.4) * 0.12;
     group.userData.ears.rotation.z = Math.sin(phase * 0.7) * 0.09;

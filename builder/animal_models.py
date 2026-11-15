@@ -258,6 +258,9 @@ JS_ANIMAL_MODELS = """
           headGroup.position.set(0, 3.0 * s, -1.45 * s);
           addBox(0.75, 0.75, 1.1, baseMat, 0, 0, 0, 0, 0, 0, headGroup);
           addBox(0.6, 0.45, 0.55, darkCamel, 0, -0.15, -0.5, 0, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.16, 0.28, 0.12, baseMat, -0.32, 0.45, 0.2, 0, 0, 0, earGroup);
+          addBox(0.16, 0.28, 0.12, baseMat, 0.32, 0.45, 0.2, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.38, -0.35, headGroup);
           // 4 Legs
           [[-0.45, -0.75], [0.45, -0.75], [-0.45, 0.75], [0.45, 0.75]].forEach(([lx, lz]) => {
@@ -521,6 +524,9 @@ JS_ANIMAL_MODELS = """
           addBox(0.75, 0.75, 1.1, baseMat, 0, 0, 0, 0, 0, 0, headGroup);
           addBox(0.16, 1.45, 0.16, hornMat, 0, 1.0, 0, 0.25, 0, 0, headGroup);
           addBox(0.25, 1.5, 0.85, maneMat, 0, -0.2, 0.65, -0.3, 0, 0, headGroup);
+          headGroup.add(earGroup);
+          addBox(0.18, 0.35, 0.12, baseMat, -0.28, 0.45, 0.25, 0, 0, 0, earGroup);
+          addBox(0.18, 0.35, 0.12, baseMat, 0.28, 0.45, 0.25, 0, 0, 0, earGroup);
           addEyes(0, 0.1, 0, 0.14, 0.14, 0.05, 0.38, -0.35, headGroup);
           // 4 Legs with Golden Hooves
           [[-0.45, -0.65], [0.45, -0.65], [-0.45, 0.65], [0.45, 0.65]].forEach(([lx, lz]) => {

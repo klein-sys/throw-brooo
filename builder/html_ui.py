@@ -7,11 +7,14 @@ HTML_UI = """
   <!-- 3D FLOATING LABELS CONTAINER (PLOT PETS, INCOME POPUPS & STATIONS) -->
   <div id="labelsContainer" class="absolute inset-0 pointer-events-none z-10 overflow-hidden"></div>
 
+  <!-- TOP-LEVEL FLOATING REWARD TEXT OVERLAY (ALWAYS VISIBLE Z-50) -->
+  <div id="floatingPopupsContainer" class="fixed inset-0 pointer-events-none z-50 overflow-hidden"></div>
+
   <!-- TOP NAVIGATION BAR: TITLE, QUICK-WALK TELEPORTS & SHORTCUTS -->
   <div id="topNav" class="game-hud fixed top-2 left-1/2 -translate-x-1/2 z-20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-[98%] max-w-5xl pointer-events-none">
     
     <!-- Title & Math Pill -->
-    <div id="gameTitle" class="bg-gray-900/95 border-2 border-black rounded-2xl px-3 py-1 flex items-center gap-2 shadow-xl pointer-events-auto">
+    <div id="gameTitle" class="glass-panel rounded-2xl px-3 py-1 flex items-center gap-2 pointer-events-auto">
       <span class="text-yellow-400 font-extrabold text-xs sm:text-base rblx-stroke-sm">🥕 THROW FOOD 3D</span>
       <span class="hidden sm:inline-block bg-cyan-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-black shadow">
         MATH 101 CALCULUS
@@ -19,7 +22,7 @@ HTML_UI = """
     </div>
 
     <!-- Quick-Walk Station Teleport Bar -->
-    <div id="stationNav" role="navigation" aria-label="Activity stations" class="bg-gray-900/95 border-2 border-black rounded-2xl p-1 flex items-center gap-1 shadow-xl pointer-events-auto">
+    <div id="stationNav" role="navigation" aria-label="Activity stations" class="glass-panel rounded-2xl p-1 flex items-center gap-1 pointer-events-auto">
       <button onclick="walkToStation('throw')" class="rblx-btn bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-xl">
         🎯 Throw Line
       </button>
@@ -43,7 +46,7 @@ HTML_UI = """
     </button>
 
     <!-- Equipped Bait Pill -->
-    <button id="baitPill" onclick="openModal('shopModal')" title="Click to change bait in Food Shop" class="cursor-pointer bg-purple-700/95 hover:bg-purple-600 border-2 border-black rounded-2xl px-2.5 py-1 flex items-center gap-1.5 shadow-xl pointer-events-auto">
+    <button id="baitPill" onclick="openModal('shopModal')" title="Click to change bait in Food Shop" class="cursor-pointer glass-panel rounded-2xl px-2.5 py-1 flex items-center gap-1.5 pointer-events-auto">
       <span id="hudFoodIcon" class="text-base sm:text-lg">🥕</span>
       <div class="leading-tight">
         <div id="hudFoodName" class="text-white font-extrabold text-[11px] sm:text-xs rblx-stroke-sm">Carrot</div>
@@ -100,7 +103,7 @@ HTML_UI = """
   <!-- BOTTOM-LEFT STATS: MUSCLE STRENGTH & CASH DISPLAY -->
   <div id="gameStats" class="game-hud fixed bottom-3 left-3 z-20 flex flex-col gap-1.5 pointer-events-auto">
     <!-- Strength Pill with Muscle Icon, Number, Bonus & Settings Gear ⚙️ -->
-    <div class="flex items-center gap-2 bg-black/75 backdrop-blur-sm border-2 border-black rounded-2xl px-3 py-1 shadow-2xl">
+    <div class="flex items-center gap-2 glass-panel rounded-2xl px-3 py-1 shadow-2xl">
       <span class="text-2xl sm:text-3xl filter drop-shadow">💪</span>
       <div class="leading-none">
         <div class="flex items-center gap-1.5">
@@ -114,7 +117,7 @@ HTML_UI = """
     </div>
 
     <!-- Cash Pill with Money Icon, Cash Amount & $/s Passive Rate -->
-    <div class="flex items-center gap-2 bg-black/75 backdrop-blur-sm border-2 border-black rounded-2xl px-3 py-1 shadow-2xl">
+    <div class="flex items-center gap-2 glass-panel rounded-2xl px-3 py-1 shadow-2xl">
       <span class="text-2xl sm:text-3xl filter drop-shadow">💵</span>
       <div class="leading-none">
         <div id="cashDisplay" class="text-lime-400 font-extrabold text-lg sm:text-2xl rblx-stroke-sm">$0</div>
@@ -131,7 +134,7 @@ HTML_UI = """
   <!-- MINIMIZABLE LIVE TRIGONOMETRIC DERIVATIVE HUD (BOTTOM CENTER) -->
   <!-- 1) Minimized Pill Bar -->
   <div id="calcMinimizedBar" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 hidden pointer-events-auto">
-    <button onclick="toggleMinimizeCalcHUD(false)" class="rblx-btn bg-gray-900/95 border-2 border-black text-white px-4 py-1.5 rounded-full flex items-center gap-2 shadow-2xl">
+    <button onclick="toggleMinimizeCalcHUD(false)" class="rblx-btn glass-panel text-white px-4 py-1.5 rounded-full flex items-center gap-2 shadow-2xl">
       <span class="text-cyan-400 font-extrabold text-xs">📈 Expand Calculus HUD</span>
       <span class="text-gray-400 text-xs">|</span>
       <span id="minDerivReadout" class="mono-math text-amber-300 font-bold text-xs">P'(t) = +2.40</span>
@@ -141,7 +144,7 @@ HTML_UI = """
   </div>
 
   <!-- 2) Expanded Calculus Oscilloscope Panel -->
-  <div id="calcExpandedPanel" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-xl bg-gray-900/95 border-3 border-black rounded-2xl p-2.5 sm:p-3 shadow-2xl pointer-events-auto transition-all">
+  <div id="calcExpandedPanel" class="game-hud fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-xl glass-panel rounded-2xl p-2.5 sm:p-3 shadow-2xl pointer-events-auto transition-all">
     <!-- Panel Header: Title, Minimizer, Pause & Status Badges -->
     <div class="flex items-center justify-between gap-1 pb-1.5 border-b border-gray-700">
       <div class="flex items-center gap-2">
@@ -162,9 +165,10 @@ HTML_UI = """
     <div class="relative w-full h-20 sm:h-24 bg-black/80 rounded-xl my-1.5 overflow-hidden border border-gray-700">
       <canvas id="oscCanvas" class="w-full h-full block"></canvas>
       <div class="absolute top-1 left-2 pointer-events-none flex items-center gap-2 text-[9px] mono-math font-bold">
-        <span class="text-cyan-400">● P(t) Position Wave</span>
-        <span class="text-amber-400">● P'(t) Derivative Velocity</span>
-        <span class="text-pink-400">● Tangent Slope</span>
+        <span class="text-cyan-400">● P(t) Wave</span>
+        <span class="text-amber-400">● P'(t) Velocity</span>
+        <span class="text-purple-400">● P''(t) Curv</span>
+        <span class="text-pink-400">● Tangent</span>
       </div>
       <div id="critPointIndicator" class="hidden absolute top-1 right-2 pointer-events-none text-[9px] font-extrabold text-yellow-300 bg-yellow-950/80 px-2 py-0.5 rounded border border-yellow-500">
         🎯 CRITICAL POINT (P' ≈ 0)
@@ -176,6 +180,7 @@ HTML_UI = """
       <div class="bg-gray-800/80 p-1.5 rounded-xl border border-gray-700">
         <div id="livePosEq" class="text-cyan-300 font-bold truncate">P(t) = 2sin(1.2t) = +0.00</div>
         <div id="liveDerivEq" class="text-amber-300 font-bold truncate">P'(t) = 2.4cos(1.2t) = +2.40</div>
+        <div id="liveDeriv2Eq" class="text-purple-300 font-bold truncate">P''(t) = -2.88sin(1.2t) = +0.00</div>
       </div>
       <div class="bg-gray-800/80 p-1.5 rounded-xl border border-gray-700 flex flex-col justify-center">
         <div class="flex items-center justify-between text-[10px] leading-tight">
