@@ -50,10 +50,17 @@ HTML_HEAD = """<!DOCTYPE html>
     .text-black.rblx-stroke,
     .text-black.rblx-stroke-sm,
     .text-black.rblx-stroke-subtle,
+    .text-black .rblx-stroke,
+    .text-black .rblx-stroke-sm,
+    .text-black .rblx-stroke-subtle,
     .text-slate-900.rblx-stroke,
     .text-slate-900.rblx-stroke-sm,
+    .text-slate-900 .rblx-stroke,
+    .text-slate-900 .rblx-stroke-sm,
     .text-gray-900.rblx-stroke,
-    .text-gray-900.rblx-stroke-sm {
+    .text-gray-900.rblx-stroke-sm,
+    .text-gray-900 .rblx-stroke,
+    .text-gray-900 .rblx-stroke-sm {
       -webkit-text-stroke: 0 !important;
       text-shadow: none !important;
     }

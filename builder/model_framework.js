@@ -425,6 +425,18 @@ function createAnimalTexture(animalId, mutationId, baseHex) {
     }
   }
 
+  // Iridescent chromatic gradient overlay for Rainbow mutations
+  if (isRainbow) {
+    const rainGrad = ctx.createLinearGradient(0, 0, 128, 128);
+    rainGrad.addColorStop(0, 'rgba(244, 114, 182, 0.45)');
+    rainGrad.addColorStop(0.25, 'rgba(192, 132, 252, 0.45)');
+    rainGrad.addColorStop(0.5, 'rgba(129, 140, 248, 0.45)');
+    rainGrad.addColorStop(0.75, 'rgba(56, 189, 248, 0.45)');
+    rainGrad.addColorStop(1, 'rgba(52, 211, 153, 0.45)');
+    ctx.fillStyle = rainGrad;
+    ctx.fillRect(0, 0, 128, 128);
+  }
+
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
   tex.minFilter = THREE.NearestFilter;
@@ -451,6 +463,7 @@ function polishedMaterial(hex, mutationId, preserve, transparent, opacity, side,
   if (POLISHED_MATERIALS.has(key)) return POLISHED_MATERIALS.get(key);
   const isSilver = !preserve && mutationId === 'silver';
   const isGolden = !preserve && mutationId === 'golden';
+  const isRainbow = !preserve && mutationId === 'rainbow';
   const isCosmic = !preserve && mutationId === 'cosmic';
 
   let map = null;
@@ -460,8 +473,8 @@ function polishedMaterial(hex, mutationId, preserve, transparent, opacity, side,
 
   const mat = new THREE.MeshStandardMaterial({
     color: polishedColor(hex, mutationId, preserve),
-    roughness: isGolden ? 0.18 : isSilver ? 0.22 : 0.58,
-    metalness: isGolden ? 0.72 : isSilver ? 0.65 : 0.08,
+    roughness: isGolden ? 0.18 : isSilver ? 0.22 : isRainbow ? 0.25 : 0.58,
+    metalness: isGolden ? 0.72 : isSilver ? 0.65 : isRainbow ? 0.40 : 0.08,
     map: map,
     flatShading: true,
     transparent: Boolean(transparent),
@@ -614,6 +627,17 @@ const POLISHED_DETAIL_BUILDERS = Object.freeze({
     // Walking leg segments
     for (const side of [-1, 1]) for (let i = 0; i < 3; i++)
       k.box(k.root, [side * (.85 + i * .24), .23, -.08 + i * .36], [.40, .10, .13], 0x92400e, {preserve:true, rot:[0, side * .23, side * .15]});
+    // Articulated serrated pincers (chelae) with inner tooth ridges
+    for (const side of [-1, 1]) {
+      // Outer movable pincer blade
+      k.cone(k.root, [side * .92, .36, -1.82], [.15, .54, .17], 0xb45309, {preserve:true, rot:[Math.PI * .5, 0, side * .35]});
+      // Inner fixed pincer finger
+      k.cone(k.root, [side * .68, .36, -1.78], [.13, .46, .15], 0xb45309, {preserve:true, rot:[Math.PI * .5, 0, -side * .25]});
+      // Serrated inner teeth ridges
+      for (let t = 0; t < 3; t++) {
+        k.cone(k.root, [side * (.80 - side * .04 * t), .36, -1.62 - t * .08], [.04, .08, .04], 0xfef08a, {preserve:true, rot:[0, 0, side * Math.PI * .5]});
+      }
+    }
     // Segmented arched tail
     for (let i = 0; i < 4; i++)
       k.orb(k.tail, [0, .15 + i * .27, -i * .37], [.45 - i * .06, .34, .42 - i * .05], 0xf59e0b);

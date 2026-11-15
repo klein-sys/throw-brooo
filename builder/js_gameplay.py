@@ -476,8 +476,8 @@ JS_GAMEPLAY = """
         }
         resonanceBonusCoins = Math.max(15, Math.round(finalIncome * 2));
         state.cash += resonanceBonusCoins;
-        updateTopHUD();
-        updatePullUpHUD();
+        updateHUD();
+        renderPullUpHUD();
       }
 
       // Distance mapping to expanded 3D Z coordinate (-14 to -900)
@@ -1422,6 +1422,9 @@ JS_GAMEPLAY = """
 
     function showToast(msg, colorClass) {
       const container = document.body;
+      const existingToast = document.getElementById('gameplayToast');
+      if (existingToast) existingToast.remove();
+
       const t = document.createElement('div');
       t.id = 'gameplayToast';
       t.setAttribute('role', 'status');
@@ -1442,13 +1445,29 @@ JS_GAMEPLAY = """
 
       t.className = `fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-[92vw] px-4 sm:px-5 py-2.5 rounded-full bg-slate-900/95 backdrop-blur-md border ${borderAccent} text-white font-extrabold text-xs sm:text-sm shadow-2xl flex items-center gap-2.5 transition-all duration-300 pointer-events-none select-none`;
 
-      // Extract leading emoji if present for a clean glowing circular badge
+      // Extract leading emoji if present for a clean glowing circular badge (handling grapheme clusters/ZWJ)
       let emoji = '';
       let textContent = msg;
-      const chars = Array.from(msg);
-      if (chars.length > 0 && chars[0].codePointAt(0) > 255) {
-        emoji = chars[0];
-        textContent = msg.slice(chars[0].length).trim();
+      if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        try {
+          const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+          const iterator = segmenter.segment(msg)[Symbol.iterator]();
+          const first = iterator.next();
+          if (!first.done && first.value && first.value.segment) {
+            const seg = first.value.segment;
+            if (seg.codePointAt(0) > 255) {
+              emoji = seg;
+              textContent = msg.slice(seg.length).trim();
+            }
+          }
+        } catch (e) {}
+      }
+      if (!emoji) {
+        const chars = Array.from(msg);
+        if (chars.length > 0 && chars[0].codePointAt(0) > 255) {
+          emoji = chars[0];
+          textContent = msg.slice(chars[0].length).trim();
+        }
       }
 
       const badgeHtml = emoji

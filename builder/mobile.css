@@ -10,7 +10,6 @@ button:disabled { opacity: .55; cursor: default; }
 #topNav { top: calc(8px + var(--safe-top)); max-width: 1280px; }
 #zoneBanner { top: calc(72px + var(--safe-top)); }
 #stationNav button { min-height: 44px; }
-#stationNav button[aria-pressed="true"] { outline: 2px solid white; outline-offset: -5px; }
 #gameStats button, .game-modal button { min-width: 44px; min-height: 44px; }
 .game-modal { padding-top: max(12px, var(--safe-top)); padding-bottom: max(12px, var(--safe-bottom)); }
 .game-modal > div { max-height: calc(100dvh - 32px - var(--safe-top) - var(--safe-bottom)); }
